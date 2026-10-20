@@ -648,8 +648,14 @@ export function TripResult({
     const gano =
       decision === "accept" || ganados.has(r.index) || !!localSub[r.index];
     const perdio = decision === "reject" || descartados.has(r.index);
-    if (perdio) planCompras.push({ r, deDuelo: true });
-    else duelos.push({ r, tuya, tipo, ganado: gano });
+    if (perdio) {
+      // Ganó la sugerida… pero si ya la cubriste ("ya lo tengo" o "la compré"
+      // en la vitrina), va a lo que tienes. Antes se quedaba en compras para
+      // siempre: el cruce decía "tienes" y la tarjeta seguía diciendo "cómprala"
+      // (2026-10-21, visto al probar "la compré").
+      if (effLocal(r) === "falta" && !isPacked(r.index)) planCompras.push({ r, deDuelo: true });
+      else planTienes.push(r);
+    } else duelos.push({ r, tuya, tipo, ganado: gano });
   }
   /** El duelo abierto: el elegido a mano, o el PRIMERO sin resolver. */
   const abierto =
