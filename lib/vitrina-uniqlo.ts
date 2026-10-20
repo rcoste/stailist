@@ -173,17 +173,109 @@ const MODIFICADORES: Record<string, string> = {
   midi: "midi",
 };
 
-/** El término en inglés con el que se busca un tipo de prenda; null si no sabemos buscarlo. */
-export function terminoDe(tipo: string | null | undefined): string | null {
+/**
+ * El término en inglés con el que se busca un tipo de prenda; null si no
+ * sabemos buscarlo. Los modificadores salen del `tipo` Y del `nombre` de la
+ * pieza: "Short de lino negro" trae tipo "short" a secas, y buscar "shorts"
+ * sin "linen" le devolvió a Roberto bóxers y shorts de sudadera (2026-10-21).
+ */
+export function terminoDe(tipo: string | null | undefined, nombre?: string | null): string | null {
   if (!tipo) return null;
   const canon = tipoCanonico(tipo);
   const [cabeza, ...resto] = canon.split("-");
   const base = TERMINOS[cabeza];
   if (!base) return null;
-  const mods = resto.map((m) => MODIFICADORES[m]).filter((m): m is string => Boolean(m));
   // "cuello-alto" / "cuello-tortuga": la cabeza ya dice turtleneck.
   if (cabeza === "cuello") return base;
+  const palabrasNombre = nombre ? tipoCanonico(nombre).split("-") : [];
+  const mods: string[] = [];
+  for (const m of [...resto, ...palabrasNombre]) {
+    const t = MODIFICADORES[m];
+    if (t && !mods.includes(t) && !base.includes(t)) mods.push(t);
+  }
   return [...mods, base].join(" ");
+}
+
+// --- Lo que NO es la prenda, aunque la búsqueda lo devuelva ---------------------
+//
+// "shorts" devuelve bóxers; "sweater" devuelve ropa de dormir. Primero se saca
+// lo que nunca puede cubrir un hueco de la maleta (ropa interior, calcetines,
+// pijama), en los tres idiomas. OJO en japonés: "ボクサー" también nombra el
+// corte de un short de calle ("コットンボクサーイージーショートパンツ"), así que
+// ahí sólo se excluye "ブリーフ" (brief) y no la palabra bóxer.
+const ROPA_INTERIOR = [
+  /\b(boxers?|briefs?|underwear|innerwear|bras?|bralettes?|panties|thongs?|socks?|pajamas?|pyjamas?|sleepwear|loungewear|undershirts?)\b/i,
+  /ブリーフ|ブラジャー|ブラトップ|靴下|ソックス|パジャマ|ルームウェア|インナー/,
+  /브리프|드로즈|팬티|브라|양말|파자마|이너웨어/,
+];
+
+/** ¿Es ropa interior, calcetines o pijama? Nunca entra, salvo que eso sea lo que se busca. */
+export function esRopaInterior(nombre: string, termino = ""): boolean {
+  if (/\b(socks?|tights?|pajamas?)\b/i.test(termino)) return false;
+  return ROPA_INTERIOR.some((re) => re.test(nombre));
+}
+
+// Para cada cabeza del término, las palabras que la nombran en una ficha de
+// Uniqlo (EE. UU.). "shorts" tiene que estar como palabra entera: "Short
+// Sleeve" no es un short.
+const NOMBRES_EN: Record<string, RegExp> = {
+  sweater: /\b(sweater|pullover|knit|cardigan)\b/i,
+  shirt: /\bshirt\b/i,
+  scarf: /\b(scarf|stole|muffler)\b/i,
+  jacket: /\b(jacket|blouson|parka|anorak|coat)\b/i,
+  dress: /\bdress\b/i,
+  "polo shirt": /\bpolo\b/i,
+  "t-shirt": /\b(t-shirt|tee|t shirt)\b/i,
+  jeans: /\b(jeans|denim)\b/i,
+  shorts: /\bshorts\b/i,
+  pants: /\b(pants|trousers|slacks|chinos)\b/i,
+  sweatshirt: /\b(sweatshirt|sweat|hoodie)\b/i,
+  "trench coat": /\b(trench|coat)\b/i,
+  beanie: /\b(beanie|hat|cap)\b/i,
+  blazer: /\b(blazer|jacket)\b/i,
+  blouse: /\b(blouse|shirt|top)\b/i,
+  boots: /\bboots?\b/i,
+  cardigan: /\bcardigan\b/i,
+  chinos: /\b(chino|chinos|pants|trousers)\b/i,
+  belt: /\bbelt\b/i,
+  coat: /\b(coat|parka|jacket)\b/i,
+  joggers: /\b(joggers?|sweatpants|track pants)\b/i,
+  tights: /\b(tights|leggings)\b/i,
+  "rain jacket": /\b(jacket|parka|coat)\b/i,
+  windbreaker: /\b(windbreaker|jacket|parka)\b/i,
+  sandals: /\bsandals?\b/i,
+  skirt: /\bskirt\b/i,
+  overshirt: /\b(overshirt|shirt jacket|shirt)\b/i,
+  sneakers: /\b(sneakers?|shoes)\b/i,
+  top: /\b(top|tank|camisole|blouse)\b/i,
+  bag: /\b(bag|tote|backpack|pouch)\b/i,
+  beret: /\b(beret|hat)\b/i,
+  turtleneck: /\b(turtleneck|turtle neck|mock neck|high neck)\b/i,
+  parka: /\b(parka|jacket|coat)\b/i,
+  vest: /\bvest\b/i,
+  leggings: /\bleggings\b/i,
+  pajamas: /\b(pajamas?|pyjamas?)\b/i,
+  socks: /\bsocks?\b/i,
+  gloves: /\bgloves?\b/i,
+};
+
+/**
+ * ¿El nombre de la ficha dice la prenda que se busca? Sólo se puede exigir
+ * cuando el nombre viene en letras latinas (EE. UU.); en Japón y Corea los
+ * nombres vienen en su idioma y aquí no se juzgan (la exclusión sí aplica).
+ */
+export function nombreCoincide(nombre: string, termino: string): boolean {
+  if (!/[a-z]/i.test(nombre) || /[\u3040-\u30ff\u4e00-\u9fff\uac00-\ud7af]/.test(nombre)) return true;
+  const partes = termino.trim().split(" ");
+  const cabeza = partes.length > 1 && NOMBRES_EN[partes.slice(-2).join(" ")] ? partes.slice(-2).join(" ") : partes.at(-1) ?? "";
+  const re = NOMBRES_EN[cabeza];
+  return re ? re.test(nombre) : true;
+}
+
+/** Cuántos modificadores del término ("linen", "knit") dice el nombre: desempata hacia la prenda más parecida. */
+export function puntosDeModificador(nombre: string, termino: string): number {
+  const mods = termino.trim().split(" ").slice(0, -1);
+  return mods.filter((m) => nombre.toLowerCase().includes(m.toLowerCase())).length;
 }
 
 // --- Color ------------------------------------------------------------------
@@ -298,7 +390,7 @@ export function precioTexto(mercado: Mercado, valor: number): string {
  */
 export function elegirPrendas(
   items: UniqloItem[] | null | undefined,
-  hueco: { segmento: Segmento; colorFamilia: string },
+  hueco: { segmento: Segmento; colorFamilia: string; termino?: string | null },
   mercado: Mercado,
   vistoEl: string | null = null,
   maximo = 2
@@ -306,9 +398,14 @@ export function elegirPrendas(
   const generos = new Set([hueco.segmento === "hombre" ? "MEN" : "WOMEN", "UNISEX"]);
   const colores = coloresDe(hueco.colorFamilia);
   if (colores.length === 0) return [];
-  const candidatas: (PrendaVitrina & { rating: number })[] = [];
+  const termino = hueco.termino ?? "";
+  const candidatas: (PrendaVitrina & { rating: number; puntos: number })[] = [];
   for (const it of items ?? []) {
     if (!it?.productId || !it.name || !generos.has(it.genderCategory ?? "")) continue;
+    // Ni ropa interior ni algo que no diga la prenda pedida (2026-10-21: a un
+    // "short de lino negro" le salió un bóxer a rayas y un short de sudadera).
+    if (esRopaInterior(it.name, termino)) continue;
+    if (termino && !nombreCoincide(it.name, termino)) continue;
     const precio = it.prices?.base?.value;
     if (typeof precio !== "number") continue;
     const color = (it.colors ?? []).find((c) => colores.includes((c.name ?? "").toUpperCase()));
@@ -328,10 +425,15 @@ export function elegirPrendas(
       foto,
       vistoEl,
       rating: it.rating?.average ?? 0,
+      puntos: termino ? puntosDeModificador(it.name, termino) : 0,
     });
   }
-  candidatas.sort((a, b) => b.rating - a.rating);
-  return candidatas.slice(0, maximo).map(({ rating: _r, ...p }) => p);
+  // Primero la que más se parece a lo pedido (dice "linen", "knit"…), luego la mejor calificada.
+  candidatas.sort((a, b) => b.puntos - a.puntos || b.rating - a.rating);
+  return candidatas.slice(0, maximo).map((c) => {
+    const { rating: _r, puntos: _p, ...p } = c;
+    return p;
+  });
 }
 
 /** La clave con la que se cuentan vistas y clics: segmento|tipo canónico|color. */
