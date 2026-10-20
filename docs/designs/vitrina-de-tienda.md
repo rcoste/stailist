@@ -1135,7 +1135,7 @@ Parallel lanes: Lane A: T2 → T5 → T6 → T7 (lib/ → components/ → app/vi
 ## Implementation Tasks
 Synthesized from this review's findings. Each task derives from a specific finding above. Run with Claude Code or Codex; checkbox as you ship.
 
-- [ ] **T1 (P1, human: ~2h / CC: ~20min)** — app/api — Probar la API de Uniqlo desde un deploy de preview de Vercel
+- [x] **T1 (P1, human: ~2h / CC: ~20min)** — app/api — Probar la API de Uniqlo desde un deploy de preview de Vercel — HECHO 2026-10-20 19:08 UTC desde Vercel sfo1: us http 200 status ok total 66 (251 ms), jp 200 ok 65 (549 ms), kr 200 ok 23 (375 ms); sin firma de bloqueo. Hallazgo de paso: el entorno Preview de Vercel no tiene env vars (sólo Production), por lo que el proxy de Supabase truena en cualquier preview; se excluyó la ruta de prueba del matcher del proxy de forma temporal.
   - Surfaced by: Reto de alcance 4 / Arquitectura 2 — bloqueo por IP de datacenter no verificado
   - Files: app/api/vitrina-prueba/route.ts (temporal; se borra antes del merge)
   - Verify: GET en preview devuelve `{status:"ok", total:>0}` para `/us/api/commerce/v5/en/products?q=jeans`; 403 = cancelar el camino y anotar en el doc
