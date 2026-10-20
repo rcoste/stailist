@@ -16,7 +16,9 @@ import {
   coloresDe,
   consultarUniqlo,
   elegirPrendas,
+  esRopaInterior,
   fotoSegura,
+  nombreCoincide,
   mercadoDeParada,
   mercadosDeParadas,
   precioTexto,
@@ -222,5 +224,60 @@ describe("consultarUniqlo: el único fetch; todo fallo es vacío y aviso, nunca 
     const fetchImpl = vi.fn(async () => respuesta(fixture));
     expect((await consultarUniqlo("us", "  ", { fetchImpl: fetchImpl as unknown as typeof fetch })).items).toEqual([]);
     expect(fetchImpl).not.toHaveBeenCalled();
+  });
+});
+
+// LO QUE SE VIO EN PRODUCCIÓN EL 2026-10-21: a "Short de lino negro" le salió
+// "AIRism Boxer Briefs | Striped" y "Wide Sweat Shorts". El tipo venía a secas
+// ("short"), nadie exigía que el nombre dijera "shorts" y nadie sacaba la ropa
+// interior. Esto blinda las tres cosas.
+describe("lo que no es la prenda, aunque la búsqueda lo devuelva", () => {
+  it("terminoDe toma los modificadores también del nombre de la pieza", () => {
+    expect(terminoDe("short", "Short de lino negro")).toBe("linen shorts");
+    expect(terminoDe("sueter", "Suéter de punto vino")).toBe("knit sweater");
+    expect(terminoDe("short-lino", "Short de lino negro")).toBe("linen shorts"); // no repite
+    expect(terminoDe("jeans", "Jeans negros rectos")).toBe("jeans");
+  });
+
+  it("esRopaInterior saca bóxers, briefs, calcetines y pijama en los tres idiomas, salvo que eso se busque", () => {
+    expect(esRopaInterior("AIRism Boxer Briefs | Striped")).toBe(true);
+    expect(esRopaInterior("HEATTECH Socks | 3 Pairs")).toBe(true);
+    expect(esRopaInterior("Flannel Pajamas | Long Sleeve")).toBe(true);
+    expect(esRopaInterior("エアリズムボクサーブリーフ")).toBe(true);
+    expect(esRopaInterior("에어리즘 드로즈")).toBe(true);
+    expect(esRopaInterior("Linen Blend Shorts | 9.5\"")).toBe(false);
+    // "ボクサー" también nombra el corte de un short de calle en Japón: no se excluye.
+    expect(esRopaInterior("コットンボクサーイージーショートパンツ")).toBe(false);
+    expect(esRopaInterior("HEATTECH Socks | 3 Pairs", "socks")).toBe(false);
+  });
+
+  it("nombreCoincide exige la prenda en nombres en inglés y no juzga los nombres japoneses o coreanos", () => {
+    expect(nombreCoincide("Linen Blend Shorts | 9.5\"", "linen shorts")).toBe(true);
+    expect(nombreCoincide("Cotton Linen Shirt | Short Sleeve", "linen shorts")).toBe(false);
+    expect(nombreCoincide("Wide Sweat Shorts", "linen shorts")).toBe(true);
+    expect(nombreCoincide("Souffle Yarn Sweater", "knit sweater")).toBe(true);
+    expect(nombreCoincide("Sweat Oversized Full-Zip Hoodie", "knit sweater")).toBe(false);
+    expect(nombreCoincide("リネンブレンドイージーショートパンツ", "linen shorts")).toBe(true);
+    expect(nombreCoincide("리넨 블렌드 쇼츠", "linen shorts")).toBe(true);
+  });
+
+  it("elegirPrendas: para 'linen shorts' de hombre en negro no sale el bóxer ni la camisa de manga corta, y el short de lino va primero", () => {
+    const base = (id: string, name: string, rating: number): UniqloItem => ({
+      productId: id,
+      name,
+      genderCategory: "MEN",
+      colors: [{ name: "BLACK", displayCode: "09" }],
+      prices: { base: { currency: { code: "USD" }, value: 29.9 } },
+      rating: { average: rating },
+      images: { main: { "09": { image: `https://image.uniqlo.com/UQ/ST3/us/imagesgoods/${id}/item/x_09.jpg` } } },
+    });
+    const items = [
+      base("E1-000", "AIRism Boxer Briefs | Striped", 4.9),
+      base("E2-000", "Wide Sweat Shorts", 4.8),
+      base("E3-000", "Cotton Linen Shirt | Short Sleeve", 4.8),
+      base("E4-000", "Linen Blend Shorts | 9.5\"", 4.5),
+    ];
+    const out = elegirPrendas(items, { segmento: "hombre", colorFamilia: "negro", termino: "linen shorts" }, "us");
+    expect(out.map((p) => p.nombre)).toEqual(["Linen Blend Shorts | 9.5\"", "Wide Sweat Shorts"]);
   });
 });

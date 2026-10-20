@@ -20,18 +20,21 @@ import {
 // Fallo o timeout: nada visible, y una fila en /admin/errores (D4).
 export async function VitrinaHueco({
   tipo,
+  nombre,
   colorFamilia,
   segmento,
   mercados,
   userId,
 }: {
   tipo: string;
+  /** El nombre de la pieza ("Short de lino negro"): de ahí salen los modificadores de la búsqueda. */
+  nombre?: string | null;
   colorFamilia: string;
   segmento: Segmento;
   mercados: Mercado[];
   userId: string;
 }) {
-  const q = terminoDe(tipo);
+  const q = terminoDe(tipo, nombre);
   if (!q || mercados.length === 0) return null;
 
   const onError = async (mercado: Mercado, mensaje: string) => {
@@ -52,7 +55,7 @@ export async function VitrinaHueco({
   const consultas = await Promise.all(mercados.map((m) => consultarUniqlo(m, q, { onError })));
   let prendas: PrendaVitrina[] = [];
   for (let i = 0; i < mercados.length && prendas.length === 0; i++) {
-    prendas = elegirPrendas(consultas[i].items, { segmento, colorFamilia }, mercados[i], consultas[i].vistoEl);
+    prendas = elegirPrendas(consultas[i].items, { segmento, colorFamilia, termino: q }, mercados[i], consultas[i].vistoEl);
   }
   if (prendas.length === 0) return null;
 
