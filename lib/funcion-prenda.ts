@@ -48,6 +48,22 @@ export function funcionDe(texto: string | null | undefined): FuncionPrenda | nul
 }
 
 /**
+ * UN SUÉTER ES UN SUÉTER, LO HAYA GUARDADO LA FOTO COMO TOP O COMO ABRIGO
+ * (2026-10-19). La lectura de fotos manda un "suéter grueso" a 'abrigo' (capa
+ * por clima) y la maleta pide sus suéteres como 'top': de 165 suéteres en la
+ * base, 40 son 'abrigo'. Así, para el "Suéter de punto esmeralda" de una maleta
+ * real, "lo elijo de mi clóset" no enseñaba el "Suéter de punto verde" que la
+ * persona acababa de subir. Entre top y abrigo el cruce se permite SÓLO si las
+ * dos son de punto: una blusa sigue sin poder cubrirse con un abrigo.
+ */
+function esDePunto(p: { nombre: string; tipo?: string | null; category: string }): boolean {
+  if (p.category !== "top" && p.category !== "abrigo") return false;
+  return /\b(sueter|cardigan|jersey|pullover|cuello alto|cuello tortuga|tortuga|de punto|tejido)\b/.test(
+    sinAcentos(`${p.tipo ?? ""} ${p.nombre}`)
+  );
+}
+
+/**
  * ¿Esta prenda del clóset puede ocupar el lugar de la que falta? Misma
  * categoría siempre; y si la que falta tiene una función, la candidata tiene
  * que tener LA MISMA. Al revés no: un trench puede cubrir un abrigo de lana.
@@ -56,7 +72,7 @@ export function sirveComoSustituto(
   falta: { nombre: string; tipo?: string | null; category: string },
   candidata: { nombre: string; category: string }
 ): boolean {
-  if (candidata.category !== falta.category) return false;
+  if (candidata.category !== falta.category && !(esDePunto(falta) && esDePunto(candidata))) return false;
   const necesita = funcionDe(`${falta.tipo ?? ""} ${falta.nombre}`);
   return necesita === null || funcionDe(candidata.nombre) === necesita;
 }
