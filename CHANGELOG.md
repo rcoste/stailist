@@ -2,6 +2,14 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.402.1] - 2026-10-21 — la ficha de Uniqlo abre en el color que te enseñamos
+
+- **El enlace de la vitrina abre la ficha en el color de la prenda que viste**
+  (`lib/vitrina-uniqlo.ts`, `urlDeFicha` con `colorDisplayCode`). Abría en el
+  color por defecto de Uniqlo: te enseñábamos el vestido en vino y aterrizabas
+  en gris, justo en el eslabón que la prueba mide. Verificado en el navegador
+  en EE. UU. ("Color: 19 WINE") y Japón ("カラー: 14 RED").
+
 ## [0.2.402.0] - 2026-10-20 — la maleta te enseña la prenda real de Uniqlo del país al que vas
 
 - **Bajo cada pieza que te falta para un viaje a EE. UU., Japón o Corea, hasta
