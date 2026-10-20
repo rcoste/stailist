@@ -27,6 +27,7 @@ import type {
 } from "@/lib/capsule";
 import type { TripOutfit } from "@/lib/trip";
 import { registrarEvento } from "@/lib/telemetria";
+import { validarCompra, type CompraDeTienda } from "@/lib/vitrina-uniqlo";
 import { repartirCandidatas } from "@/lib/trip-candidatas";
 import { PROMPT_VIAJE } from "@/lib/engine/trip-outfits";
 
@@ -330,7 +331,10 @@ export async function markTripFaltaOwned(
   /** "Tengo uno parecido": la pieza como es la SUYA (nombre editado, color,
    *  material). Sin esto, "ya lo tengo" guardaba la sugerida tal cual — un
    *  cinturón con hebilla dorada en el clóset de quien tiene uno plateado. */
-  variante?: VariantePieza | null
+  variante?: VariantePieza | null,
+  /** "La compré" desde la vitrina (2026-10-21): la prenda es ESA de la tienda,
+   *  con su foto. Se valida aquí; lo que no pase, se trata como "ya lo tengo". */
+  compraEnTienda?: Partial<CompraDeTienda> | null
 ): Promise<{ ok: boolean; itemId: string | null }> {
   if (!Number.isInteger(index) || index < 0) return { ok: false, itemId: null };
   const supabase = await createClient();
@@ -357,10 +361,31 @@ export async function markTripFaltaOwned(
     ? { ...sugerida, nombre: v.nombre, colorFamilia: v.color ?? sugerida.colorFamilia }
     : sugerida;
 
+  // "La compré" en la vitrina: la foto real de la tienda, guardada en SU
+  // carpeta privada (como cualquier foto suya). Sin render y sin IA. Si la foto
+  // no baja o no sube, sigue como un "ya lo tengo" normal: la compra se
+  // registra igual, que es lo que mide la prueba.
+  const compra = validarCompra(compraEnTienda);
+  let fotoTienda: string | null = null;
+  if (compra) {
+    try {
+      const res = await fetch(compra.foto, { signal: AbortSignal.timeout(8000) });
+      const bytes = res.ok ? new Uint8Array(await res.arrayBuffer()) : null;
+      if (bytes && bytes.byteLength > 0 && bytes.byteLength < 5_000_000) {
+        const path = `${user.id}/tienda-${crypto.randomUUID()}.jpg`;
+        const up = await supabase.storage.from("prendas").upload(path, bytes, { contentType: "image/jpeg" });
+        if (!up.error) fotoTienda = path;
+      }
+    } catch {
+      fotoTienda = null;
+    }
+  }
+
   // Imagen prestada de un arquetipo de la misma categoría/color parecido. Con
   // variante NO: la imagen del catálogo es la de la sugerida (la hebilla
-  // dorada); su prenda se dibuja de su propia descripción.
-  const imagePath = v ? null : await borrowArchetypeImage(
+  // dorada); su prenda se dibuja de su propia descripción. Con foto de la
+  // tienda tampoco: ya tiene la suya.
+  const imagePath = v || fotoTienda ? null : await borrowArchetypeImage(
     supabase,
     item.category,
     familiaToHex(item.colorFamilia),
@@ -374,6 +399,7 @@ export async function markTripFaltaOwned(
     .insert({
       user_id: user.id,
       source: "photo",
+      ...(fotoTienda ? { photo_path: fotoTienda } : {}),
       attrs: {
         nombre: item.nombre,
         categoria: item.category,
@@ -383,6 +409,20 @@ export async function markTripFaltaOwned(
         temporada: item.temporada,
         ...(v?.material ? { material: v.material } : {}),
         ...(imagePath ? { image_path: imagePath } : {}),
+        ...(compra
+          ? {
+              marca: "Uniqlo",
+              tienda: {
+                marca: "Uniqlo",
+                producto: compra.producto,
+                url: compra.url,
+                entrada: compra.entrada,
+                precio: compra.precio,
+                moneda: compra.moneda,
+              },
+              ...(fotoTienda ? { preferir_foto: true } : {}),
+            }
+          : {}),
       },
     })
     .select("id")
@@ -391,11 +431,18 @@ export async function markTripFaltaOwned(
   await registrarEvento(supabase, {
     user_id: user.id,
     type: "item_added",
-    data: { source: "viaje", n: 1 },
+    data: { source: compra ? "vitrina" : "viaje", n: 1 },
   });
+  if (compra) {
+    await registrarEvento(supabase, {
+      user_id: user.id,
+      type: "tienda_compra",
+      data: { trip_id: tripId, index, entrada: compra.entrada, tienda: compra.tienda, precio: compra.precio, moneda: compra.moneda, con_foto: !!fotoTienda },
+    });
+  }
 
-  // Sin imagen prestada → genera su render limpio ahora (inline).
-  if (!imagePath) {
+  // Sin imagen prestada ni foto de la tienda → genera su render limpio ahora (inline).
+  if (!imagePath && !fotoTienda) {
     await renderItemImage(supabase, user.id, inserted.id as string);
   }
 
