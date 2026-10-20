@@ -274,8 +274,15 @@ export function fotoSegura(url: string | null | undefined): string | null {
   return url;
 }
 
-export function urlDeFicha(mercado: Mercado, productId: string): string {
-  return `https://www.uniqlo.com/${mercado}/${MERCADOS[mercado].idioma}/products/${productId}/00`;
+/**
+ * La ficha del producto, abierta en EL color que se enseñó. Sin
+ * `colorDisplayCode` la ficha abre en el color por defecto (gris, en el
+ * vestido de prueba) y el eslabón se rompe justo donde importa: te enseñamos
+ * vino y aterrizas en gris. Verificado en el navegador el 2026-10-21.
+ */
+export function urlDeFicha(mercado: Mercado, productId: string, colorDisplayCode?: string | null): string {
+  const base = `https://www.uniqlo.com/${mercado}/${MERCADOS[mercado].idioma}/products/${productId}/00`;
+  return colorDisplayCode ? `${base}?colorDisplayCode=${encodeURIComponent(colorDisplayCode)}` : base;
 }
 
 export function precioTexto(mercado: Mercado, valor: number): string {
@@ -317,7 +324,7 @@ export function elegirPrendas(
       precio,
       moneda: MERCADOS[mercado].moneda,
       precioTexto: precioTexto(mercado, precio),
-      url: urlDeFicha(mercado, it.productId),
+      url: urlDeFicha(mercado, it.productId, color.displayCode),
       foto,
       vistoEl,
       rating: it.rating?.average ?? 0,
