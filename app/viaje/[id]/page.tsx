@@ -32,6 +32,9 @@ import { DeleteTripButton } from "@/components/delete-trip-button";
 import { InvitarViaje } from "@/components/invitar-viaje";
 import { textoUnidos } from "@/lib/viaje-invitacion";
 import { avisosDeLoQueLlevas } from "@/lib/trip-avisos";
+import { Suspense, type ReactNode } from "react";
+import { VitrinaHueco } from "@/components/vitrina-hueco";
+import { mercadosDeParadas } from "@/lib/vitrina-uniqlo";
 
 export default async function ViajeDetallePage({
   params,
@@ -171,6 +174,29 @@ export default async function ViajeDetallePage({
     .map((p) => ({ lugar: p.lugar.split(",")[0].trim(), ...p.weather! }));
   // ¿Su clóset cambió desde el último cruce? (misma firma que los esenciales)
   const closetCambio = !!match && matchSignature(await loadClosetLite(supabase, profile.id)) !== match.signature;
+  // LA VITRINA DE UNIQLO (2026-10-20, prueba hasta el 30-nov): bajo cada pieza
+  // que te FALTA, hasta dos prendas reales de Uniqlo del país de destino. Sólo
+  // viajes a EE. UU., Japón o Corea (lo demás: mapa vacío y nada cambia). Cada
+  // hueco es un componente async en su propio <Suspense>: la maleta no espera.
+  const mercados = mercadosDeParadas(paradas.length ? paradas : [{ lugar: trip.lugar as string }]);
+  const vitrina: Record<number, ReactNode> = {};
+  if (mercados.length > 0 && gender) {
+    for (const r of capsuleRows(target, match, overrides)) {
+      if (r.dismissed || r.effective !== "falta" || sustitutoDe(overrides, r.index)) continue;
+      vitrina[r.index] = (
+        <Suspense key={r.index} fallback={null}>
+          <VitrinaHueco
+            tipo={r.item.tipo}
+            colorFamilia={r.item.colorFamilia}
+            segmento={gender}
+            mercados={mercados}
+            userId={profile.id}
+          />
+        </Suspense>
+      );
+    }
+  }
+
   const avisos = avisosDeLoQueLlevas(target, match, overrides, {
     paradas: climaParadas,
     ocasiones: (trip.ocasiones as string[] | null) ?? [],
@@ -399,6 +425,7 @@ export default async function ViajeDetallePage({
               ganadosIniciales={ganados}
               avisos={avisos}
               closetCambio={closetCambio}
+              vitrina={vitrina}
             />
           }
           looks={

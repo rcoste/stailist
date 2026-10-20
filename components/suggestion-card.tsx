@@ -58,6 +58,7 @@ export function SuggestionCard({
   /** Recorta la razón a una línea. Para listas de 6+ sugerencias. */
   razonCompacta = false,
   masOpciones,
+  debajo,
 }: {
   /** La categoría del hueco (o lo que vale), NO la razón. Va en versalitas. */
   eyebrow: string;
@@ -96,6 +97,9 @@ export function SuggestionCard({
   /** "···" al final del pie: más salidas que no caben como botón (el viaje:
    *  "tengo uno parecido", "lo elijo de mi clóset", "no lo necesito"…). */
   masOpciones?: (() => void) | null;
+  /** Algo que cuelga bajo el pie, dentro de la misma card (la vitrina de la
+   *  maleta: prendas reales de tienda para esta pieza). Opcional y raro. */
+  debajo?: React.ReactNode;
 }) {
   const [preguntando, setPreguntando] = useState(false);
   // Motivo elegido en el paso 1 de la hoja; null = todavía en los chips.
@@ -229,6 +233,8 @@ export function SuggestionCard({
       {/* La hoja de motivo es OBLIGATORIA: "no me va" no resuelve sin motivo.
           Es la MISMA que abre la salida del duelo (`ninguna de las dos me va`)
           — por eso vive en su propio componente. */}
+      {debajo ?? null}
+
       {noMeVa ? (
         <MotivoSheet
           open={preguntando}

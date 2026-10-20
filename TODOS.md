@@ -2,6 +2,26 @@
 
 Trabajo diferido con contexto. Cada ítem tiene su "por qué ahora no" y su trigger de reapertura.
 
+## Código de país en cada parada del viaje (2026-10-20)
+
+- **Qué**: que cada parada guarde el código de país (`us`, `jp`, `kr`…) al
+  crearse, en vez de inferirlo del final del texto de `lugar`.
+- **De dónde sale**: la vitrina de Uniqlo (`docs/designs/vitrina-de-tienda.md`,
+  decisión D6 de la revisión de ingeniería) elige el mercado de Uniqlo por el
+  país de destino. Hoy lo saca del sufijo de `lugar` ("…, Japón"), que Open-Meteo
+  escribe en español cuando la parada viene del buscador de lugares
+  (`lib/place-suggestions.ts:54`). Open-Meteo también manda `country_code`
+  (`lib/place-suggestions.ts:43-54`), y no se guarda.
+- **Por qué ahora no**: la prueba de la vitrina es de 6 semanas y cabe en un
+  día; el parche por sufijo cubre el único viaje con mercado que hay hoy. Los
+  13 viajes existentes no tendrían el dato de todos modos.
+- **Dónde empezar**: `lib/trip.ts:179` (`Parada`) + el alta de paradas que
+  consume `place-suggestions`; `mercadoDeParada` en `lib/vitrina-uniqlo.ts`
+  prefiere `pais` y cae al sufijo.
+- **Trigger**: el primer viaje con una parada tecleada a mano ("Tokio") que
+  debió tener vitrina y no la tuvo, o cuando se toque el alta de paradas por
+  otra razón.
+
 ## Leer una foto del clóset abierto (2026-09-08)
 
 - **Qué**: que una foto del clóset abierto (ropa colgada en ganchos, doblada en

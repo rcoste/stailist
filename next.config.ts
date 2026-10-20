@@ -90,6 +90,15 @@ const nextConfig: NextConfig = {
         hostname: "owmvdpdczznygbuctnpv.supabase.co",
         pathname: "/storage/v1/object/public/**",
       },
+      // Fotos de producto de Uniqlo para la vitrina de la maleta (prueba hasta
+      // el 2026-11-30, docs/designs/vitrina-de-tienda.md). No se guardan: se
+      // enlazan. `fotoSegura` (lib/vitrina-uniqlo.ts) descarta cualquier otro
+      // host ANTES de llegar a <Image>, que lanza con un host no listado.
+      {
+        protocol: "https",
+        hostname: "image.uniqlo.com",
+        pathname: "/UQ/**",
+      },
     ],
   },
 };
