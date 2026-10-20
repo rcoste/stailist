@@ -127,6 +127,15 @@ describe("con término (v0.2.402.2): ropa interior y nombre que no dice la prend
     expect(out.filter((c) => c.elegida).map((c) => c.productId)).toEqual(elegirPrendas(items, hueco, "us").map((p) => p.id.split(":")[1]));
   });
 
+  it("v0.2.402.3: temporada, manga y piel, con el nombre de la pieza", () => {
+    const vestido = prenda("V", "Linen Blend Dress", "WOMEN");
+    expect(motivoDescarte(vestido, { segmento: "mujer", colorFamilia: "negro", termino: "midi dress", nombre: "Vestido midi rubí", temporada: "frio" })).toBe("temporada");
+    const camisa = prenda("S", "Oxford Shirt");
+    expect(motivoDescarte(camisa, { segmento: "hombre", colorFamilia: "negro", termino: "short sleeve shirt", nombre: "Camisa de manga corta negra" })).toBe("manga");
+    const bolsa = prenda("G", "Nylon Shoulder Bag", "WOMEN");
+    expect(motivoDescarte(bolsa, { segmento: "mujer", colorFamilia: "negro", termino: "crossbody bag", nombre: "Bolsa cruzada de piel negra" })).toBe("material");
+  });
+
   it("sin término (corridas anteriores a v0.2.402.2) no se aplica el filtro de nombre", () => {
     expect(motivoDescarte(items[1], { segmento: "hombre", colorFamilia: "negro" })).toBeNull();
   });

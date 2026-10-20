@@ -2,11 +2,18 @@ import { capsuleRows, type CapsuleMatch, type CapsuleOverrides, type CapsuleTarg
 import { sustitutoDe } from "@/lib/trip-maleta";
 import {
   coloresDe,
+  cuelloCompatible,
   elegirPrendas,
   esRopaInterior,
+  estampadoNoPedido,
   fotoSegura,
+  funcionCompatible,
+  mangaCompatible,
+  mangaDe,
+  materialCompatible,
   nombreCoincide,
   precioTexto,
+  temporadaCompatible,
   terminoDe,
   urlDeFicha,
   type Mercado,
@@ -45,6 +52,8 @@ export type HuecoMedicion = {
   porque: string | null;
   /** Con qué buscó la vitrina (terminoDe); null = no sabe buscar este tipo. */
   termino: string | null;
+  /** Ninguna parada pasa de 20 °C (viajeEsFrio); null si el viaje no tiene clima. */
+  viajeFrio: boolean | null;
 };
 
 /**
@@ -56,7 +65,8 @@ export function huecosDeViaje(
   target: CapsuleTarget,
   match: CapsuleMatch | null,
   overrides: CapsuleOverrides | null,
-  segmento: Segmento
+  segmento: Segmento,
+  viajeFrio: boolean | null = null
 ): HuecoMedicion[] {
   return capsuleRows(target, match, overrides)
     .filter((r) => !r.dismissed && r.effective === "falta" && !sustitutoDe(overrides, r.index))
@@ -73,6 +83,7 @@ export function huecosDeViaje(
       // Con el NOMBRE, igual que components/vitrina-hueco.tsx desde v0.2.402.2:
       // de ahí salen los modificadores ("Short de lino negro" → "linen shorts").
       termino: terminoDe(r.item.tipo, r.item.nombre),
+      viajeFrio,
     }));
 }
 
@@ -80,13 +91,26 @@ export type MotivoDescarte =
   | "genero"
   | "ropa-interior"
   | "nombre-no-coincide"
+  | "manga"
+  | "estampado"
+  | "cuello"
+  | "funcion"
+  | "temporada"
+  | "material"
   | "sin-precio"
   | "sin-color"
   | "sin-foto"
   | "rating";
 
 /** Lo que la vitrina necesita de un hueco para elegir (la firma de elegirPrendas). */
-export type HuecoParaElegir = { segmento: Segmento; colorFamilia: string; termino?: string | null };
+export type HuecoParaElegir = {
+  segmento: Segmento;
+  colorFamilia: string;
+  termino?: string | null;
+  nombre?: string | null;
+  temporada?: string | null;
+  viajeFrio?: boolean | null;
+};
 
 export type CandidatoMedicion = {
   mercado: Mercado;
@@ -119,6 +143,14 @@ export function motivoDescarte(it: UniqloItem, hueco: HuecoParaElegir): Exclude<
   const termino = hueco.termino ?? "";
   if (esRopaInterior(it.name ?? "", termino)) return "ropa-interior";
   if (termino && !nombreCoincide(it.name ?? "", termino)) return "nombre-no-coincide";
+  // Desde v0.2.402.3: manga, liso/estampado, cuello, función (lluvia), temporada y piel.
+  const nombre = it.name ?? "";
+  if (!mangaCompatible(nombre, mangaDe(hueco.nombre), termino)) return "manga";
+  if (estampadoNoPedido(nombre, hueco.nombre)) return "estampado";
+  if (!cuelloCompatible(nombre, hueco.nombre)) return "cuello";
+  if (!funcionCompatible(nombre, hueco.nombre)) return "funcion";
+  if (!temporadaCompatible(nombre, hueco)) return "temporada";
+  if (!materialCompatible(nombre, hueco.nombre)) return "material";
   if (typeof it.prices?.base?.value !== "number") return "sin-precio";
   const colores = coloresDe(hueco.colorFamilia);
   const color = (it.colors ?? []).find((c) => colores.includes((c.name ?? "").toUpperCase()));

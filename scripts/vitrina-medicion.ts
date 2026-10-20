@@ -20,7 +20,7 @@ import { readFileSync } from "node:fs";
 
 import { withDb } from "../lib/db";
 import type { CapsuleMatch, CapsuleOverrides, CapsuleTarget } from "../lib/capsule";
-import { consultarUniqlo, LIMITE_RESPUESTA, type Consulta, type Mercado, type Segmento } from "../lib/vitrina-uniqlo";
+import { consultarUniqlo, LIMITE_RESPUESTA, viajeEsFrio, type Consulta, type Mercado, type Segmento } from "../lib/vitrina-uniqlo";
 import { armarCandidatos, huecosDeViaje, type CandidatoMedicion, type HuecoMedicion } from "../lib/evales/vitrina-medicion";
 import { JUEZ_VITRINA_VERSION, juzgarCandidato } from "../lib/evales/juez-vitrina";
 import { MODELO_JUEZ_VITRINA } from "../lib/models";
@@ -39,24 +39,37 @@ const CONCURRENCIA_JUEZ = 6;
 const fetchPlano: typeof fetch = (url, init) => fetch(url, { signal: init?.signal });
 
 type HuecoGuardado = HuecoMedicion & { id: string; n: number };
+type Clima = { temp_c?: number | null; temp_max?: number | null };
 
 async function nuevaCorrida(): Promise<string> {
   const viajes = await withDb(async (c) => {
     const { rows } = await c.query(
-      `select t.id, t.capsule_target, t.capsule_match, t.overrides, p.gender
+      `select t.id, t.capsule_target, t.capsule_match, t.overrides, t.paradas, t.weather, p.gender
          from public.trips t join public.profiles p on p.id = t.user_id
         where t.deleted_at is null and t.capsule_target is not null and t.capsule_match is not null
           and p.gender in ('hombre', 'mujer')
         order by t.created_at`
     );
-    return rows as { id: string; capsule_target: CapsuleTarget; capsule_match: CapsuleMatch; overrides: CapsuleOverrides | null; gender: Segmento }[];
+    return rows as {
+      id: string;
+      capsule_target: CapsuleTarget;
+      capsule_match: CapsuleMatch;
+      overrides: CapsuleOverrides | null;
+      paradas: { weather?: Clima | null }[] | null;
+      weather: Clima | null;
+      gender: Segmento;
+    }[];
   });
   console.log(`viajes vivos con maleta: ${viajes.length}`);
 
   const huecos: (HuecoMedicion & { tripId: string; viajeN: number })[] = [];
   let viajeN = 0;
   for (const v of viajes) {
-    const hs = huecosDeViaje(v.capsule_target, v.capsule_match, v.overrides, v.gender);
+    // El frío del viaje, igual que app/viaje/[id]/page.tsx: el clima de cada
+    // parada (o el del viaje si no hay paradas); sin clima, null.
+    const paradas = Array.isArray(v.paradas) && v.paradas.length ? v.paradas : [{ weather: v.weather }];
+    const frio = viajeEsFrio(paradas.map((p) => p.weather).filter((w): w is Clima => Boolean(w)));
+    const hs = huecosDeViaje(v.capsule_target, v.capsule_match, v.overrides, v.gender, frio);
     if (hs.length === 0) continue;
     viajeN++;
     for (const h of hs) huecos.push({ ...h, tripId: v.id, viajeN });
