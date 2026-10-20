@@ -2,6 +2,26 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.400.0] - 2026-10-20 — subes prendas y tu maleta las ve, sin rehacerla
+
+- **"Tu clóset cambió — recalcular qué tienes" llega a la maleta**
+  (`lib/trip-recalcular.ts`, `recalcularMaletaViaje`). Los esenciales lo tenían
+  y la maleta no: una persona subió tres suéteres para su viaje y la única
+  forma de que la maleta los viera era rehacerla entera — la lista se volvió a
+  sortear (el suéter rubí salió vino) y perdió todas sus decisiones, por cuarta
+  vez. Ahora el mismo aviso de los esenciales aparece arriba de la maleta cuando
+  tu clóset cambió, y recalcula sobre la MISMA lista.
+- **Recalcular sólo mejora**: lo que ya estaba cubierto con una prenda tuya que
+  sigue en tu clóset (y no desmentiste) se queda; lo que faltaba, lo que
+  desmentiste o lo que cubría una prenda que borraste se vuelve a cruzar; y al
+  final pasan las reglas del cruce. Donde una pieza cambió de prenda se limpian
+  sus decisiones y su palomita; lo que elegiste a mano y lo que sacaste se
+  respeta. Si algo cambió, tus looks quedan marcados como viejos.
+- **Medido en seco** sobre 4 maletas reales: la primera versión dejaba que la
+  IA re-cruzara también los "parecido" y un bolso pasó de "parecido" a "falta"
+  sin que nada cambiara; con la regla de sólo mejorar, eso ya no pasa.
+- La memoria de rechazos ("no me convence") la comparten crear y recalcular.
+
 ## [0.2.399.1] - 2026-10-20 — tus suéteres aparecen para elegirlos, aunque la foto los haya guardado como abrigo
 
 - **"Lo elijo de mi clóset" ya enseña tus suéteres** (`lib/funcion-prenda.ts`).

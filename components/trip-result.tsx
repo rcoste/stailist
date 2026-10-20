@@ -21,12 +21,14 @@ import {
   replaceTripPiece,
   rejectTripDuel,
   listTripClosetOptions,
+  recalcularMaletaViaje,
   type SubstituteCandidate,
   type VariantePieza,
 } from "@/lib/trip-actions";
 import { MotivoSheet } from "@/components/motivo-sheet";
 import { MasOpcionesSheet, ParecidoSheet, type OpcionPieza } from "@/components/trip-pieza-opciones";
 import type { AvisoMaleta } from "@/lib/trip-avisos";
+import { MatchRecalc } from "@/components/match-recalc";
 import { ImportCarreteFlow, type AddFlowHandle } from "@/components/import-carrete-flow";
 import { MOTIVOS_VIAJE, type VetoReason } from "@/lib/capsule";
 import { NOMBRE_FUNCION, funcionDe } from "@/lib/funcion-prenda";
@@ -387,6 +389,7 @@ export function TripResult({
   descartadosIniciales = [],
   ganadosIniciales = [],
   avisos = [],
+  closetCambio = false,
 }: {
   tripId: string;
   /** Para "mejor le tomo foto" (el flujo del carrete guarda en su carpeta). */
@@ -401,6 +404,8 @@ export function TripResult({
   ganadosIniciales?: number[];
   /** Lo que el juez encuentra en lo que DE VERDAD llevas (lib/trip-avisos.ts). */
   avisos?: AvisoMaleta[];
+  /** Su clóset cambió desde el último cruce: ofrece recalcular sin rehacer la maleta. */
+  closetCambio?: boolean;
 }) {
   // Flujo maleta→looks (CTA "Generar/Ver mis looks"): viene del context de TripTabs,
   // no por props — cruzan la frontera RSC y la inyección por cloneElement no llegaba
@@ -847,6 +852,16 @@ export function TripResult({
   return (
     <div className="flex flex-col gap-4">
       <Toast message={toast} />
+
+      {/* El mismo aviso que los esenciales (MatchRecalc): subir prendas ya no
+          obliga a rehacer el viaje entero (lib/trip-recalcular.ts). */}
+      {closetCambio ? (
+        <MatchRecalc
+          auto={false}
+          label="Tu clóset cambió — recalcular qué tienes"
+          accion={() => recalcularMaletaViaje(tripId)}
+        />
+      ) : null}
 
       {/* El juez sobre lo que de verdad llevas: mismo lenguaje que el tip
           inline (regla de acento + eyebrow), sin "entendido" — se va solo

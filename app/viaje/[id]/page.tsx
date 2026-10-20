@@ -6,7 +6,8 @@ import { Icon } from "@/components/icon";
 import { requireOnboarded } from "@/lib/auth";
 import { createClient } from "@/lib/supabase/server";
 import { capsuleRows, type CapsuleOverrides, type CapsuleMatch, type CapsuleTarget } from "@/lib/capsule";
-import { loadClosetImageMap, loadClosetNameToId } from "@/lib/capsule-data";
+import { loadClosetImageMap, loadClosetLite, loadClosetNameToId } from "@/lib/capsule-data";
+import { matchSignature } from "@/lib/engine/capsule-match";
 import { faltaKey, catalogKeysParaBuscar } from "@/lib/capsule-images";
 import { catalogPublicUrl } from "@/lib/catalog-render";
 import {
@@ -168,6 +169,8 @@ export default async function ViajeDetallePage({
   const climaParadas = (paradas.length ? paradas : [{ lugar: trip.lugar as string, weather }])
     .filter((p) => p.weather)
     .map((p) => ({ lugar: p.lugar.split(",")[0].trim(), ...p.weather! }));
+  // ¿Su clóset cambió desde el último cruce? (misma firma que los esenciales)
+  const closetCambio = !!match && matchSignature(await loadClosetLite(supabase, profile.id)) !== match.signature;
   const avisos = avisosDeLoQueLlevas(target, match, overrides, {
     paradas: climaParadas,
     ocasiones: (trip.ocasiones as string[] | null) ?? [],
@@ -395,6 +398,7 @@ export default async function ViajeDetallePage({
               descartadosIniciales={descartados}
               ganadosIniciales={ganados}
               avisos={avisos}
+              closetCambio={closetCambio}
             />
           }
           looks={
