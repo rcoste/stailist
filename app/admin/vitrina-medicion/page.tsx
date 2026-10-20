@@ -19,6 +19,8 @@ const ES_MERCADO = (m: string | undefined): m is Mercado => m === "us" || m === 
 
 const MOTIVO: Record<string, string> = {
   genero: "otra sección",
+  "ropa-interior": "ropa interior",
+  "nombre-no-coincide": "el nombre no dice la prenda",
   "sin-precio": "sin precio",
   "sin-color": "fuera del color",
   "sin-foto": "sin foto del color",

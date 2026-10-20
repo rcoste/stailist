@@ -99,6 +99,39 @@ describe("motivoDescarte sigue el orden de los filtros de producción", () => {
   });
 });
 
+describe("con término (v0.2.402.2): ropa interior y nombre que no dice la prenda, en ese orden", () => {
+  const prenda = (productId: string, name: string, genderCategory = "MEN"): UniqloItem => ({
+    productId,
+    name,
+    genderCategory,
+    colors: [{ name: "BLACK", displayCode: "09" }],
+    prices: { base: { value: 29.9 } },
+    rating: { average: 4.5 },
+    images: { main: { "09": { image: "https://image.uniqlo.com/UQ/x.jpg" } } },
+  });
+  const items = [
+    prenda("A", "Striped Boxer Briefs"),
+    prenda("B", "Short Sleeve T-Shirt"),
+    prenda("C", "Linen Blend Shorts"),
+    prenda("D", "Sweat Shorts", "WOMEN"),
+  ];
+  const hueco = { segmento: "hombre" as const, colorFamilia: "negro", termino: "linen shorts" };
+
+  it("los motivos siguen el orden real de los filtros y las elegidas son las de producción", () => {
+    const out = armarCandidatos(items, hueco, "us");
+    const porId = Object.fromEntries(out.map((c) => [c.productId, c]));
+    expect(porId.A.motivo).toBe("ropa-interior");
+    expect(porId.B.motivo).toBe("nombre-no-coincide");
+    expect(porId.D.motivo).toBe("genero");
+    expect(porId.C.elegida).toBe(true);
+    expect(out.filter((c) => c.elegida).map((c) => c.productId)).toEqual(elegirPrendas(items, hueco, "us").map((p) => p.id.split(":")[1]));
+  });
+
+  it("sin término (corridas anteriores a v0.2.402.2) no se aplica el filtro de nombre", () => {
+    expect(motivoDescarte(items[1], { segmento: "hombre", colorFamilia: "negro" })).toBeNull();
+  });
+});
+
 describe("resumenMedicion: los tres números", () => {
   const filas: VotoFila[] = [
     // hueco 1: la vitrina eligió dos; Roberto aprobó una; el juez coincide en 3 de 4

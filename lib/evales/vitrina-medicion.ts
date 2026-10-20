@@ -3,7 +3,9 @@ import { sustitutoDe } from "@/lib/trip-maleta";
 import {
   coloresDe,
   elegirPrendas,
+  esRopaInterior,
   fotoSegura,
+  nombreCoincide,
   precioTexto,
   terminoDe,
   urlDeFicha,
@@ -68,11 +70,23 @@ export function huecosDeViaje(
       formalidad: r.item.formalidad ?? null,
       visual: r.item.visual ?? null,
       porque: r.item.porque ?? null,
-      termino: terminoDe(r.item.tipo),
+      // Con el NOMBRE, igual que components/vitrina-hueco.tsx desde v0.2.402.2:
+      // de ahí salen los modificadores ("Short de lino negro" → "linen shorts").
+      termino: terminoDe(r.item.tipo, r.item.nombre),
     }));
 }
 
-export type MotivoDescarte = "genero" | "sin-precio" | "sin-color" | "sin-foto" | "rating";
+export type MotivoDescarte =
+  | "genero"
+  | "ropa-interior"
+  | "nombre-no-coincide"
+  | "sin-precio"
+  | "sin-color"
+  | "sin-foto"
+  | "rating";
+
+/** Lo que la vitrina necesita de un hueco para elegir (la firma de elegirPrendas). */
+export type HuecoParaElegir = { segmento: Segmento; colorFamilia: string; termino?: string | null };
 
 export type CandidatoMedicion = {
   mercado: Mercado;
@@ -98,12 +112,13 @@ export type CandidatoMedicion = {
  * `elegirPrendas` filtra. null = pasa todos los filtros (y entonces quedó
  * fuera sólo por calificación, o quedó dentro).
  */
-export function motivoDescarte(
-  it: UniqloItem,
-  hueco: { segmento: Segmento; colorFamilia: string }
-): Exclude<MotivoDescarte, "rating"> | null {
+export function motivoDescarte(it: UniqloItem, hueco: HuecoParaElegir): Exclude<MotivoDescarte, "rating"> | null {
   const generos = new Set([hueco.segmento === "hombre" ? "MEN" : "WOMEN", "UNISEX"]);
   if (!generos.has(it.genderCategory ?? "")) return "genero";
+  // Desde v0.2.402.2: ni ropa interior ni una ficha que no diga la prenda pedida.
+  const termino = hueco.termino ?? "";
+  if (esRopaInterior(it.name ?? "", termino)) return "ropa-interior";
+  if (termino && !nombreCoincide(it.name ?? "", termino)) return "nombre-no-coincide";
   if (typeof it.prices?.base?.value !== "number") return "sin-precio";
   const colores = coloresDe(hueco.colorFamilia);
   const color = (it.colors ?? []).find((c) => colores.includes((c.name ?? "").toUpperCase()));
@@ -117,11 +132,7 @@ export function motivoDescarte(
  * dos elegidas marcadas por la función de producción. Los productos sin id o
  * sin nombre se saltan: no hay nada que enseñar ni que juzgar.
  */
-export function armarCandidatos(
-  items: UniqloItem[] | null | undefined,
-  hueco: { segmento: Segmento; colorFamilia: string },
-  mercado: Mercado
-): CandidatoMedicion[] {
+export function armarCandidatos(items: UniqloItem[] | null | undefined, hueco: HuecoParaElegir, mercado: Mercado): CandidatoMedicion[] {
   const elegidas = new Set(elegirPrendas(items, hueco, mercado).map((p) => p.id));
   const colores = coloresDe(hueco.colorFamilia);
   const salida: CandidatoMedicion[] = [];

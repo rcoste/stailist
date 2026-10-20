@@ -13,7 +13,10 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
   la API de Uniqlo los 20 candidatos por hueco y mercado con **la misma
   consulta que usa la vitrina**, marca las dos que `elegirPrendas` elige y
   anota por qué descartó las demás (sección, precio, color, foto o
-  calificación). La vitrina de producción no cambia.
+  calificación). La vitrina de producción no cambia. La medición usa la
+  firma de v0.2.402.2 (término con modificadores del nombre, filtro de ropa
+  interior y de nombre): los motivos `ropa-interior` y `nombre-no-coincide`
+  salen de ahí, y la nota de cada corrida guarda con qué versión se eligió.
 - **Un juez barato por candidato** (`lib/evales/juez-vitrina.ts`): Haiku 5.5,
   declarado en `lib/models.ts` como `MODELO_JUEZ_VITRINA` y con precio en la
   tabla, contesta "¿esta prenda es la pieza que pide el hueco?" sí/no con una

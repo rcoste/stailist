@@ -17,6 +17,7 @@
 // en sus propias tablas. El recibo del juez se guarda en la fila del candidato
 // (no en ai_calls: es laboratorio, no uso real — ver lib/recibos.ts).
 import { readFileSync } from "node:fs";
+
 import { withDb } from "../lib/db";
 import type { CapsuleMatch, CapsuleOverrides, CapsuleTarget } from "../lib/capsule";
 import { consultarUniqlo, LIMITE_RESPUESTA, type Consulta, type Mercado, type Segmento } from "../lib/vitrina-uniqlo";
@@ -89,7 +90,9 @@ async function nuevaCorrida(): Promise<string> {
       const { rows } = await c.query(
         `insert into public.vitrina_medicion_corridas (modelo_juez, version_juez, mercados, nota)
          values ($1, $2, $3, $4) returning id`,
-        [MODELO_JUEZ_VITRINA.id, JUEZ_VITRINA_VERSION, MERCADOS, `limit ${LIMITE_RESPUESTA}; ${huecos.length} huecos de ${viajeN} viajes`]
+        // La versión de la app va en la nota: dos corridas sólo se comparan si
+        // se sabe con qué reglas de la vitrina se eligió cada una.
+        [MODELO_JUEZ_VITRINA.id, JUEZ_VITRINA_VERSION, MERCADOS, `vitrina v${readFileSync("VERSION", "utf8").trim()} · limit ${LIMITE_RESPUESTA} · ${huecos.length} huecos de ${viajeN} viajes`]
       );
       const id = rows[0].id as string;
       let nCandidatos = 0;

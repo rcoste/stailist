@@ -84,8 +84,11 @@ create table if not exists public.vitrina_medicion_candidatos (
   rating numeric(3, 2),
   -- true = una de las dos que la vitrina enseña en producción.
   elegida boolean not null default false,
-  -- Por qué NO la eligió (null si la eligió): genero | sin-precio | sin-color |
-  -- sin-foto | rating (pasó todos los filtros pero no quedó entre las dos).
+  -- Por qué NO la eligió (null si la eligió), en el orden de los filtros de
+  -- elegirPrendas: genero | ropa-interior | nombre-no-coincide | sin-precio |
+  -- sin-color | sin-foto | rating (pasó todos pero no quedó entre las dos).
+  -- Texto libre a propósito: si la vitrina estrena un filtro, el motivo nuevo
+  -- entra sin migración (los dos del medio nacieron así, en v0.2.402.2).
   motivo text,
   -- El juez: ¿es la pieza que pide el hueco? null = todavía no se juzga.
   juez boolean,
