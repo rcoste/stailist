@@ -2,6 +2,37 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.402.0] - 2026-10-20 — la maleta te enseña la prenda real de Uniqlo del país al que vas
+
+- **Bajo cada pieza que te falta para un viaje a EE. UU., Japón o Corea, hasta
+  dos prendas reales de Uniqlo del país de destino, en tu color, con precio y
+  enlace a la ficha** (`lib/vitrina-uniqlo.ts`, `components/vitrina-hueco.tsx`,
+  `components/vitrina-franja.tsx`). Es una prueba de seis semanas, no un
+  catálogo: la pregunta que contesta es si con la prenda real enfrente alguien
+  compra. Se lee el 7 y el 24 de noviembre (`docs/decisiones/vitrina-lectura.sql`)
+  y se apaga sola el 30 (`VITRINA_HASTA`). Diseño, evidencia y revisión en
+  `docs/designs/vitrina-de-tienda.md`.
+- **Cómo lo hace, sin IA ni scraping:** el país sale del final del lugar de
+  cada parada ("…, Japón"); el tipo de la pieza se traduce con un diccionario
+  a mano (suéter → sweater), la API de productos de Uniqlo contesta en 250-550
+  ms (medido desde Vercel), y se eligen sólo prendas de tu segmento (hombre o
+  mujer, nunca niños) cuyo color de Uniqlo cae en tu familia (vino → WINE o
+  DARK RED). Sin empate de color, nada: nunca una prenda fuera de paleta por
+  llenar el hueco. Las respuestas se guardan 7 días en la caché de datos de
+  Next; las fotos se enlazan, no se guardan.
+- **La maleta no espera:** cada franja llega aparte (Suspense) con tope de 3 s
+  por consulta; si Uniqlo falla o tarda, no se ve nada y queda una fila en
+  /admin/errores (`vitrina-uniqlo:<mercado>`). Viajes a otros países y la
+  maleta de todas las demás cuentas se ven exactamente como antes
+  (`components/trip-result.test.tsx`, el primer test del componente).
+- **Dos eventos para leer la prueba** (migración 0182): `vitrina_vista` al
+  pintarse una franja y `tienda_click` al tocar el enlace; en el modo "ver
+  como" del admin no se registra ninguno.
+- **Lo que se midió y descartó:** Zara y Massimo Dutti responden con el reto
+  de Akamai a cualquier petición que no sea un navegador; H&M da 403; Uniqlo
+  no vende en línea en México. El scraping de catálogos sigue fuera del
+  producto.
+
 ## [0.2.401.1] - 2026-10-20 — un suéter es un top, no un abrigo
 
 - **Las fotos ya guardan suéteres, cárdigans, sudaderas y cuellos altos como
