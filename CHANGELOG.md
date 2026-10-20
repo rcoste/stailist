@@ -2,6 +2,33 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.402.3] - 2026-10-21 — la vitrina deja de ofrecer playeras por camisas y suéteres de cuello redondo por cuello alto
+
+- **Lo que se vio:** a "Camisa de manga corta negra" la vitrina le ofrecía
+  "Waffle T-Shirt" y una playera de manga larga. Al correr la vitrina sobre
+  los 50 huecos reales de los 13 viajes vivos salieron más del mismo tipo:
+  boina → cinturón (Corea), botines → botas largas, suéter de cuello alto →
+  cuello redondo, chamarra impermeable → chamarra de borrega, vestido para un
+  cumpleaños en noviembre → vestido de lino, polo → suéter tejido, bolsa de
+  piel → bolsa de algodón recubierto.
+- **Reglas nuevas en `lib/vitrina-uniqlo.ts`, todas sin IA:** "T-Shirt" y
+  "Sweatshirt" ya no cuentan como camisa; la manga pedida se respeta y se busca
+  con ella (una camisa sin etiqueta en Uniqlo es de manga larga); liso pedido
+  descarta estampados y patrón pedido exige patrón; cuello alto, en V o
+  redondo se exige si la pieza lo dice; "impermeable" exige lluvia o
+  repelente al agua en la ficha; en un viaje de frío (ninguna parada pasa de
+  20 °C) o con pieza de frío no entra lino ni AIRism; piel pedida exige piel;
+  un polo no es un suéter; un botín no es bota larga. Japón y Corea ahora
+  también se juzgan por nombre con un diccionario de katakana y hangul (sin
+  entrada, no se ofrece). Se tradujeron palabras que no llegaban a la
+  búsqueda: camisero, hombro, pequeño, cruzada, recto, impermeable, chino.
+- **Resultado sobre los 50 huecos reales:** 29 con franja (antes 39), y las
+  franjas que se fueron eran justo las equivocadas. Donde no hay una prenda de
+  Uniqlo que cumpla, no se enseña nada.
+- Lo que queda a criterio fino (un cárdigan normal para un "cárdigan largo",
+  un duffle para un "abrigo largo") lo decide la medición en seco contra el
+  ojo de Roberto.
+
 ## [0.2.402.2] - 2026-10-21 — la vitrina ya no te ofrece un bóxer por un short
 
 - **A un "short de lino negro" la vitrina le ofrecía un bóxer a rayas y un
