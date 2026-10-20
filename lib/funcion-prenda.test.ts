@@ -68,3 +68,21 @@ describe("'no lo necesito en este viaje' saca la pieza de todo", async () => {
     expect(empacablesDelViaje(target, match, overrides).map((p) => p.nombre)).toEqual(["Mi bolsa"]);
   });
 });
+
+// 2026-10-19: la foto guardó su "Suéter de punto verde" como abrigo y la maleta
+// pedía un "Suéter de punto esmeralda" como top: no aparecía para elegirlo.
+describe("un suéter es un suéter entre top y abrigo", () => {
+  const falta = { nombre: "Suéter de punto esmeralda", tipo: "sueter", category: "top" };
+  it("su suéter guardado como abrigo sí cubre el suéter top", () => {
+    expect(sirveComoSustituto(falta, { nombre: "Suéter de punto verde", category: "abrigo" })).toBe(true);
+  });
+  it("y al revés: un cuello alto top cubre un cárdigan abrigo", () => {
+    expect(sirveComoSustituto({ nombre: "Cárdigan largo negro", category: "abrigo" }, { nombre: "Cuello alto negro", category: "top" })).toBe(true);
+  });
+  it("un abrigo de verdad no cubre un suéter", () => {
+    expect(sirveComoSustituto(falta, { nombre: "Abrigo largo negro", category: "abrigo" })).toBe(false);
+  });
+  it("un suéter no cubre una blusa", () => {
+    expect(sirveComoSustituto({ nombre: "Blusa de satén rubí", category: "top" }, { nombre: "Suéter de punto morado", category: "abrigo" })).toBe(false);
+  });
+});

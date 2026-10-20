@@ -2,6 +2,17 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.399.1] - 2026-10-20 — tus suéteres aparecen para elegirlos, aunque la foto los haya guardado como abrigo
+
+- **"Lo elijo de mi clóset" ya enseña tus suéteres** (`lib/funcion-prenda.ts`).
+  La lectura de fotos guarda un suéter grueso como "abrigo" y la maleta pide
+  sus suéteres como "top"; como la lista sólo enseñaba prendas de la misma
+  categoría, para un "Suéter de punto esmeralda" no salía el "Suéter de punto
+  verde" que la persona acababa de subir. De 165 suéteres en la base, 40
+  estaban como abrigo. Ahora entre top y abrigo se cruzan sólo prendas de
+  punto (suéter, cárdigan, cuello alto): una blusa sigue sin poder cubrirse
+  con un abrigo.
+
 ## [0.2.399.0] - 2026-10-19 — tus looks del viaje van con lo que tienes, y la maleta te avisa del hueco
 
 - **Los looks del viaje (y los de esenciales) ponen primero lo que ya tienes**
