@@ -109,7 +109,8 @@ describe("elegirPrendas: tu segmento, tu color, hasta dos, las mejor calificadas
     for (const p of out) {
       expect(p.color).toBe("RED");
       expect(p.mercado).toBe("us");
-      expect(p.url).toMatch(/^https:\/\/www\.uniqlo\.com\/us\/en\/products\/E\d+-000\/00$/);
+      // La ficha abre en EL color que se enseñó, no en el color por defecto.
+      expect(p.url).toMatch(/^https:\/\/www\.uniqlo\.com\/us\/en\/products\/E\d+-000\/00\?colorDisplayCode=\d{2}$/);
       expect(p.foto.startsWith("https://image.uniqlo.com/UQ/")).toBe(true);
       expect(p.vistoEl).toBe("2026-10-20T12:00:00Z");
     }
@@ -171,6 +172,7 @@ describe("piezas chicas", () => {
     expect(precioTexto("jp", 2990)).toBe("¥2,990");
     expect(precioTexto("kr", 129000)).toBe("₩129,000");
     expect(urlDeFicha("kr", "E1-000")).toBe("https://www.uniqlo.com/kr/ko/products/E1-000/00");
+    expect(urlDeFicha("us", "E487294-000", "19")).toBe("https://www.uniqlo.com/us/en/products/E487294-000/00?colorDisplayCode=19");
   });
 
   it("la clave de eventos canoniza el tipo y normaliza el color", () => {
