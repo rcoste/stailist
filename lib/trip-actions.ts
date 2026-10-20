@@ -13,7 +13,9 @@ import { capsuleRows, fueraKey, VETO_REASON_LABEL, type VetoReason } from "@/lib
 import { generateCapsuleSwap } from "@/lib/engine/capsule-swap";
 import { quizMetalDe, type Season } from "@/lib/colorimetria";
 import { vetoLabels, type StyleVetoes } from "@/lib/vetoes";
-import { matchSignature } from "@/lib/engine/capsule-match";
+import { matchCapsule, matchSignature } from "@/lib/engine/capsule-match";
+import { cargarRechazadas, fusionarCruce } from "@/lib/trip-recalcular";
+import { posiblesDelCloset } from "@/lib/trip-ya-lo-tengo";
 import { familiaToHex } from "@/lib/capsule-images";
 import { renderItemImage } from "@/lib/render-item";
 import type {
@@ -1319,4 +1321,90 @@ export async function rejectTripDuel(
   });
   revalidatePath(`/viaje/${tripId}`);
   return { ok: true, candidata, mensaje };
+}
+
+/**
+ * "Tu clóset cambió — recalcular qué tienes" en la maleta (lib/trip-recalcular.ts):
+ * cruza la MISMA lista con el clóset de hoy sin revolver lo ya resuelto. Si
+ * alguna pieza cambió de prenda, los looks quedan marcados como viejos.
+ */
+export async function recalcularMaletaViaje(tripId: string): Promise<{ ok: boolean; cambiaron?: number }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { ok: false };
+  if (!(await revisarGasto(supabase, user.id)).permitido) return { ok: false };
+
+  const [{ data: trip }, { data: profile }] = await Promise.all([
+    supabase
+      .from("trips")
+      .select("capsule_target, capsule_match, overrides, empacado")
+      .eq("id", tripId)
+      .eq("user_id", user.id)
+      .is("deleted_at", null)
+      .maybeSingle(),
+    supabase.from("profiles").select("gender").eq("id", user.id).single(),
+  ]);
+  const target = trip?.capsule_target as CapsuleTarget | null;
+  if (!target) return { ok: false };
+  const gender = (profile?.gender as "hombre" | "mujer" | null) ?? null;
+  const antes = ((trip?.capsule_match as CapsuleMatch | null)?.entries ?? []) as MatchEntry[];
+
+  try {
+    const closet = await loadClosetLite(supabase, user.id);
+    const rechazadas = await cargarRechazadas(supabase, user.id);
+    const nuevo = await matchCapsule(target, closet, gender, rechazadas, { supabase, userId: user.id });
+    const r = fusionarCruce({
+      items: target.items,
+      antes,
+      nuevo: nuevo.entries as MatchEntry[],
+      closet,
+      overrides: (trip?.overrides as CapsuleOverrides | null) ?? null,
+      empacado: (trip?.empacado as Record<string, boolean> | null) ?? null,
+    });
+    const { error } = await supabase
+      .from("trips")
+      .update({
+        capsule_match: { signature: nuevo.signature, entries: r.entries },
+        overrides: r.overrides,
+        empacado: r.empacado,
+        ...(r.cambiaron.length ? { outfits_stale: true } : {}),
+      })
+      .eq("id", tripId)
+      .eq("user_id", user.id);
+    if (error) return { ok: false };
+    revalidatePath(`/viaje/${tripId}`);
+    return { ok: true, cambiaron: r.cambiaron.length };
+  } catch (e) {
+    console.error(`[viaje] recalcularMaletaViaje falló — ${e instanceof Error ? e.message : String(e)}`);
+    return { ok: false };
+  }
+}
+
+/** "Ya lo tengo" pregunta antes de crear: las prendas suyas que podrían ser esa (lib/trip-ya-lo-tengo.ts). */
+export async function posiblesYaLoTengo(tripId: string, index: number): Promise<SubstituteCandidate[]> {
+  if (!Number.isInteger(index) || index < 0) return [];
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+  const { data: trip } = await supabase
+    .from("trips")
+    .select("capsule_target, capsule_match, overrides")
+    .eq("id", tripId)
+    .eq("user_id", user.id)
+    .single();
+  const target = trip?.capsule_target as CapsuleTarget | null;
+  const item = target?.items?.[index];
+  if (!target || !item) return [];
+  const used = prendasUsadas(
+    target,
+    (trip?.capsule_match as CapsuleMatch | null) ?? null,
+    ((trip?.overrides as Record<string, unknown> | null) ?? {}) as Record<string, unknown>
+  );
+  const [closet, imageMap] = await Promise.all([loadClosetLite(supabase, user.id), loadClosetImageMap(supabase, user.id)]);
+  return posiblesDelCloset(item, closet, used)
+    .map((c) => ({ nombre: c.nombre, porque: "", image: imageMap[c.nombre] ?? null }));
 }

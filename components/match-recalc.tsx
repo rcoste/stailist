@@ -10,7 +10,16 @@ import { Spinner } from "@/components/spinner";
 // (sin match aún) → arranca solo, con spinner, sin que el usuario tenga que picar.
 // Al terminar bien, router.refresh() re-renderiza la página con el match y este
 // componente desaparece (stale = false). Si falla, ofrece reintentar (sin loop).
-export function MatchRecalc({ auto, label }: { auto: boolean; label: string }) {
+export function MatchRecalc({
+  auto,
+  label,
+  accion = recalcularMatch,
+}: {
+  auto: boolean;
+  label: string;
+  /** Qué recalcular: los esenciales por default; la maleta pasa la suya (lib/trip-actions). */
+  accion?: () => Promise<{ ok: boolean }>;
+}) {
   const router = useRouter();
   const [phase, setPhase] = useState<"idle" | "running" | "failed">(auto ? "running" : "idle");
   const started = useRef(false);
@@ -20,7 +29,7 @@ export function MatchRecalc({ auto, label }: { auto: boolean; label: string }) {
   const run = async () => {
     if (started.current) return;
     started.current = true;
-    const r = await recalcularMatch();
+    const r = await accion();
     if (r.ok) {
       router.refresh(); // la página re-renderiza con el match → este bloque se va
     } else {

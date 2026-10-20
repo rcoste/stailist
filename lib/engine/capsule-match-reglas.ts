@@ -106,7 +106,8 @@ const MATERIALES = new Set(["piel", "lino", "lana", "algodon", "punto", "seda", 
 // clase (sin esto, su pantalón ancho negro no compartía ni una palabra).
 export const singular = (w: string) =>
   /(on|in)es$/.test(w) ? w.slice(0, -2) : /[^s]s$/.test(w) && w.length > 4 ? w.slice(0, -1) : w;
-const deClase = (s: string) => new Set([...palabras(s)].filter((w) => !MATERIALES.has(w)).map(singular));
+/** Las palabras que dicen QUÉ es una prenda: sin colores, sin materiales, en singular. */
+export const deClase = (s: string) => new Set([...palabras(s)].filter((w) => !MATERIALES.has(w)).map(singular));
 // El corte que la visión le leyó a la prenda, como las palabras con que una
 // pieza ideal lo nombra. Sólo en bottoms: es donde el nombre de la pieza lo
 // trae ("wide leg", "pierna recta") y el de la prenda real casi nunca.
@@ -115,7 +116,8 @@ const PALABRAS_DE_CORTE: Record<string, string[]> = {
   recto: ["recto", "recta", "straight"],
   entallado: ["entallado", "slim", "skinny", "pitillo", "ajustado"],
 };
-const deClaseReal = (c: ClosetItemLite) => {
+/** Las de una prenda real, más las de su corte si es bottom ("holgado" → ancho, wide leg…). */
+export const deClaseReal = (c: ClosetItemLite) => {
   const w = deClase(c.nombre);
   if (c.category === "bottom" && c.corte) for (const p of PALABRAS_DE_CORTE[norm(c.corte)] ?? []) w.add(p);
   return w;

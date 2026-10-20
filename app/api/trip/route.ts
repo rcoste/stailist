@@ -35,6 +35,7 @@ import type { ApetitoAcentos } from "@/lib/looks";
 import { revisarGasto } from "@/lib/cuotas";
 import { registrarEvento } from "@/lib/telemetria";
 import { tokenValido } from "@/lib/viaje-invitacion";
+import { cargarRechazadas } from "@/lib/trip-recalcular";
 
 // 300 s, no 60 (2026-10-14). La ruta vivía al filo: ~12 s de preparar
 // (paradas, clima, perfil), la cápsula de la IA (mediana 36 s, máx 48 s
@@ -246,28 +247,11 @@ export async function POST(request: NextRequest) {
         // ideales para ellas y el match las usa como último recurso. Sin esto,
         // cada maleta nueva re-proponía la misma prenda rechazada (bug real,
         // 2026-07-15). Máx 8 recientes para no inflar el prompt.
-        let rechazadas: string[] = [];
-        try {
-          const { data: swapRows } = await supabase
-            .from("events")
-            .select("data")
-            .eq("user_id", user.id)
-            .eq("type", "trip_item_swap")
-            .order("created_at", { ascending: false })
-            .limit(30);
-          const anclaSet = new Set(anclas.map((a) => a.nombre.toLowerCase()));
-          rechazadas = Array.from(
-            new Set(
-              (swapRows ?? [])
-                .map((r) => ((r.data as { from?: string } | null)?.from ?? "").trim())
-                .filter((n) => n.length > 0)
-                // Un ancla gana sobre un rechazo viejo: si hoy la pidió, no es rechazada.
-                .filter((n) => !anclaSet.has(n.toLowerCase()))
-            )
-          ).slice(0, 8);
-        } catch {
-          rechazadas = [];
-        }
+        const rechazadas = await cargarRechazadas(
+          supabase,
+          user.id,
+          new Set(anclas.map((a) => a.nombre.toLowerCase()))
+        );
 
         send({ phase: "armando tu maleta…" });
         const target = await generateTripCapsuleTarget({
