@@ -36,7 +36,7 @@ const MOTIVO: Record<string, string> = {
 export default async function VitrinaMedicionPage({
   searchParams,
 }: {
-  searchParams: Promise<{ c?: string; h?: string; m?: string }>;
+  searchParams: Promise<{ c?: string; h?: string; m?: string; ver?: string }>;
 }) {
   await requireAdmin();
   const sp = await searchParams;
@@ -68,8 +68,12 @@ export default async function VitrinaMedicionPage({
   const mercado: Mercado = ES_MERCADO(sp.m) ? sp.m : "us";
   const hN = Math.min(Math.max(1, Number(sp.h) || 1), huecos.length);
   const hueco = huecos.find((h) => h.n === hN) ?? huecos[0];
-  const candidatos = await cargarCandidatos(hueco.id, mercado);
-  const url = (h: number, m: Mercado = mercado) => `/admin/vitrina-medicion?c=${corrida.id}&h=${h}&m=${m}`;
+  // Por defecto SÓLO lo que la vitrina enseña (hasta 2 por país): es lo que
+  // Roberto vota. Los 20 completos quedan a un clic, para el techo.
+  const verTodos = sp.ver === "todos";
+  const todos = await cargarCandidatos(hueco.id, mercado);
+  const candidatos = verTodos ? todos : todos.filter((k) => k.elegida);
+  const url = (h: number, m: Mercado = mercado, ver = verTodos) => `/admin/vitrina-medicion?c=${corrida.id}&h=${h}&m=${m}${ver ? "&ver=todos" : ""}`;
   const fecha = new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "America/Mexico_City" }).format(new Date(corrida.creada));
 
   return (
@@ -101,6 +105,13 @@ export default async function VitrinaMedicionPage({
       <Filtros
         grupos={[
           {
+            titulo: "ver",
+            opciones: [
+              { href: url(hueco.n, mercado, false), label: "las que enseña", activo: !verTodos },
+              { href: url(hueco.n, mercado, true), label: "los 20", activo: verTodos },
+            ],
+          },
+          {
             titulo: "hueco",
             opciones: huecos.map((h) => ({
               href: url(h.n),
@@ -115,10 +126,24 @@ export default async function VitrinaMedicionPage({
         <Pieza hueco={hueco} anterior={hueco.n > 1 ? url(hueco.n - 1) : null} siguiente={hueco.n < huecos.length ? url(hueco.n + 1) : null} />
         <Panel
           titulo={`Lo que devolvió ${MERCADOS[mercado].nombre}`}
-          extra={hueco.termino ? <>q = <span className="text-ink">{hueco.termino}</span> · {candidatos.length} candidatos</> : "sin término de búsqueda"}
+          extra={
+            hueco.termino ? (
+              <>
+                q = <span className="text-ink">{hueco.termino}</span> · {verTodos ? `${todos.length} candidatos` : `enseña ${candidatos.length} de ${todos.length}`}
+              </>
+            ) : (
+              "sin término de búsqueda"
+            )
+          }
         >
           {candidatos.length === 0 ? (
-            <Vacio>{hueco.termino ? "La API no devolvió nada para esta consulta." : "La vitrina no sabe buscar este tipo de prenda: no enseña nada."}</Vacio>
+            <Vacio>
+              {!hueco.termino
+                ? "La vitrina no sabe buscar este tipo de prenda: no enseña nada."
+                : todos.length === 0
+                  ? "La API no devolvió nada para esta consulta."
+                  : "Ninguno de los candidatos pasó los filtros: aquí la vitrina no enseña nada."}
+            </Vacio>
           ) : (
             <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4">
               {candidatos.map((k) => (

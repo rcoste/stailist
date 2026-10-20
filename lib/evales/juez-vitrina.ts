@@ -17,19 +17,26 @@ import type { CandidatoMedicion, HuecoMedicion } from "./vitrina-medicion";
 // sea bonito; un vestido de lino para un vestido de noviembre es no aunque el
 // color coincida. El precio va como dato, no como criterio.
 
-export const JUEZ_VITRINA_VERSION = "jv1";
+/**
+ * jv2 (2026-10-21): el juez VE LA FOTO. Roberto, calificando: "acepta las
+ * t-shirts que sean verdes independientemente del tono… verde deslavado, verde
+ * fosforescente, verde bosque; por relevancia cae en verde, pero no es verde
+ * esmeralda". Con sólo la palabra "GREEN" ni la vitrina ni el juez pueden ver
+ * el tono; la foto sí lo enseña, y de paso la manga y el largo.
+ */
+export const JUEZ_VITRINA_VERSION = "jv2";
 
 export const SYSTEM_JUEZ_VITRINA = `Eres un stylist profesional revisando una tienda en línea para una clienta o cliente.
 La maleta de un viaje le pide una PIEZA concreta que no tiene. Te enseñan UNA prenda de Uniqlo y contestas si esa prenda ES la pieza que pide la maleta: la compraría para cubrir ese hueco, tal cual.
 
 Criterios, en este orden:
 1. Tipo de prenda: tiene que ser la misma clase de prenda (un suéter no es un pantalón de sudadera; una camisa no es una playera; un cárdigan abierto no es un suéter cerrado salvo que el hueco lo admita).
-2. Color: tiene que caer dentro de la familia de color que pide el hueco (el color de Uniqlo viene en inglés).
+2. Color: tiene que caer dentro de la familia de color que pide el hueco Y en el TONO que esa familia nombra. El nombre de color de Uniqlo ("GREEN") es sólo la familia; el tono lo ves en la foto: "esmeralda" es un verde intenso y profundo, no un verde deslavado ni fosforescente ni militar; "rubí" es rojo profundo, no coral; "camel" no es beige claro.
 3. Temporada y materia: coherente con la temporada del hueco (lino de verano no sirve para "frio"; lana gruesa no sirve para "calor").
 4. Formalidad: coherente con la del hueco (una sudadera no cubre un hueco formal).
-5. Corte y detalles de la descripción visual: los detalles chicos se perdonan; el carácter de la pieza no.
+5. Corte, manga y largo: lo que la foto enseña manda sobre lo que el nombre calla (una "camiseta" sin más es de manga corta; una camisa sin más, de manga larga). Los detalles chicos se perdonan; el carácter de la pieza no.
 
-El precio es dato de contexto, NO criterio. El nombre de la prenda puede venir en inglés, japonés o coreano.
+El precio es dato de contexto, NO criterio. El nombre de la prenda puede venir en inglés, japonés o coreano. Si no hay foto, juzga sólo con el texto y dilo en la línea.
 Contesta en español, en el JSON pedido: es_la_pieza (true/false) y una línea de máximo 20 palabras con el motivo principal.`;
 
 export const SCHEMA_JUEZ_VITRINA = {
@@ -80,12 +87,15 @@ export type VeredictoJuez = { esLaPieza: boolean; linea: string; recibo: Recibo 
 export async function juzgarCandidato(
   quien: QuienMide | null,
   hueco: HuecoParaJuez,
-  candidato: CandidatoParaJuez
+  candidato: CandidatoParaJuez,
+  /** La foto de la prenda en el color enseñado (jv2). Sin ella, juzga el texto. */
+  imagen?: { mediaType: string; base64: string } | null
 ): Promise<VeredictoJuez> {
   const recibo = await medir(quien && { ...quien, tarea: "juez-vitrina", version: JUEZ_VITRINA_VERSION }, {
     modelo: MODELO_JUEZ_VITRINA,
     system: SYSTEM_JUEZ_VITRINA,
     texto: textoJuezVitrina(hueco, candidato),
+    ...(imagen ? { imagen } : {}),
     schema: SCHEMA_JUEZ_VITRINA,
     maxTokens: 200,
   });

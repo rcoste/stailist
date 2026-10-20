@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import fixture from "../__fixtures__/uniqlo-us-sweater.json";
 import type { CapsuleMatch, CapsuleTarget } from "@/lib/capsule";
 import { elegirPrendas, type UniqloItem } from "@/lib/vitrina-uniqlo";
-import { armarCandidatos, huecosDeViaje, motivoDescarte, pct, resumenMedicion, type VotoFila } from "./vitrina-medicion";
+import { armarCandidatos, huecosDeViaje, motivoDescarte, muestraDeHuecos, pct, resumenMedicion, type VotoFila } from "./vitrina-medicion";
 import { textoJuezVitrina } from "./juez-vitrina";
 
 const items = fixture.result.items as unknown as UniqloItem[];
@@ -138,6 +138,19 @@ describe("con término (v0.2.402.2): ropa interior y nombre que no dice la prend
 
   it("sin término (corridas anteriores a v0.2.402.2) no se aplica el filtro de nombre", () => {
     expect(motivoDescarte(items[1], { segmento: "hombre", colorFamilia: "negro" })).toBeNull();
+  });
+});
+
+describe("muestraDeHuecos: cuatro huecos distintos, no cuatro suéteres", () => {
+  const h = (tipo: string, segmento: "hombre" | "mujer", termino: string | null = "x") => ({ tipo, segmento, termino });
+  it("alterna segmento, no repite la cabeza del tipo y salta lo que no se puede buscar", () => {
+    const huecos = [h("sueter", "mujer"), h("sueter-grueso", "mujer"), h("mocasin", "hombre", null), h("jeans", "hombre"), h("camisa", "hombre"), h("vestido", "mujer")];
+    const m = muestraDeHuecos(huecos, 4);
+    expect(m.map((x) => x.tipo)).toEqual(["sueter", "jeans", "vestido", "camisa"]);
+  });
+  it("si no alcanzan los tipos distintos, completa con lo que haya; nunca más de n", () => {
+    expect(muestraDeHuecos([h("sueter", "mujer"), h("sueter", "mujer")], 4)).toHaveLength(2);
+    expect(muestraDeHuecos([h("a", "mujer"), h("b", "mujer"), h("c", "mujer")], 2)).toHaveLength(2);
   });
 });
 

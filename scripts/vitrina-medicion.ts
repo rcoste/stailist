@@ -2,6 +2,7 @@
 //
 // Uso:
 //   npx tsx scripts/vitrina-medicion.ts                 nueva corrida + juez
+//   npx tsx scripts/vitrina-medicion.ts --huecos 4      corrida CHICA: 4 huecos distintos (lo que Roberto vota)
 //   npx tsx scripts/vitrina-medicion.ts --sin-juez      sólo consulta y guarda
 //   npx tsx scripts/vitrina-medicion.ts --juzgar <id>   (re)anuda el juez de una corrida
 //
@@ -21,7 +22,7 @@ import { readFileSync } from "node:fs";
 import { withDb } from "../lib/db";
 import type { CapsuleMatch, CapsuleOverrides, CapsuleTarget } from "../lib/capsule";
 import { consultarUniqlo, LIMITE_RESPUESTA, viajeEsFrio, type Consulta, type Mercado, type Segmento } from "../lib/vitrina-uniqlo";
-import { armarCandidatos, huecosDeViaje, type CandidatoMedicion, type HuecoMedicion } from "../lib/evales/vitrina-medicion";
+import { armarCandidatos, huecosDeViaje, muestraDeHuecos, type CandidatoMedicion, type HuecoMedicion } from "../lib/evales/vitrina-medicion";
 import { JUEZ_VITRINA_VERSION, juzgarCandidato } from "../lib/evales/juez-vitrina";
 import { MODELO_JUEZ_VITRINA } from "../lib/models";
 
@@ -41,7 +42,21 @@ const fetchPlano: typeof fetch = (url, init) => fetch(url, { signal: init?.signa
 type HuecoGuardado = HuecoMedicion & { id: string; n: number };
 type Clima = { temp_c?: number | null; temp_max?: number | null };
 
-async function nuevaCorrida(): Promise<string> {
+/** La foto como la ve Roberto al votar: el juez (jv2) la recibe también. */
+async function comoBase64(url: string | null): Promise<{ mediaType: string; base64: string } | null> {
+  if (!url) return null;
+  try {
+    const r = await fetch(url, { signal: AbortSignal.timeout(8000) });
+    if (!r.ok) return null;
+    const mediaType = r.headers.get("content-type")?.split(";")[0] ?? "image/jpeg";
+    if (!/^image\/(jpeg|png)$/.test(mediaType)) return null;
+    return { mediaType, base64: Buffer.from(await r.arrayBuffer()).toString("base64") };
+  } catch {
+    return null;
+  }
+}
+
+async function nuevaCorrida(limiteHuecos: number | null): Promise<string> {
   const viajes = await withDb(async (c) => {
     const { rows } = await c.query(
       `select t.id, t.capsule_target, t.capsule_match, t.overrides, t.paradas, t.weather, p.gender
@@ -62,7 +77,7 @@ async function nuevaCorrida(): Promise<string> {
   });
   console.log(`viajes vivos con maleta: ${viajes.length}`);
 
-  const huecos: (HuecoMedicion & { tripId: string; viajeN: number })[] = [];
+  let huecos: (HuecoMedicion & { tripId: string; viajeN: number })[] = [];
   let viajeN = 0;
   for (const v of viajes) {
     // El frío del viaje, igual que app/viaje/[id]/page.tsx: el clima de cada
@@ -97,6 +112,18 @@ async function nuevaCorrida(): Promise<string> {
   }
   if (errores.length) console.log(`consultas con error (${errores.length}): ${errores.join(" · ")}`);
 
+  // La muestra chica se elige DESPUÉS de consultar y sólo entre huecos a los
+  // que la vitrina sí les enseña algo en algún mercado: cuatro huecos vacíos no
+  // le dan a Roberto nada que votar (la primera muestra cayó en impermeables y
+  // tenis, justo lo que la API no devuelve).
+  if (limiteHuecos) {
+    const conAlgo = huecos.filter(
+      (h) => h.termino && MERCADOS.some((m) => armarCandidatos(consultas.get(`${m}|${h.termino}`)?.items, h, m).some((k) => k.elegida))
+    );
+    huecos = muestraDeHuecos(conAlgo, limiteHuecos);
+    console.log(`muestra de ${huecos.length} huecos (de ${conAlgo.length} con algo que enseñar): ${huecos.map((h) => `${h.nombre} (${h.segmento})`).join(" · ")}`);
+  }
+
   const corridaId = await withDb(async (c) => {
     await c.query("begin");
     try {
@@ -105,7 +132,7 @@ async function nuevaCorrida(): Promise<string> {
          values ($1, $2, $3, $4) returning id`,
         // La versión de la app va en la nota: dos corridas sólo se comparan si
         // se sabe con qué reglas de la vitrina se eligió cada una.
-        [MODELO_JUEZ_VITRINA.id, JUEZ_VITRINA_VERSION, MERCADOS, `vitrina v${readFileSync("VERSION", "utf8").trim()} · limit ${LIMITE_RESPUESTA} · ${huecos.length} huecos de ${viajeN} viajes`]
+        [MODELO_JUEZ_VITRINA.id, JUEZ_VITRINA_VERSION, MERCADOS, `vitrina v${readFileSync("VERSION", "utf8").trim()} · limit ${LIMITE_RESPUESTA} · ${limiteHuecos ? `muestra de ${huecos.length} huecos` : `${huecos.length} huecos de ${viajeN} viajes`}`]
       );
       const id = rows[0].id as string;
       let nCandidatos = 0;
@@ -146,10 +173,10 @@ async function nuevaCorrida(): Promise<string> {
 }
 
 async function juzgar(corridaId: string) {
-  type Pendiente = { id: string; hueco: HuecoGuardado; candidato: CandidatoMedicion };
+  type Pendiente = { id: string; foto: string | null; hueco: HuecoGuardado; candidato: CandidatoMedicion };
   const pendientes = await withDb(async (c) => {
     const { rows } = await c.query(
-      `select k.id, k.nombre, k.color, k.genero, k.precio_texto,
+      `select k.id, k.nombre, k.color, k.genero, k.precio_texto, k.foto,
               h.nombre as h_nombre, h.segmento, h.color_familia, h.temporada, h.formalidad, h.visual, h.porque
          from public.vitrina_medicion_candidatos k
          join public.vitrina_medicion_huecos h on h.id = k.hueco_id
@@ -160,6 +187,7 @@ async function juzgar(corridaId: string) {
     return rows.map(
       (r): Pendiente => ({
         id: r.id,
+        foto: r.foto,
         hueco: { nombre: r.h_nombre, segmento: r.segmento, colorFamilia: r.color_familia, temporada: r.temporada, formalidad: r.formalidad, visual: r.visual, porque: r.porque } as HuecoGuardado,
         candidato: { nombre: r.nombre, color: r.color, genero: r.genero, precioTexto: r.precio_texto } as CandidatoMedicion,
       })
@@ -174,7 +202,7 @@ async function juzgar(corridaId: string) {
     while (cursor < pendientes.length) {
       const p = pendientes[cursor++];
       try {
-        const v = await juzgarCandidato(null, p.hueco, p.candidato);
+        const v = await juzgarCandidato(null, p.hueco, p.candidato, await comoBase64(p.foto));
         costo += v.recibo.costoUsd ?? 0;
         await withDb((c) =>
           c.query(
@@ -204,7 +232,9 @@ async function main() {
     await juzgar(id);
     return;
   }
-  const id = await nuevaCorrida();
+  const h = args.indexOf("--huecos");
+  const limite = h >= 0 ? Math.max(1, Number(args[h + 1]) || 4) : null;
+  const id = await nuevaCorrida(limite);
   if (!args.includes("--sin-juez")) await juzgar(id);
   console.log(`listo → /admin/vitrina-medicion?c=${id}`);
 }

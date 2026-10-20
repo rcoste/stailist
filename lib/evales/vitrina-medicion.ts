@@ -200,6 +200,32 @@ export function armarCandidatos(items: UniqloItem[] | null | undefined, hueco: H
   return salida;
 }
 
+// --- La muestra chica ------------------------------------------------------
+//
+// Roberto, al ver la corrida completa: "no hay manera de que yo me ponga a
+// revisar 40 o 50 cosas; puede ser con 4 prendas y ya, e iteramos". La corrida
+// de 58 huecos es para el juez; lo que él vota cabe en una pantalla. La muestra
+// se elige a mano alzada pero determinista: tipos distintos entre sí y los dos
+// segmentos alternados, para que cuatro huecos no sean cuatro suéteres.
+
+export function muestraDeHuecos<H extends { tipo: string; segmento: Segmento; termino: string | null }>(huecos: H[], n: number): H[] {
+  const salida: H[] = [];
+  const tipos = new Set<string>();
+  const conTermino = huecos.filter((h) => h.termino);
+  let segmento: Segmento = "mujer";
+  while (salida.length < n) {
+    const sig =
+      conTermino.find((h) => !salida.includes(h) && h.segmento === segmento && !tipos.has(h.tipo.split("-")[0])) ??
+      conTermino.find((h) => !salida.includes(h) && !tipos.has(h.tipo.split("-")[0])) ??
+      conTermino.find((h) => !salida.includes(h));
+    if (!sig) break;
+    salida.push(sig);
+    tipos.add(sig.tipo.split("-")[0]);
+    segmento = segmento === "mujer" ? "hombre" : "mujer";
+  }
+  return salida;
+}
+
 // --- Los números de la pantalla --------------------------------------------
 
 export type VotoFila = {
