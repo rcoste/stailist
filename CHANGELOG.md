@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.405.0] - 2026-10-21 — la medición de la vitrina cabe en una pantalla y el juez ve la foto
+
+- **Corrida chica** (`scripts/vitrina-medicion.ts --huecos 4`): Roberto, al abrir
+  la corrida completa: "no hay manera de que yo me ponga a revisar 40 o 50
+  cosas; puede ser con 4 prendas y ya, e iteramos". La de 58 huecos es para el
+  juez; la muestra elige cuatro huecos de tipos distintos alternando segmento
+  (`muestraDeHuecos`, con test).
+- **La pantalla enseña por defecto sólo lo que la vitrina enseña** (hasta 2
+  por país), que es lo que se vota; "los 20" queda a un clic para el techo.
+- **El juez ve la foto (jv2)**. Con sólo la palabra "GREEN" aceptaba
+  cualquier verde: deslavado, fosforescente o bosque pasaban por "esmeralda".
+  Ahora recibe la imagen en el color enseñado y juzga el tono, la manga y el
+  largo. Sin foto, juzga el texto y lo dice.
+
 ## [0.2.404.0] - 2026-10-21 — la vitrina de Uniqlo se mide antes de creerle
 
 - **Medición en seco de la vitrina** (`scripts/vitrina-medicion.ts`,
