@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.401.1] - 2026-10-20 — un suéter es un top, no un abrigo
+
+- **Las fotos ya guardan suéteres, cárdigans, sudaderas y cuellos altos como
+  "top"** (`lib/vision-prendas.ts`, `lib/vision-prenda.ts`). La regla decía que
+  un cárdigan o un "suéter grueso" era abrigo, y el armado de esenciales y
+  maletas los pide como top: así 40 prendas de punto no cubrían los suéteres de
+  una maleta ni salían para elegirlas. "Abrigo" ahora es sólo la capa exterior
+  (abrigo, chamarra, gabardina, parka, impermeable, chaleco acolchado).
+- **Medido** leyendo de nuevo 24 fotos reales (12 suéteres, 12 abrigos y
+  chamarras), regla vieja contra nueva: suéteres leídos como abrigo 6 de 11 →
+  0 de 11; abrigos y chamarras reales como abrigo 12 de 12 → 12 de 12.
+- **Datos alineados** (migración 0181): las 38 prendas de punto que estaban
+  como abrigo y 4 cárdigans del catálogo de básicos pasan a top.
+
 ## [0.2.401.0] - 2026-10-20 — "ya lo tengo" te pregunta si es alguna que ya tienes
 
 - **En la maleta, "ya lo tengo" pregunta antes de crear una prenda**
