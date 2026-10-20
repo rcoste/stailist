@@ -149,6 +149,8 @@ export const config = {
   // mp4 también: el video del hero de la landing lo pide alguien sin sesión, y
   // redirigido a /login el <video> se queda en blanco ("no supported sources").
   matcher: [
-    "/((?!_next/static|_next/image|favicon\\.ico|sw\\.js|manifest\\.webmanifest|.*\\.(?:svg|png|jpg|jpeg|webp|ico|woff2?|mp4)$).*)",
+    // TEMPORAL (T1 vitrina, 2026-10-20): la ruta de prueba no necesita Supabase y
+    // el preview no tiene env vars; se quita junto con app/api/vitrina-prueba.
+    "/((?!_next/static|_next/image|favicon\\.ico|sw\\.js|manifest\\.webmanifest|api/vitrina-prueba|.*\\.(?:svg|png|jpg|jpeg|webp|ico|woff2?|mp4)$).*)",
   ],
 };
