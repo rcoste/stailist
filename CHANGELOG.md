@@ -2,6 +2,20 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.401.0] - 2026-10-20 — "ya lo tengo" te pregunta si es alguna que ya tienes
+
+- **En la maleta, "ya lo tengo" pregunta antes de crear una prenda**
+  (`lib/trip-ya-lo-tengo.ts`). Creaba una nueva cada vez: una persona lo marcó
+  en un "Pantalón wide leg negro" y un "Pantalón de vestir gris recto", y le
+  quedaron dos prendas sin foto al lado de sus "Pantalones de vestir negros"
+  (corte ancho) y su "Pantalón de vestir gris carbón" — el mismo pantalón dos
+  veces. Ahora le enseña sus prendas que podrían ser esa (misma clase, misma
+  familia de color, que no estén ya en la maleta; las de corte y nombre más
+  cercanos primero) en la misma hoja de "lo elijo de mi clóset": "¿Es alguna de
+  estas?". Si elige una, queda como esa pieza; si no, "No, es otra — agrégala
+  a mi clóset". Sin candidatas, se crea como siempre.
+- Probado sobre su clóset real: para los dos pantalones, la suya sale primero.
+
 ## [0.2.400.0] - 2026-10-20 — subes prendas y tu maleta las ve, sin rehacerla
 
 - **"Tu clóset cambió — recalcular qué tienes" llega a la maleta**

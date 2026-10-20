@@ -15,6 +15,7 @@ import { quizMetalDe, type Season } from "@/lib/colorimetria";
 import { vetoLabels, type StyleVetoes } from "@/lib/vetoes";
 import { matchCapsule, matchSignature } from "@/lib/engine/capsule-match";
 import { cargarRechazadas, fusionarCruce } from "@/lib/trip-recalcular";
+import { posiblesDelCloset } from "@/lib/trip-ya-lo-tengo";
 import { familiaToHex } from "@/lib/capsule-images";
 import { renderItemImage } from "@/lib/render-item";
 import type {
@@ -1379,4 +1380,31 @@ export async function recalcularMaletaViaje(tripId: string): Promise<{ ok: boole
     console.error(`[viaje] recalcularMaletaViaje falló — ${e instanceof Error ? e.message : String(e)}`);
     return { ok: false };
   }
+}
+
+/** "Ya lo tengo" pregunta antes de crear: las prendas suyas que podrían ser esa (lib/trip-ya-lo-tengo.ts). */
+export async function posiblesYaLoTengo(tripId: string, index: number): Promise<SubstituteCandidate[]> {
+  if (!Number.isInteger(index) || index < 0) return [];
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return [];
+  const { data: trip } = await supabase
+    .from("trips")
+    .select("capsule_target, capsule_match, overrides")
+    .eq("id", tripId)
+    .eq("user_id", user.id)
+    .single();
+  const target = trip?.capsule_target as CapsuleTarget | null;
+  const item = target?.items?.[index];
+  if (!target || !item) return [];
+  const used = prendasUsadas(
+    target,
+    (trip?.capsule_match as CapsuleMatch | null) ?? null,
+    ((trip?.overrides as Record<string, unknown> | null) ?? {}) as Record<string, unknown>
+  );
+  const [closet, imageMap] = await Promise.all([loadClosetLite(supabase, user.id), loadClosetImageMap(supabase, user.id)]);
+  return posiblesDelCloset(item, closet, used)
+    .map((c) => ({ nombre: c.nombre, porque: "", image: imageMap[c.nombre] ?? null }));
 }

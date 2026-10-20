@@ -22,6 +22,7 @@ import {
   rejectTripDuel,
   listTripClosetOptions,
   recalcularMaletaViaje,
+  posiblesYaLoTengo,
   type SubstituteCandidate,
   type VariantePieza,
 } from "@/lib/trip-actions";
@@ -431,8 +432,9 @@ export function TripResult({
   const [subFlow, setSubFlow] = useState<{
     index: number;
     nombre: string;
-    /** "elegir": lista SIN IA de sus prendas que pueden ocupar el lugar (···). */
-    mode: "falta" | "swap" | "elegir";
+    /** "elegir": lista SIN IA de sus prendas que pueden ocupar el lugar (···).
+     *  "ya": "ya lo tengo" pregunta antes de crear — ¿es alguna de éstas? */
+    mode: "falta" | "swap" | "elegir" | "ya";
     status: "loading" | "done" | "empty" | "error";
     candidates: SubstituteCandidate[];
   } | null>(null);
@@ -666,6 +668,21 @@ export function TripResult({
   // "Ya lo tengo" sobre un faltante: lo suma a tu clóset de verdad + le genera
   // imagen (server, inline) y lo marca cubierto en el viaje. Spinner mientras;
   // al terminar, refresca y la prenda se reubica en "Empaca esto" con su imagen.
+  // "Ya lo tengo" primero pregunta si es alguna prenda que ya está en su clóset
+  // (lib/trip-ya-lo-tengo.ts); sólo crea una nueva si no hay ninguna o si dice
+  // que es otra. Sin esto quedaban duplicados sin foto de su propia ropa.
+  async function preguntarYaLoTengo(r: TripRow) {
+    setOwnBusy((s) => new Set(s).add(r.index));
+    const cands = await posiblesYaLoTengo(tripId, r.index).catch(() => [] as SubstituteCandidate[]);
+    setOwnBusy((s) => {
+      const n = new Set(s);
+      n.delete(r.index);
+      return n;
+    });
+    if (cands.length === 0) return void marcarYaLoTengo(r.index);
+    setSubFlow({ index: r.index, nombre: r.nombre, mode: "ya", status: "done", candidates: cands });
+  }
+
   async function marcarYaLoTengo(index: number) {
     setOwnBusy((s) => new Set(s).add(index));
     const res = await markTripFaltaOwned(tripId, index);
@@ -909,7 +926,7 @@ export function TripResult({
                     key={renderKey(r)}
                     row={conRender(r)}
                     ownBusy={ownBusy.has(r.index)}
-                    onYaLoTengo={() => marcarYaLoTengo(r.index)}
+                    onYaLoTengo={() => void preguntarYaLoTengo(r)}
                     wishSaved={wishSaved.has(r.faltaKey)}
                     onToggleWish={() => toggleWish(r)}
                     onDeshacer={deDuelo ? () => deshacerDuelo(r.index) : undefined}
@@ -1295,7 +1312,7 @@ export function TripResult({
                 key={renderKey(r)}
                 row={conRender(r)}
                 ownBusy={ownBusy.has(r.index)}
-                onYaLoTengo={() => marcarYaLoTengo(r.index)}
+                onYaLoTengo={() => void preguntarYaLoTengo(r)}
                 wishSaved={wishSaved.has(r.faltaKey)}
                 onToggleWish={() => toggleWish(r)}
               />
@@ -1498,7 +1515,13 @@ export function TripResult({
             </div>
             <div className="flex flex-col">
               <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-muted">
-                {subFlow.mode === "swap" ? "Cambiar" : subFlow.mode === "elegir" ? "De tu clóset" : "Sustituir"}
+                {subFlow.mode === "swap"
+                  ? "Cambiar"
+                  : subFlow.mode === "elegir"
+                    ? "De tu clóset"
+                    : subFlow.mode === "ya"
+                      ? "¿Es alguna de estas?"
+                      : "Sustituir"}
               </span>
               <span className="editorial text-h3 leading-tight text-ink">{subFlow.nombre}</span>
             </div>
@@ -1574,6 +1597,20 @@ export function TripResult({
                   </li>
                 ))}
               </ul>
+            ) : null}
+
+            {subFlow.mode === "ya" && subFlow.status === "done" ? (
+              <button
+                type="button"
+                onClick={() => {
+                  const i = subFlow.index;
+                  setSubFlow(null);
+                  void marcarYaLoTengo(i);
+                }}
+                className="min-h-11 rounded-sm border border-line bg-surface px-4 text-sm font-medium text-ink hover:border-ink"
+              >
+                No, es otra — agrégala a mi clóset
+              </button>
             ) : null}
           </div>
         </div>
