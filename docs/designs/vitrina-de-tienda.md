@@ -381,6 +381,36 @@ la alta en Awin (C).
 **Esta sección no pasó por el revisor adversarial:** el tope de tres rondas
 se gastó con el diseño A de curación a mano. Se presenta sin revisar.
 
+## Medición en seco de las elecciones (2026-10-21)
+
+La lectura del 7 y el 24 de noviembre mide si alguien **compra**; no dice si
+las dos prendas que la card enseña eran **la pieza correcta**. Roberto vio dos
+que no lo eran el mismo día del deploy (pantalones de sudadera para "sweater"
+en Corea; un vestido de lino de verano para un vestido midi rubí de
+noviembre), y la pregunta "¿cómo sé si elige bien?" tiene banda de medir
+propia, separada de la lectura de compras:
+
+- `scripts/vitrina-medicion.ts` toma los huecos reales ("falta" en
+  `capsule_match` de los viajes vivos), pide los 20 candidatos por hueco y
+  mercado con **la misma consulta de producción** (`terminoDe` +
+  `consultarUniqlo`), marca las dos que `elegirPrendas` elige y anota por qué
+  descartó las demás. Guarda todo en `vitrina_medicion_*` (migración 0183,
+  sólo admin; en pantalla nunca sale una cuenta, sólo el índice del viaje).
+- Un juez barato (`MODELO_JUEZ_VITRINA`, Haiku 5.5) contesta por candidato si
+  es la pieza que pide el hueco; Roberto vota lo mismo en
+  `/admin/vitrina-medicion`.
+- Tres números: elecciones de la vitrina aprobadas por Roberto; acuerdo
+  juez↔Roberto (si es alto, la próxima corrida la vigila el juez solo); y el
+  **techo**: huecos con al menos un candidato correcto entre los 20. Techo
+  bajo = el problema es la consulta (diccionario de términos/colores), no la
+  elección.
+
+Regla antes de mirar: si las elecciones aprobadas quedan por debajo de 2 de
+cada 3, la vitrina está enseñando ruido y hay que arreglar el diccionario
+ANTES del 7 de noviembre, porque la lectura de clics medirá el ruido y no la
+idea. Lo que se cambie se vuelve a correr contra la misma corrida (mismos
+huecos) para comparar.
+
 ## Open Questions
 
 - ¿Zara MX cubre las claves de él (sobrecamisa oliva, chukka de ante, derby
