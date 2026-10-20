@@ -5,6 +5,7 @@ import {
   claveVitrina,
   consultarUniqlo,
   elegirPrendas,
+  tasasAMxn,
   terminoDe,
   type Mercado,
   type PrendaVitrina,
@@ -27,6 +28,9 @@ export async function VitrinaHueco({
   segmento,
   mercados,
   userId,
+  tripId,
+  index,
+  pesos = false,
 }: {
   tipo: string;
   /** El nombre de la pieza ("Short de lino negro"): de ahí salen los modificadores de la búsqueda. */
@@ -39,6 +43,11 @@ export async function VitrinaHueco({
   segmento: Segmento;
   mercados: Mercado[];
   userId: string;
+  /** Para "la compré": el viaje y la pieza que cubre. */
+  tripId?: string;
+  index?: number;
+  /** ¿Enseñar el precio aproximado en pesos? (México o país sin dato) */
+  pesos?: boolean;
 }) {
   const q = terminoDe(tipo, nombre);
   if (!q || mercados.length === 0) return null;
@@ -58,12 +67,24 @@ export async function VitrinaHueco({
     }
   };
 
-  const consultas = await Promise.all(mercados.map((m) => consultarUniqlo(m, q, { onError })));
+  const [consultas, tasas] = await Promise.all([
+    Promise.all(mercados.map((m) => consultarUniqlo(m, q, { onError }))),
+    pesos ? tasasAMxn() : Promise.resolve(null),
+  ]);
   let prendas: PrendaVitrina[] = [];
   for (let i = 0; i < mercados.length && prendas.length === 0; i++) {
     prendas = elegirPrendas(consultas[i].items, { segmento, colorFamilia, termino: q, nombre, temporada, viajeFrio }, mercados[i], consultas[i].vistoEl);
   }
   if (prendas.length === 0) return null;
 
-  return <VitrinaFranja prendas={prendas} clave={claveVitrina(segmento, tipo, colorFamilia)} desde="maleta" />;
+  return (
+    <VitrinaFranja
+      prendas={prendas}
+      clave={claveVitrina(segmento, tipo, colorFamilia)}
+      desde="maleta"
+      tripId={tripId}
+      index={index}
+      tasas={tasas}
+    />
+  );
 }
