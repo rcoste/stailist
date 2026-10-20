@@ -394,7 +394,7 @@ propia, separada de la lectura de compras:
   `capsule_match` de los viajes vivos), pide los 20 candidatos por hueco y
   mercado con **la misma consulta de producción** (`terminoDe` +
   `consultarUniqlo`), marca las dos que `elegirPrendas` elige y anota por qué
-  descartó las demás. Guarda todo en `vitrina_medicion_*` (migración 0183,
+  descartó las demás. Guarda todo en `vitrina_medicion_*` (migración 0184,
   sólo admin; en pantalla nunca sale una cuenta, sólo el índice del viaje).
 - Un juez barato (`MODELO_JUEZ_VITRINA`, Haiku 5.5) contesta por candidato si
   es la pieza que pide el hueco; Roberto vota lo mismo en

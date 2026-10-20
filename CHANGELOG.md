@@ -5,7 +5,7 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
 ## [0.2.404.0] - 2026-10-21 — la vitrina de Uniqlo se mide antes de creerle
 
 - **Medición en seco de la vitrina** (`scripts/vitrina-medicion.ts`,
-  `lib/evales/vitrina-medicion.ts`, migración 0183). Roberto preguntó cómo
+  `lib/evales/vitrina-medicion.ts`, migración 0184). Roberto preguntó cómo
   saber si las dos prendas que la maleta enseña bajo cada hueco son la pieza
   correcta, y ya había visto dos que no (pantalones de sudadera para
   "sweater" en Corea; un vestido de lino de verano para un vestido midi rubí

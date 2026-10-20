@@ -9,7 +9,7 @@
 // viajes vivos, deleted_at null), pide a la API de Uniqlo los 20 candidatos
 // por hueco y mercado con LA MISMA consulta que usa la vitrina (terminoDe +
 // consultarUniqlo, limit 20), marca cuáles dos eligió `elegirPrendas`, lo
-// guarda en vitrina_medicion_* (migración 0183) y le pregunta al juez barato
+// guarda en vitrina_medicion_* (migración 0184) y le pregunta al juez barato
 // (MODELO_JUEZ_VITRINA) por cada candidato si es la pieza que pide el hueco.
 // Roberto califica después en /admin/vitrina-medicion.
 //

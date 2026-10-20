@@ -1,4 +1,4 @@
--- 0183 · LA MEDICIÓN EN SECO DE LA VITRINA DE UNIQLO (2026-10-21).
+-- 0184 · LA MEDICIÓN EN SECO DE LA VITRINA DE UNIQLO (2026-10-21).
 --
 -- La vitrina (v0.2.402, docs/designs/vitrina-de-tienda.md) elige dos prendas
 -- de Uniqlo por cada pieza que te falta en la maleta, sin IA: término de
