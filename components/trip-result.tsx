@@ -79,6 +79,7 @@ function FaltaCard({
   onDeshacer,
   onMas,
   busy = false,
+  debajo,
 }: {
   row: TripRow;
   ownBusy: boolean;
@@ -91,6 +92,8 @@ function FaltaCard({
   onMas?: () => void;
   /** Proponiendo otra pieza en su lugar ("no me gusta esta pieza"). */
   busy?: boolean;
+  /** La vitrina de tienda para esta pieza (prendas reales del destino), si hay. */
+  debajo?: React.ReactNode;
 }) {
   const render = useIdealRender(row.renderArgs, row.idealImage);
   const onTapTile = () => {
@@ -157,6 +160,7 @@ function FaltaCard({
           active: wishSaved,
         },
       ]}
+      debajo={debajo}
     />
   );
 }
@@ -391,6 +395,7 @@ export function TripResult({
   ganadosIniciales = [],
   avisos = [],
   closetCambio = false,
+  vitrina,
 }: {
   tripId: string;
   /** Para "mejor le tomo foto" (el flujo del carrete guarda en su carpeta). */
@@ -405,6 +410,10 @@ export function TripResult({
   ganadosIniciales?: number[];
   /** Lo que el juez encuentra en lo que DE VERDAD llevas (lib/trip-avisos.ts). */
   avisos?: AvisoMaleta[];
+  /** Vitrina de tienda por índice de fila (prueba Uniqlo 2026-10/11): la página
+   *  la arma como nodos en Suspense; aquí sólo se cuelga bajo la card de la
+   *  pieza que falta. Vacío = nada cambia. */
+  vitrina?: Record<number, React.ReactNode>;
   /** Su clóset cambió desde el último cruce: ofrece recalcular sin rehacer la maleta. */
   closetCambio?: boolean;
 }) {
@@ -932,6 +941,7 @@ export function TripResult({
                     onDeshacer={deDuelo ? () => deshacerDuelo(r.index) : undefined}
                     onMas={() => setOpcionesDe(r)}
                     busy={cambiando.has(r.index)}
+                    debajo={vitrina?.[r.index]}
                   />
                 ))}
               </ul>
