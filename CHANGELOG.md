@@ -27,6 +27,22 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
   próxima vez) y el **techo** — huecos con al menos un candidato correcto
   entre los 20, que separa "elige mal" de "busca mal". Ni cuentas ni ids en
   pantalla: sólo el índice del viaje y del hueco.
+## [0.2.402.2] - 2026-10-21 — la vitrina ya no te ofrece un bóxer por un short
+
+- **A un "short de lino negro" la vitrina le ofrecía un bóxer a rayas y un
+  short de sudadera.** Tres causas, tres arreglos en `lib/vitrina-uniqlo.ts`:
+  la búsqueda ignoraba el nombre de la pieza (ahora "lino" → "linen shorts",
+  no "shorts" a secas); nadie sacaba la ropa interior (ahora bóxers, briefs,
+  calcetines y pijama nunca entran, en inglés, japonés y coreano, salvo que
+  eso sea lo que se busca); y nadie exigía que la ficha dijera la prenda
+  (ahora "shorts" tiene que estar en el nombre: "Shirt | Short Sleeve" ya no
+  cuela). Entre lo que queda, primero lo que dice el modificador ("linen"),
+  luego la mejor calificada. En Japón y Corea los nombres vienen en su idioma:
+  ahí aplica la exclusión, no la coincidencia por nombre.
+- Lo que esto NO resuelve: elegir entre dos shorts legítimos el más parecido
+  (lino contra sudadera cuando ninguno dice "linen"). Eso lo decide la
+  medición en seco que corre aparte, con un juez de texto contra el ojo de
+  Roberto, antes de meter ningún reordenador a producción.
 
 ## [0.2.402.1] - 2026-10-21 — la ficha de Uniqlo abre en el color que te enseñamos
 

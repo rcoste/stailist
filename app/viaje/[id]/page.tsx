@@ -187,6 +187,7 @@ export default async function ViajeDetallePage({
         <Suspense key={r.index} fallback={null}>
           <VitrinaHueco
             tipo={r.item.tipo}
+            nombre={r.item.nombre}
             colorFamilia={r.item.colorFamilia}
             segmento={gender}
             mercados={mercados}
