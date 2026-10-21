@@ -303,16 +303,23 @@ export function estampadoNoPedido(nombreFicha: string, nombrePieza: string | nul
 //
 // "Suéter de cuello alto negro" recibía suéteres de cuello redondo (クルーネック).
 // Si la pieza pide un cuello, la ficha tiene que decirlo.
-const CUELLOS: [RegExp, RegExp][] = [
-  [/cuello (alto|tortuga|de tortuga|vuelto|mock)|turtleneck|mock neck/, /turtle ?neck|mock neck|high neck|タートル|ハイネック|モックネック|터틀넥|하이넥|모크넥/i],
-  [/cuello (en )?v\b|escote (en )?v\b|v-neck/, /v-?neck|Vネック|브이넥|V넥/i],
-  [/cuello redondo|crew neck/, /crew ?neck|クルーネック|크루넥/i],
-];
+const DICE_ALTO = /turtle ?neck|mock neck|high neck|タートル|ハイネック|モックネック|터틀넥|하이넥|모크넥/i;
+const DICE_V = /v-?neck|Vネック|브이넥|V넥/i;
 
-/** ¿La ficha respeta el cuello que pide la pieza? Sin cuello pedido, siempre. */
+/**
+ * ¿La ficha respeta el cuello que pide la pieza? Sin cuello pedido, siempre.
+ *
+ * Alto o en V: la ficha tiene que DECIRLO (Uniqlo lo escribe cuando no es el
+ * de siempre). Redondo: es el cuello por defecto de suéteres y playeras, así
+ * que basta con que la ficha no diga otro —exigir "Crew Neck" en el nombre
+ * dejó sin prenda a tres huecos en EE. UU. el 2026-10-21 ("Merino Sweater" es
+ * de cuello redondo y no lo dice).
+ */
 export function cuelloCompatible(nombreFicha: string, nombrePieza: string | null | undefined): boolean {
   const pieza = slug(nombrePieza ?? "");
-  for (const [pide, dice] of CUELLOS) if (pide.test(pieza)) return dice.test(nombreFicha);
+  if (/cuello (alto|tortuga|de tortuga|vuelto|mock)|turtleneck|mock neck/.test(pieza)) return DICE_ALTO.test(nombreFicha);
+  if (/cuello (en )?v\b|escote (en )?v\b|v-neck/.test(pieza)) return DICE_V.test(nombreFicha);
+  if (/cuello redondo|crew neck/.test(pieza)) return !DICE_ALTO.test(nombreFicha) && !DICE_V.test(nombreFicha);
   return true;
 }
 

@@ -189,6 +189,16 @@ describe("la descripción visual también manda: cuello, manga y material que el
     expect(textoDePieza({ nombre: "Jeans negros", visual: null })).toBe("Jeans negros");
   });
 
+  it("cuello redondo es el de siempre: no exige que la ficha lo diga, sólo que no diga otro", () => {
+    expect(cuelloCompatible("Merino Sweater", "Suéter de punto esmeralda. punto grueso, cuello redondo")).toBe(true);
+    expect(cuelloCompatible("Crew Neck T-Shirt", "cuello redondo")).toBe(true);
+    expect(cuelloCompatible("Cashmere V-Neck Sweater", "cuello redondo")).toBe(false);
+    expect(cuelloCompatible("Merino Turtleneck Sweater", "cuello redondo")).toBe(false);
+    // Alto y V siguen exigiendo que la ficha lo diga.
+    expect(cuelloCompatible("Merino Sweater", "cuello alto suelto")).toBe(false);
+    expect(cuelloCompatible("Merino Sweater", "cuello en V suave")).toBe(false);
+  });
+
   it("en elegirPrendas: 'cuello alto' en la descripción descarta el suéter de cuello redondo", () => {
     const base = items.find((i) => i.genderCategory === "WOMEN" && i.colors?.some((c) => c.name === "WINE"))!;
     const redondo = { ...base, productId: "CREW", name: "Cashmere Crew Neck Sweater" };
