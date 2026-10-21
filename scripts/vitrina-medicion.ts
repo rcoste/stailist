@@ -21,7 +21,7 @@ import { readFileSync } from "node:fs";
 
 import { withDb } from "../lib/db";
 import type { CapsuleMatch, CapsuleOverrides, CapsuleTarget } from "../lib/capsule";
-import { consultarUniqloEnCategoria, LIMITE_RESPUESTA, viajeEsFrio, type Consulta, type Mercado, type Segmento } from "../lib/vitrina-uniqlo";
+import { consultarVitrina, LIMITE_RESPUESTA, viajeEsFrio, type Consulta, type Mercado, type Segmento } from "../lib/vitrina-uniqlo";
 import { armarCandidatos, huecosDeViaje, muestraDeHuecos, type CandidatoMedicion, type HuecoMedicion } from "../lib/evales/vitrina-medicion";
 import { JUEZ_VITRINA_VERSION, juzgarCandidato } from "../lib/evales/juez-vitrina";
 import { MODELO_JUEZ_VITRINA } from "../lib/models";
@@ -95,19 +95,19 @@ async function nuevaCorrida(limiteHuecos: number | null): Promise<string> {
   if (sinTermino.length) console.log(`  sin término (la vitrina no los busca): ${[...new Set(sinTermino)].join(", ")}`);
 
   // Una consulta por (mercado, término): muchos huecos comparten "sweater".
-  const consultas = new Map<string, Consulta>();
+  const consultas = new Map<string, Consulta & { q: string }>();
   const errores: string[] = [];
   const claves = [...new Set(conTermino.map((h) => h.termino!))];
   for (const m of MERCADOS) {
     for (const q of claves) {
-      const r = await consultarUniqloEnCategoria(m, q, {
+      const r = await consultarVitrina(m, q, {
         fetchImpl: fetchPlano,
         onError: (mercado, msg) => {
           errores.push(`${mercado} ${q}: ${msg}`);
         },
       });
       consultas.set(`${m}|${q}`, r);
-      process.stdout.write(`  ${m} ${q}: ${r.items.length}${r.filtradaPorCategoria ? " (por categoría)" : ""}\n`);
+      process.stdout.write(`  ${m} ${q}: ${r.items.length}${r.q !== q ? ` (q=${r.q})` : ""}${r.filtradaPorCategoria ? " (por categoría)" : ""}\n`);
     }
   }
   if (errores.length) console.log(`consultas con error (${errores.length}): ${errores.join(" · ")}`);
@@ -118,7 +118,7 @@ async function nuevaCorrida(limiteHuecos: number | null): Promise<string> {
   // tenis, justo lo que la API no devuelve).
   if (limiteHuecos) {
     const conAlgo = huecos.filter(
-      (h) => h.termino && MERCADOS.some((m) => armarCandidatos(consultas.get(`${m}|${h.termino}`)?.items, h, m).some((k) => k.elegida))
+      (h) => h.termino && MERCADOS.some((m) => armarCandidatos(consultas.get(`${m}|${h.termino}`)?.items, { ...h, consulta: consultas.get(`${m}|${h.termino}`)?.q ?? null }, m).some((k) => k.elegida))
     );
     huecos = muestraDeHuecos(conAlgo, limiteHuecos);
     console.log(`muestra de ${huecos.length} huecos (de ${conAlgo.length} con algo que enseñar): ${huecos.map((h) => `${h.nombre} (${h.segmento})`).join(" · ")}`);
@@ -148,13 +148,13 @@ async function nuevaCorrida(limiteHuecos: number | null): Promise<string> {
         if (!h.termino) continue;
         for (const m of MERCADOS) {
           const items = consultas.get(`${m}|${h.termino}`)?.items ?? [];
-          const candidatos = armarCandidatos(items, h, m);
+          const candidatos = armarCandidatos(items, { ...h, consulta: consultas.get(`${m}|${h.termino}`)?.q ?? null }, m);
           for (const k of candidatos) {
             await c.query(
               `insert into public.vitrina_medicion_candidatos
-                 (hueco_id, mercado, orden, product_id, nombre, color, display_code, genero, precio, precio_texto, foto, url, rating, elegida, motivo, cercana, tono_cercano)
-               values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`,
-              [huecoId, m, k.orden, k.productId, k.nombre, k.color, k.displayCode, k.genero, k.precio, k.precioTexto, k.foto, k.url, k.rating, k.elegida, k.motivo, k.cercana, k.tonoCercano]
+                 (hueco_id, mercado, orden, product_id, nombre, color, display_code, genero, precio, precio_texto, foto, url, rating, elegida, motivo, cercana, tono_cercano, consulta)
+               values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`,
+              [huecoId, m, k.orden, k.productId, k.nombre, k.color, k.displayCode, k.genero, k.precio, k.precioTexto, k.foto, k.url, k.rating, k.elegida, k.motivo, k.cercana, k.tonoCercano, consultas.get(`${m}|${h.termino}`)?.q ?? h.termino]
             );
             nCandidatos++;
           }

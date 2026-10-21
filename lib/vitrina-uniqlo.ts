@@ -250,8 +250,8 @@ export function mangaDe(texto: string | null | undefined): Manga | null {
   return null;
 }
 
-const DICE_CORTA = /short[- ]sleeve|half[- ]sleeve|半袖|반팔/i;
-const DICE_LARGA = /long[- ]sleeve|長袖|긴팔/i;
+const DICE_CORTA = /short[- ]sleeve|half[- ]sleeve|半袖|반팔|반소매/i;
+const DICE_LARGA = /long[- ]sleeve|長袖|긴팔|긴소매/i;
 const DICE_SIN = /sleeveless|tank|camisole|ノースリーブ|タンク|민소매|나시/i;
 
 /**
@@ -266,8 +266,10 @@ export function mangaCompatible(nombreFicha: string, manga: Manga | null, termin
     : manga === "larga" ? DICE_CORTA.test(nombreFicha) || DICE_SIN.test(nombreFicha)
     : DICE_CORTA.test(nombreFicha) || DICE_LARGA.test(nombreFicha);
   if (contra) return false;
-  const latino = /[a-z]/i.test(nombreFicha) && !/[\u3040-\u30ff\u4e00-\u9fff\uac00-\ud7af]/.test(nombreFicha);
-  if (!latino) return true;
+  // Sin exención para japonés y coreano (2026-10-21): Uniqlo también ahí
+  // escribe la manga cuando no es la de siempre (半袖, 반팔). La exención no
+  // dañaba mientras "short sleeve shirt" devolvía cero en JP/KR; con los
+  // escalones de búsqueda, dejaba pasar camisas de manga larga.
   // La más larga primero: "t-shirt" y "polo shirt" también terminan en "shirt".
   const base = Object.keys(MANGA_POR_DEFECTO).sort((a, b) => b.length - a.length).find((b) => termino.endsWith(b)) ?? null;
   const porDefecto = base ? MANGA_POR_DEFECTO[base] : null;
@@ -465,11 +467,15 @@ export function nombreCoincide(nombre: string, termino: string): boolean {
 // Boots"; una camisa no es una "Shirt Jacket".
 const EXCLUYE_EN: Record<string, RegExp> = {
   "ankle boots": /\b(long|knee|tall)\b/i,
+  // Una sudadera no es un pantalón ni un short de sudadera (2026-10-21).
+  sweatshirt: /\b(pants|sweatpants|shorts|joggers)\b/i,
   // Un polo no es un suéter tejido tipo polo (2026-10-21, Corea).
   "polo shirt": /\b(sweater|cardigan|knit polo)\b/i,
 };
 const EXCLUYE_ASIA: Record<string, RegExp> = {
   shirt: /Tシャツ|T シャツ|スウェットシャツ|티셔츠|T셔츠|맨투맨/,
+  // スウェット / 스웨트 también nombra el pantalón: "スウェットワイドパンツ", "스웨트팬츠".
+  sweatshirt: /パンツ|ショーツ|팬츠|쇼츠|반바지/,
   "ankle boots": /ロング|ニーハイ|롱|니하이/,
   "polo shirt": /セーター|ニットポロ|カーディガン|스웨터|니트폴로|가디건/,
 };
@@ -891,6 +897,8 @@ type HuecoVitrina = {
   visual?: string | null;
   temporada?: string | null;
   viajeFrio?: boolean | null;
+  /** La palabra con que se buscó en este país (escalones): lo que se perdió al bajar pasa a filtrar. */
+  consulta?: string | null;
 };
 
 type Candidata = PrendaVitrina & { rating: number; puntos: number; vecino: number };
@@ -919,6 +927,8 @@ function candidatasDe(
     // "short de lino negro" le salió un bóxer a rayas y un short de sudadera).
     if (esRopaInterior(it.name, termino)) continue;
     if (termino && !nombreCoincide(it.name, termino)) continue;
+    // Lo que se dejó fuera de la búsqueda al bajar de escalón, se exige aquí.
+    if (termino && !respetaModificadores(it.name, termino, hueco.consulta)) continue;
     // La manga pedida y lo liso se respetan (2026-10-21: a una camisa negra de
     // manga corta le salían playeras, una de manga larga, y la única camisa de
     // manga corta disponible era estampada).
@@ -1021,6 +1031,8 @@ const TIMEOUT_MS = 3000;
 export type Consulta = {
   items: UniqloItem[];
   vistoEl: string | null;
+  /** true si la API falló (http, status, timeout): no se baja de escalón, para no multiplicar esperas. */
+  fallo?: boolean;
   /** El árbol de categorías en que caen los resultados (aggregations.tree.categories). */
   categorias: CategoriaUniqlo[];
   /** true si estos ítems vienen ya filtrados por categoría de Uniqlo. */
@@ -1062,7 +1074,7 @@ export async function consultarUniqlo(
     } as RequestInit);
     if (!res.ok) {
       await opts.onError?.(mercado, `http ${res.status}`);
-      return vacia;
+      return { ...vacia, fallo: true };
     }
     const json = (await res.json()) as {
       status?: string;
@@ -1070,7 +1082,7 @@ export async function consultarUniqlo(
     };
     if (json.status !== "ok") {
       await opts.onError?.(mercado, `status ${json.status ?? "sin status"}`);
-      return vacia;
+      return { ...vacia, fallo: true };
     }
     return {
       items: json.result?.items ?? [],
@@ -1080,7 +1092,7 @@ export async function consultarUniqlo(
   } catch (e) {
     const mensaje = e instanceof Error && e.name === "TimeoutError" ? "timeout" : e instanceof Error ? e.message : String(e);
     await opts.onError?.(mercado, mensaje);
-    return vacia;
+    return { ...vacia, fallo: true };
   }
 }
 
@@ -1095,13 +1107,138 @@ export async function consultarUniqlo(
 export async function consultarUniqloEnCategoria(
   mercado: Mercado,
   q: string,
-  opts: { onError?: (mercado: Mercado, mensaje: string) => Promise<void> | void; fetchImpl?: typeof fetch } = {}
+  opts: {
+    onError?: (mercado: Mercado, mensaje: string) => Promise<void> | void;
+    fetchImpl?: typeof fetch;
+    /** La prenda que se busca, para elegir la categoría cuando `q` es otra palabra (base o en japonés/coreano). */
+    termino?: string;
+  } = {}
 ): Promise<Consulta> {
-  const primera = await consultarUniqlo(mercado, q, opts);
-  const ids = categoriasQueEmpatan(primera.categorias, q);
+  const { termino, ...base } = opts;
+  const primera = await consultarUniqlo(mercado, q, base);
+  if (primera.fallo) return primera;
+  const ids = categoriasQueEmpatan(primera.categorias, termino ?? q);
   if (ids.length === 0) return primera;
-  const segunda = await consultarUniqlo(mercado, q, { ...opts, categoryId: ids.join(",") });
+  const segunda = await consultarUniqlo(mercado, q, { ...base, categoryId: ids.join(",") });
   return segunda.items.length > 0 ? { ...segunda, filtradaPorCategoria: true } : primera;
+}
+
+// --- Escalones de búsqueda: nunca menos que hoy ---------------------------------
+//
+// La consulta con modificadores ("leather ankle boots", "wool blazer") afina en
+// EE. UU. pero en Japón y Corea devuelve CERO: sus buscadores no entienden el
+// modificador en inglés. Medido el 2026-10-21 sobre los 58 huecos vivos: 56 de
+// 135 consultas en cero (JP 22, KR 28, US 6). Se recuperan bajando escalones
+// SÓLO cuando el anterior devolvió cero (nunca cuando falló):
+//   1. el término completo (lo de siempre),
+//   2. la prenda sin modificadores ("ankle boots"),
+//   3. la palabra base ("boots"),
+//   4. en JP/KR, el nombre local de la prenda, sólo donde se midió que recupera.
+// Los modificadores NO se pierden al bajar: siguen filtrando desde el texto de
+// la pieza (piel, impermeable, manga, cuello) y ordenando por parecido.
+// Sigue en cero en los tres países: la boina (Uniqlo no la vende hoy).
+// "windbreaker" NO baja a "jacket": medido el 2026-10-21, en JP/KR trajo
+// chamarras de punto, de borrego y plumíferos. Es otra prenda; si no hay
+// rompevientos, no hay. "rain jacket" sí baja: `funcionCompatible` exige que
+// la ficha diga lluvia o repelente al agua.
+const BASE_DE: Record<string, string> = {
+  "ankle boots": "boots",
+  "rain jacket": "jacket",
+};
+
+/** Nombre local de la prenda; sólo los que se midió que devuelven resultados (2026-10-21). */
+const NOMBRE_LOCAL: Record<string, Partial<Record<Mercado, string>>> = {
+  belt: { jp: "ベルト" }, // 0 → 19
+  sweatshirt: { jp: "スウェット" }, // 0 → 101
+  sneakers: { jp: "スニーカー" }, // 0 → 1
+  blazer: { kr: "블레이저" }, // 0 → 9
+  joggers: { kr: "조거팬츠" }, // 0 → 15
+  beanie: { kr: "비니" }, // 0 → 6
+  scarf: { kr: "머플러" }, // 0 → 7
+};
+
+/**
+ * Lo que un modificador exige de la ficha cuando la búsqueda se hizo SIN él
+ * (se bajó de escalón). Dos clases, porque Uniqlo no escribe lo normal:
+ *   · `requiere`: la ficha tiene que decirlo (una chamarra de mezclilla dice
+ *     デニム; una sudadera con capucha dice パーカ).
+ *   · `excluye`: basta con que no lo contradiga ("EZY Jeans" es recta y no lo
+ *     dice; exigirle "straight" la tiraría, que es justo lo que el juez aprobó).
+ * Lo que no está aquí (wool, knit, linen, cashmere, mini…) sólo ordena.
+ * Medido el 2026-10-21 sobre las 61 prendas que entraron con los escalones:
+ * "abrigo largo" recibía abrigos cortos, "jeans rectos" skinny y barrel,
+ * "chamarra de mezclilla" una Harrington, "botines" botas altas.
+ */
+const MODIFICADOR_PERDIDO: Record<string, { requiere?: RegExp; excluye?: RegExp }> = {
+  denim: { requiere: /denim|デニム|데님/i },
+  hoodie: { requiere: /hood|parka|パーカ|フーディ|후드|후디|파카/i },
+  zip: { requiere: /zip|ジップ|집업|지퍼|지업/i },
+  cargo: { requiere: /cargo|カーゴ|카고/i },
+  wide: { requiere: /wide|ワイド|와이드/i },
+  chino: { requiere: /chino|チノ|치노/i },
+  smart: { requiere: /smart|slacks|trousers|dress pants|スマート|スラックス|トラウザー|センタープレス|스마트|슬랙스|트라우저/i },
+  ankle: { requiere: /ankle|bootie|chelsea|side gore|\bshort\b|ショート|サイドゴア|チェルシー|앵클|첼시|숏|쇼트/i },
+  crossbody: { requiere: /shoulder|crossbody|cross body|ショルダー|숄더|크로스/i },
+  straight: {
+    excluye: /skinny|wide|barrel|baggy|flare|tapered|bootcut|スキニー|ワイド|バレル|バギー|フレア|テーパード|스키니|와이드|배럴|배기|플레어|테이퍼드/i,
+  },
+  long: { excluye: /\bshort\b|cropped|ショート|クロップド|쇼트|숏|크롭/i },
+};
+
+/** Las palabras de un término, sin la frase de manga ("long sleeve" habla de la manga, no del largo). */
+const palabras = (t: string) =>
+  t
+    .toLowerCase()
+    .replace(/\b(short|long) sleeve\b/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+
+/**
+ * ¿La ficha respeta los modificadores que se perdieron al bajar de escalón?
+ * Sin escalón (la consulta es el término completo) no se exige nada nuevo:
+ * así queda EE. UU., donde el término completo ya afina.
+ */
+export function respetaModificadores(nombreFicha: string, termino: string, consulta: string | null | undefined): boolean {
+  if (!consulta || consulta.trim() === termino.trim()) return true;
+  const usadas = new Set(palabras(consulta));
+  for (const m of palabras(termino)) {
+    if (usadas.has(m)) continue;
+    const regla = MODIFICADOR_PERDIDO[m];
+    if (!regla) continue;
+    if (regla.requiere && !regla.requiere.test(nombreFicha)) return false;
+    if (regla.excluye && regla.excluye.test(nombreFicha)) return false;
+  }
+  return true;
+}
+
+/** Los escalones de búsqueda de un término en un mercado, sin repetir, del más fino al más general. */
+export function consultasPara(termino: string, mercado: Mercado): string[] {
+  const t = termino.trim();
+  if (!t) return [];
+  const cabeza = cabezaDeTermino(t);
+  const base = BASE_DE[cabeza] ?? cabeza;
+  const local = NOMBRE_LOCAL[base]?.[mercado];
+  return [...new Set([t, cabeza, base, ...(local ? [local] : [])].filter(Boolean))];
+}
+
+/**
+ * LA CONSULTA DE LA VITRINA, con escalones: el primero que devuelva algo gana;
+ * si uno falla, se detiene ahí. Devuelve también qué palabra se usó (la
+ * medición la enseña: "q = boots" no es lo mismo que "q = leather ankle boots").
+ */
+export async function consultarVitrina(
+  mercado: Mercado,
+  termino: string,
+  opts: { onError?: (mercado: Mercado, mensaje: string) => Promise<void> | void; fetchImpl?: typeof fetch } = {}
+): Promise<Consulta & { q: string }> {
+  const escalones = consultasPara(termino, mercado);
+  let ultima: Consulta & { q: string } = { items: [], vistoEl: null, categorias: [], q: termino };
+  for (const q of escalones) {
+    const r = await consultarUniqloEnCategoria(mercado, q, { ...opts, termino });
+    ultima = { ...r, q };
+    if (r.fallo || r.items.length > 0) break;
+  }
+  return ultima;
 }
 
 /** Fecha corta para la card: "20 oct". */

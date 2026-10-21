@@ -18,6 +18,9 @@ import {
   coloresDe,
   colorQueEmpata,
   consultarUniqloEnCategoria,
+  consultarVitrina,
+  consultasPara,
+  respetaModificadores,
   elegirCercana,
   familiasEnTexto,
   vecinosDe,
@@ -183,6 +186,115 @@ describe("categoría de Uniqlo: filtrar en origen lo que la búsqueda de texto t
     const fetchUna = vi.fn(async () => con(items, [{ id: 1, name: "Bottoms" }]));
     await consultarUniqloEnCategoria("us", "sweater", { fetchImpl: fetchUna as unknown as typeof fetch });
     expect(fetchUna).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("escalones de búsqueda: bajar sólo cuando hay cero, nunca cuando falla", () => {
+  it("del término completo a la prenda, a la palabra base y, en JP/KR, al nombre local medido", () => {
+    expect(consultasPara("leather ankle boots", "jp")).toEqual(["leather ankle boots", "ankle boots", "boots"]);
+    expect(consultasPara("hoodie sweatshirt", "jp")).toEqual(["hoodie sweatshirt", "sweatshirt", "スウェット"]);
+    expect(consultasPara("knit beanie", "kr")).toEqual(["knit beanie", "beanie", "비니"]);
+    // EE. UU. nunca recibe el nombre local; un término sin modificadores es un solo escalón.
+    expect(consultasPara("hoodie sweatshirt", "us")).toEqual(["hoodie sweatshirt", "sweatshirt"]);
+    expect(consultasPara("sweater", "us")).toEqual(["sweater"]);
+    expect(consultasPara("  ", "us")).toEqual([]);
+  });
+
+  const resp = (items: UniqloItem[], categories: { id: number; name: string }[] = []) =>
+    ({
+      ok: true,
+      status: 200,
+      headers: { get: () => null },
+      json: async () => ({ status: "ok", result: { items, aggregations: { tree: { categories } } } }),
+    }) as unknown as Response;
+
+  it("con cero baja al siguiente escalón y devuelve la palabra que sí trajo algo", async () => {
+    const pedidas: string[] = [];
+    const fetchImpl = vi.fn(async (url: string | URL | Request) => {
+      const q = new URL(String(url)).searchParams.get("q")!;
+      pedidas.push(q);
+      return q === "boots" ? resp(items.slice(0, 1)) : resp([]);
+    });
+    const r = await consultarVitrina("jp", "leather ankle boots", { fetchImpl: fetchImpl as unknown as typeof fetch });
+    expect(pedidas).toEqual(["leather ankle boots", "ankle boots", "boots"]);
+    expect(r.q).toBe("boots");
+    expect(r.items).toHaveLength(1);
+  });
+
+  it("si la API falla, NO baja de escalón (no multiplica esperas) y avisa una vez", async () => {
+    const avisos: string[] = [];
+    const f403 = vi.fn(async () => ({ ok: false, status: 403, headers: { get: () => null }, json: async () => ({}) }) as unknown as Response);
+    const r = await consultarVitrina("kr", "knit beanie", { fetchImpl: f403 as unknown as typeof fetch, onError: (m, msg) => void avisos.push(`${m}:${msg}`) });
+    expect(f403).toHaveBeenCalledTimes(1);
+    expect(r.fallo).toBe(true);
+    expect(avisos).toEqual(["kr:http 403"]);
+  });
+
+  it("con el nombre local, la categoría se elige por la PRENDA buscada, no por la palabra japonesa", async () => {
+    const pedidas: string[] = [];
+    const arbol = [{ id: 7, name: "スウェット" }, { id: 8, name: "パンツ・ズボン" }];
+    const fetchImpl = vi.fn(async (url: string | URL | Request) => {
+      const u = new URL(String(url));
+      pedidas.push(`${u.searchParams.get("q")}${u.searchParams.get("categoryId") ? `#${u.searchParams.get("categoryId")}` : ""}`);
+      return u.searchParams.get("q") === "スウェット" ? resp(items.slice(0, 2), arbol) : resp([], arbol);
+    });
+    const r = await consultarVitrina("jp", "zip sweatshirt", { fetchImpl: fetchImpl as unknown as typeof fetch });
+    expect(r.q).toBe("スウェット");
+    expect(pedidas.at(-1)).toBe("スウェット#7");
+    expect(r.filtradaPorCategoria).toBe(true);
+  });
+});
+
+describe("lo que se perdió al bajar de escalón pasa a filtrar (medido en las 61 prendas recuperadas)", () => {
+  it("sin escalón no se exige nada nuevo: EE. UU. con el término completo queda igual", () => {
+    expect(respetaModificadores("Jeans", "straight jeans", "straight jeans")).toBe(true);
+    expect(respetaModificadores("Jeans", "straight jeans", null)).toBe(true);
+  });
+
+  it("recto: basta con no contradecirlo (EZY Jeans pasa; skinny, wide y barrel no), en los tres idiomas", () => {
+    expect(respetaModificadores("EZYジーンズ/丈長め", "straight jeans", "jeans")).toBe(true);
+    expect(respetaModificadores("ウルトラストレッチスキニージーンズ", "straight jeans", "jeans")).toBe(false);
+    expect(respetaModificadores("ハイライズワイドジーンズ", "straight jeans", "jeans")).toBe(false);
+    expect(respetaModificadores("バギーバレルレッグジーンズ/丈長め", "straight jeans", "jeans")).toBe(false);
+  });
+
+  it("largo: fuera lo corto ('ショート', '쇼트'); un abrigo largo que no dice 'long' pasa", () => {
+    expect(respetaModificadores("ノンキルトダウンショートコート", "long wool coat", "coat")).toBe(false);
+    expect(respetaModificadores("울블렌드쇼트코트", "long wool coat", "coat")).toBe(false);
+    expect(respetaModificadores("ダブルフェイスリラックスロングコート", "long wool coat", "coat")).toBe(true);
+    expect(respetaModificadores("더플코트", "long wool coat", "coat")).toBe(true);
+  });
+
+  it("mezclilla, capucha y botín: la ficha tiene que decirlo", () => {
+    expect(respetaModificadores("해링턴재킷", "denim jacket", "jacket")).toBe(false);
+    expect(respetaModificadores("데님재킷", "denim jacket", "jacket")).toBe(true);
+    expect(respetaModificadores("ハーフボタンスウェットプルオーバー", "hoodie sweatshirt", "スウェット")).toBe(false);
+    expect(respetaModificadores("スウェットプルパーカ", "hoodie sweatshirt", "スウェット")).toBe(true);
+    expect(respetaModificadores("Boots", "leather ankle boots", "boots")).toBe(false);
+    expect(respetaModificadores("サイドゴアブーツ", "leather ankle boots", "boots")).toBe(true);
+  });
+
+  it("'long sleeve' habla de la manga, no del largo: no exige nada de largo", () => {
+    expect(respetaModificadores("Crew Neck T-Shirt | Short Body", "long sleeve t-shirt", "t-shirt")).toBe(true);
+  });
+
+  it("una sudadera no es un pantalón de sudadera, en los tres idiomas", () => {
+    expect(nombreCoincide("スウェットワイドパンツ", "hoodie sweatshirt")).toBe(false);
+    expect(nombreCoincide("스웨트팬츠(다리길이65~71cm)", "sweatshirt")).toBe(false);
+    expect(nombreCoincide("Sweat Pants", "sweatshirt")).toBe(false);
+    expect(nombreCoincide("スウェットプルパーカ", "sweatshirt")).toBe(true);
+  });
+
+  it("rompevientos no baja a 'jacket': es otra prenda", () => {
+    expect(consultasPara("windbreaker", "kr")).toEqual(["windbreaker"]);
+  });
+
+  it("manga corta pedida en una camisa: también en japonés y coreano la ficha tiene que decirla", () => {
+    expect(mangaCompatible("イージーケアソフトシャツ", "corta", "short sleeve shirt")).toBe(false);
+    expect(mangaCompatible("オープンカラーシャツ（半袖）", "corta", "short sleeve shirt")).toBe(true);
+    expect(mangaCompatible("오픈칼라셔츠(반팔)", "corta", "short sleeve shirt")).toBe(true);
+    // Una playera es de manga corta por defecto: no tiene que decirlo.
+    expect(mangaCompatible("クルーネックT", "corta", "t-shirt")).toBe(true);
   });
 });
 

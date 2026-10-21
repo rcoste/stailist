@@ -53,6 +53,8 @@ export type CandidatoUI = {
   motivo: MotivoDescarte | null;
   cercana: boolean;
   tonoCercano: string | null;
+  /** La palabra con que se buscó en este país (escalones desde v0.2.409.0); null en corridas anteriores. */
+  consulta: string | null;
   juez: boolean | null;
   juezLinea: string | null;
   juezError: string | null;
@@ -150,7 +152,7 @@ export async function cargarCorrida(corridaId: string): Promise<{
 export async function cargarCandidatos(huecoId: string, mercado: Mercado): Promise<CandidatoUI[]> {
   return withDb(async (c) => {
     const { rows } = await c.query(
-      `select id, mercado, orden, nombre, color, genero, precio_texto, foto, url, rating, elegida, motivo, cercana, tono_cercano,
+      `select id, mercado, orden, nombre, color, genero, precio_texto, foto, url, rating, elegida, motivo, cercana, tono_cercano, consulta,
               juez, juez_linea, juez_error, roberto
          from public.vitrina_medicion_candidatos where hueco_id = $1 and mercado = $2 order by orden`,
       [huecoId, mercado]
@@ -170,6 +172,7 @@ export async function cargarCandidatos(huecoId: string, mercado: Mercado): Promi
       motivo: r.motivo as MotivoDescarte | null,
       cercana: Boolean(r.cercana),
       tonoCercano: r.tono_cercano,
+      consulta: r.consulta,
       juez: r.juez === null ? null : Boolean(r.juez),
       juezLinea: r.juez_linea,
       juezError: r.juez_error,
