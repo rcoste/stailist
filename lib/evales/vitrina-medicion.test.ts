@@ -7,7 +7,7 @@ import { describe, expect, it } from "vitest";
 import fixture from "../__fixtures__/uniqlo-us-sweater.json";
 import type { CapsuleMatch, CapsuleTarget } from "@/lib/capsule";
 import { elegirPrendas, type UniqloItem } from "@/lib/vitrina-uniqlo";
-import { armarCandidatos, huecosDeViaje, motivoDescarte, muestraDeHuecos, pct, resumenMedicion, type VotoFila } from "./vitrina-medicion";
+import { armarCandidatos, corridaPorDefecto, huecosDeViaje, motivoDescarte, muestraDeHuecos, pct, resumenMedicion, type VotoFila } from "./vitrina-medicion";
 import { textoJuezVitrina } from "./juez-vitrina";
 
 const items = fixture.result.items as unknown as UniqloItem[];
@@ -225,6 +225,31 @@ describe("resumenMedicion: los tres números", () => {
     expect(r.acuerdo).toEqual({ comparables: 6, coinciden: 4 });
     expect(r.techo).toEqual({ roberto: 2, juez: 2, huecos: 3, huecosSinVoto: 1 });
     expect(r.calificados).toEqual({ votados: 6, total: 7 });
+  });
+
+  it("'por votar' cuenta sólo lo que la vitrina enseña (elegidas y cercanas), no los cientos de descartados", () => {
+    const r = resumenMedicion(
+      [
+        { huecoN: 1, elegida: true, juez: true, roberto: true },
+        { huecoN: 1, elegida: false, cercana: true, juez: false, roberto: null },
+        { huecoN: 1, elegida: false, juez: false, roberto: false },
+        { huecoN: 1, elegida: false, juez: false, roberto: null },
+      ],
+      1
+    );
+    expect(r.porVotar).toEqual({ votados: 1, total: 2 });
+    expect(r.calificados).toEqual({ votados: 2, total: 4 });
+  });
+
+  it("la pantalla abre en la muestra más reciente, no en la corrida completa", () => {
+    const corridas = [
+      { id: "completa", nota: "vitrina v0.2.409.0 · limit 20 · 58 huecos de 11 viajes" },
+      { id: "muestra", nota: "vitrina v0.2.409.0 · limit 20 · muestra de 10 huecos" },
+      { id: "vieja", nota: "vitrina v0.2.405.0 · limit 20 · muestra de 4 huecos" },
+    ];
+    expect(corridaPorDefecto(corridas)?.id).toBe("muestra");
+    expect(corridaPorDefecto([corridas[0]])?.id).toBe("completa");
+    expect(corridaPorDefecto([])).toBeUndefined();
   });
 
   it("pct no divide entre cero", () => {

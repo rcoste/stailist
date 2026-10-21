@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.409.1] - 2026-10-21 — la medición abre en lo que hay que votar
+
+- **`/admin/vitrina-medicion` abre en la muestra más reciente**, no en la
+  corrida completa del juez (`corridaPorDefecto`). Roberto, al entrar:
+  "venían como 800 mil cosas que votar". La corrida completa (58 huecos,
+  ~2,000 candidatos) es para el juez; la muestra (10 huecos, ~36 prendas) es
+  la que se vota. Los botones de corrida dicen cuál es cuál ("para votar · 10",
+  "completa · 58").
+- **El contador cuenta sólo lo que la vitrina enseña** ("por votar: 0 de 36"),
+  no todos los candidatos; el ✓ de cada hueco marca que ya votaste lo que
+  enseña en los tres países.
+
 ## [0.2.409.0] - 2026-10-21 — Japón y Corea dejan de quedarse en blanco: la búsqueda baja de escalón sólo cuando no hay nada
 
 - **Escalones de búsqueda** (`consultasPara`, `consultarVitrina` en
