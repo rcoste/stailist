@@ -34,6 +34,9 @@ export type HuecoUI = {
   /** Cuántos candidatos tiene y cuántos ya calificó Roberto (todos los mercados). */
   candidatos: number;
   votados: number;
+  /** Lo que la vitrina enseña en este hueco (todos los países) y cuánto de eso ya votó. */
+  aVotar: number;
+  votadosAVotar: number;
   /** ¿Roberto ya encontró al menos uno correcto? */
   conAcierto: boolean;
 };
@@ -113,11 +116,15 @@ export async function cargarCorrida(corridaId: string): Promise<{
       roberto: v.roberto === null ? null : Boolean(v.roberto),
       costo: v.juez_costo_usd === null ? 0 : Number(v.juez_costo_usd),
     }));
-    const porHueco = new Map<string, { candidatos: number; votados: number; conAcierto: boolean }>();
+    const porHueco = new Map<string, { candidatos: number; votados: number; aVotar: number; votadosAVotar: number; conAcierto: boolean }>();
     for (const f of filas) {
-      const acc = porHueco.get(f.huecoId) ?? { candidatos: 0, votados: 0, conAcierto: false };
+      const acc = porHueco.get(f.huecoId) ?? { candidatos: 0, votados: 0, aVotar: 0, votadosAVotar: 0, conAcierto: false };
       acc.candidatos++;
       if (f.roberto !== null) acc.votados++;
+      if (f.elegida || f.cercana) {
+        acc.aVotar++;
+        if (f.roberto !== null) acc.votadosAVotar++;
+      }
       if (f.roberto === true) acc.conAcierto = true;
       porHueco.set(f.huecoId, acc);
     }
@@ -134,7 +141,7 @@ export async function cargarCorrida(corridaId: string): Promise<{
       visual: h.visual,
       porque: h.porque,
       termino: h.termino,
-      ...(porHueco.get(h.id) ?? { candidatos: 0, votados: 0, conAcierto: false }),
+      ...(porHueco.get(h.id) ?? { candidatos: 0, votados: 0, aVotar: 0, votadosAVotar: 0, conAcierto: false }),
     }));
     const mercados: Mercado[] = ["us", "jp", "kr"];
     const resumenPorMercado = Object.fromEntries(

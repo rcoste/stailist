@@ -274,6 +274,8 @@ export type ResumenMedicion = {
   /** Huecos con al menos un candidato correcto entre los 20 (× mercados). */
   techo: { roberto: number; juez: number; huecos: number; huecosSinVoto: number };
   calificados: { votados: number; total: number };
+  /** Lo que de verdad hay que votar: lo que la vitrina enseña (elegidas y cercanas). */
+  porVotar: { votados: number; total: number };
 };
 
 export function resumenMedicion(filas: VotoFila[], nHuecos: number): ResumenMedicion {
@@ -310,7 +312,20 @@ export function resumenMedicion(filas: VotoFila[], nHuecos: number): ResumenMedi
       huecosSinVoto: Math.max(0, nHuecos - conVoto.size),
     },
     calificados: { votados: filas.filter((f) => f.roberto !== null).length, total: filas.length },
+    porVotar: {
+      votados: filas.filter((f) => (f.elegida || f.cercana) && f.roberto !== null).length,
+      total: filas.filter((f) => f.elegida || f.cercana).length,
+    },
   };
+}
+
+/**
+ * La corrida que abre la pantalla: la MUESTRA más reciente (lo que Roberto
+ * vota), no la corrida completa del juez. Roberto, 2026-10-21: "venían como
+ * 800 mil cosas que votar". Sin muestras, la más reciente.
+ */
+export function corridaPorDefecto<C extends { nota: string | null }>(corridas: C[]): C | undefined {
+  return corridas.find((c) => /muestra/i.test(c.nota ?? "")) ?? corridas[0];
 }
 
 /** Porcentaje entero, o null si no hay con qué dividir. */

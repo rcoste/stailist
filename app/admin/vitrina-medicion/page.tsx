@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { MERCADOS, type Mercado } from "@/lib/vitrina-uniqlo";
-import { pct, type ResumenMedicion } from "@/lib/evales/vitrina-medicion";
+import { corridaPorDefecto, pct, type ResumenMedicion } from "@/lib/evales/vitrina-medicion";
 import { cargarCandidatos, cargarCorrida, listarCorridas, type CandidatoUI, type HuecoUI } from "@/lib/evales/vitrina-medicion-datos";
 import { Chip, Cifra, Control, Encabezado, Fila, Filtros, Panel, Pestanas, Vacio } from "../_ui";
 import { VotoCandidato } from "./voto-candidato";
@@ -43,7 +43,7 @@ export default async function VitrinaMedicionPage({
   await requireAdmin();
   const sp = await searchParams;
   const corridas = await listarCorridas();
-  const corrida = corridas.find((x) => x.id === sp.c) ?? corridas[0];
+  const corrida = corridas.find((x) => x.id === sp.c) ?? corridaPorDefecto(corridas);
 
   if (!corrida) {
     return (
@@ -87,7 +87,10 @@ export default async function VitrinaMedicionPage({
         {corridas.length > 1
           ? corridas.slice(0, 5).map((c) => (
               <Control key={c.id} href={`/admin/vitrina-medicion?c=${c.id}`} activo={c.id === corrida.id}>
-                {new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "short", timeZone: "America/Mexico_City" }).format(new Date(c.creada))}
+                {/muestra/i.test(c.nota ?? "") ? `para votar · ${c.nHuecos}` : `completa · ${c.nHuecos}`}
+                <span className="ml-1 text-faint">
+                  {new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "short", timeZone: "America/Mexico_City" }).format(new Date(c.creada))}
+                </span>
               </Control>
             ))
           : null}
@@ -117,7 +120,8 @@ export default async function VitrinaMedicionPage({
             titulo: "hueco",
             opciones: huecos.map((h) => ({
               href: url(h.n),
-              label: `${h.n}${h.conAcierto ? "·✓" : h.votados > 0 && h.votados === h.candidatos ? "·×" : ""}`,
+              // ✓ = ya votaste todo lo que la vitrina enseña en ese hueco.
+              label: `${h.n}${h.aVotar > 0 && h.votadosAVotar === h.aVotar ? "·✓" : ""}`,
               activo: h.n === hueco.n,
             })),
           },
@@ -192,10 +196,11 @@ function Cifras({ r }: { r: ResumenMedicion }) {
         barra={{ n: r.techo.roberto, de: r.techo.huecos }}
       />
       <Cifra
-        label="Calificados por ti"
-        valor={`${r.calificados.votados}`}
-        unidad={`de ${r.calificados.total}`}
-        barra={{ n: r.calificados.votados, de: r.calificados.total }}
+        label="Por votar"
+        valor={`${r.porVotar.votados}`}
+        unidad={`de ${r.porVotar.total}`}
+        sub={r.calificados.votados > r.porVotar.votados ? `y ${r.calificados.votados - r.porVotar.votados} entre los descartados` : "sólo lo que la vitrina enseña"}
+        barra={{ n: r.porVotar.votados, de: r.porVotar.total }}
       />
     </Fila>
   );
@@ -232,7 +237,9 @@ function Pieza({ hueco, anterior, siguiente }: { hueco: HuecoUI; anterior: strin
       {hueco.visual ? <p className="mt-3 text-sm text-ink2">{hueco.visual}</p> : null}
       {hueco.porque ? <p className="mt-2 text-[13px] text-muted">{hueco.porque}</p> : null}
       <p className="mt-3 text-xs text-faint">
-        {hueco.votados} de {hueco.candidatos} candidatos calificados{hueco.conAcierto ? " · ya hay uno correcto" : ""}
+        {hueco.aVotar === 0
+          ? "la vitrina no enseña nada en este hueco"
+          : `${hueco.votadosAVotar} de ${hueco.aVotar} por votar en este hueco (los tres países)`}
       </p>
     </Panel>
   );
