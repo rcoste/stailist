@@ -370,13 +370,25 @@ export function funcionCompatible(nombreFicha: string, nombrePieza: string | nul
 // y lo que Uniqlo marca de verano (AIRism, DRY-EX).
 const DE_VERANO = /\b(linen|seersucker|airism|dry-ex)\b|リネン|麻|エアリズム|ドライEX|린넨|리넨|에어리즘/i;
 
+// El espejo: una pieza de CALOR no recibe lo térmico (2026-10-21). A "Camiseta
+// esmeralda" (temporada calor) la vitrina le enseñaba una "HEATTECH Cashmere
+// Blend T-Shirt | Extra Warm | Turtleneck". Roberto: "las HEATTECH son para
+// dar calor; no sé en qué momento la puse que sí". HEATTECH, forro polar,
+// borrego y plumas son para frío.
+const DE_INVIERNO = /heattech|extra warm|ultra warm|\bwarm\b|fleece|\bboa\b|\bdown\b|puffer|ヒートテック|極暖|ウォーム|フリース|ボア|ダウン|히트텍|웜|후리스|보아|다운/i;
+
 export function temporadaCompatible(
   nombreFicha: string,
   pieza: { nombre?: string | null; temporada?: string | null; viajeFrio?: boolean | null }
 ): boolean {
   // Frío si la pieza lo es O si el viaje lo es: un vestido "todo el año" para
   // un viaje de 5-17 °C tampoco va de lino (2026-10-21).
-  const frio = slug(pieza.temporada ?? "") === "frio" || pieza.viajeFrio === true;
+  const temporada = slug(pieza.temporada ?? "");
+  // Calor: nada térmico, aunque el viaje no tenga clima.
+  if (temporada === "calor") return !DE_INVIERNO.test(nombreFicha);
+  // Frío si la pieza lo es O si el viaje lo es: un vestido "todo el año" para
+  // un viaje de 5-17 °C tampoco va de lino (2026-10-21).
+  const frio = temporada === "frio" || pieza.viajeFrio === true;
   if (!frio) return true;
   if (/lino|linen/.test(slug(pieza.nombre ?? ""))) return true;
   return !DE_VERANO.test(nombreFicha);
