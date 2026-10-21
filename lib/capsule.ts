@@ -381,6 +381,9 @@ export type ClosetItemLite = {
   // dos piezas" el texto ya no lo caza y el atributo sí.
   contexto?: string | null;
   color_secundario?: string | null;
+  // El lazo del traje (attrs.conjunto): este saco es la mitad de un traje. El
+  // cruce no lo ofrece para un saco suelto si tienes un blazer.
+  conjunto?: string | null;
 };
 
 // Resultado por prenda ideal (alineado por índice con target.items). Tres estados:

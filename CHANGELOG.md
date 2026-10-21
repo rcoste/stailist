@@ -2,6 +2,39 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.412.0] - 2026-10-21 — la maleta ve lo que ya tienes: tu chamarra marino, tu blazer y la diferencia entre gorro y gorra
+
+Salió de una maleta real para Mineápolis. Tres errores del cruce entre la
+maleta y el clóset (`lib/engine/capsule-match-reglas.ts`):
+
+- **El nombre de la pieza estrecha el color.** La cápsula escribe "marino" en
+  el nombre y "azul" en la familia (6 de 24 piezas "azul" de los viajes vivos).
+  La regla de color comparaba la familia: azul contra marino es "falta", así
+  que una "Chamarra acolchada azul marino" no cubría la "Chamarra acolchada
+  marino", y el duelo ofrecía la misma chamarra dos veces. Ahora
+  `familiaDePieza` usa el nombre cuando estrecha la familia (azul → marino),
+  nunca para cambiarla.
+- **Un saco de traje no va suelto.** Para una pieza de saco suelto, la IA
+  eligió en una de dos corridas el saco de un traje marino, teniendo un blazer
+  marino. Si hay un saco suelto del mismo color, ahora va ése (si tiene
+  estampado y la pieza no, como "parecido"); si no hay, el de traje queda como
+  "parecido: es el saco de un traje" para que la persona decida.
+  `ClosetItemLite` ahora carga `conjunto`, sin cambiar la firma del clóset.
+- **Un gorro de punto no es una gorra.** La clase fina de accesorio juntaba
+  gorro, gorra y sombrero; a 8 °C la gorra salía "tienes" del gorro. Ahora son
+  clases distintas, y la regla corre también después de la IA: al recalcular
+  una maleta, lo ya cubierto se conserva sin pasar por el guard de la IA.
+  (`claseAccesorio` se mudó a las reglas; `capsule-match.ts` la reexporta.)
+- **Dos prendas con el mismo nombre y distinto color:** la regla de color
+  revisa la que empata en color, no la última que leyó.
+
+Medido en seco, reglas de producción contra reglas nuevas, sobre los 33 cruces
+guardados (890 piezas): cambian 4, y en las 4 la regla nueva acierta. En las
+cápsulas del clóset no cambia nada salvo un saco. La versión del cruce (m9) no
+sube: subirla recalcularía todas las maletas y marcaría como viejos los looks de
+24 cápsulas para casi ningún cambio. Lo nuevo aplica al crear una maleta y al
+recalcularla.
+
 ## [0.2.411.1] - 2026-10-21 — una pieza de calor ya no recibe ropa térmica
 
 - **El filtro de temporada ahora funciona en los dos sentidos**

@@ -1,5 +1,5 @@
 import { CLASSIFY_MODEL } from "@/lib/models";
-import { aplicarReglasDelCruce } from "@/lib/engine/capsule-match-reglas";
+import { aplicarReglasDelCruce, claseAccesorio } from "@/lib/engine/capsule-match-reglas";
 import Anthropic from "@anthropic-ai/sdk";
 import {
   closetSignature,
@@ -86,32 +86,12 @@ const CLASES_CONTEXTO: [string, RegExp][] = [
   ["gym", /gym|gimnasio|entrenamiento|running|para correr|de yoga|sports bra/],
 ];
 
-// CLASE FINA dentro de "accesorio": la zona no alcanza. Un reloj y unos lentes son
-// ambos 'accesorio', así que el guard de zona los daba por intercambiables — le
-// pasó a Roberto: "Reloj de acero con detalles en oro" emparejado con "Lentes
-// redondos". El prompt YA pide distinguirlos y el modelo se lo saltó; esto lo
-// blinda en código, que es donde no se olvida. Exportada para test.
-const CLASES_ACCESORIO: [string, RegExp][] = [
-  ["reloj", /reloj/],
-  ["lentes", /lentes|gafas|anteojos/],
-  ["cinturon", /cinturon/],
-  ["bufanda", /bufanda|pashmina|mascada|panuelo/],
-  ["sombrero", /gorra|sombrero|boina|beanie|gorro/],
-  ["bolsa", /bolsa|bolso|cartera|mochila|morral|maletin|bandolera|tote/],
-  ["joyeria", /collar|arete|anillo|pulsera|brazalete|joyer|cadena/],
-  ["corbata", /corbata|pajarita/],
-  ["calcetin", /calcet|medias/],
-  ["guantes", /guante/],
-];
 const normaliza = (s: string) =>
   s.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim();
 
-/** null = clase desconocida → no bloquea (mejor dejar pasar que falsear un hueco). */
-export function claseAccesorio(texto: string): string | null {
-  const n = normaliza(texto);
-  for (const [clase, re] of CLASES_ACCESORIO) if (re.test(n)) return clase;
-  return null;
-}
+// La clase fina de accesorio vive con las reglas del cruce (también la usa la
+// regla que corre después de la IA y al recalcular una maleta).
+export { claseAccesorio } from "@/lib/engine/capsule-match-reglas";
 
 // LARGO DE PIERNA dentro de 'bottom'. La zona no alcanza: un short de lino y un
 // pantalón de lino son ambos 'bottom', así que el match daba el pantalón por
