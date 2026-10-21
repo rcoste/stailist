@@ -20,7 +20,10 @@ import {
   tripDays,
   bolsasCount,
   luggageCapacity,
+  capsuleFloor,
+  preguntarLavado,
   type Bolsas,
+  type CambioDeRopa,
   type Occasion,
   type Luggage,
 } from "@/lib/trip";
@@ -111,10 +114,13 @@ export function TripWizard({
   closet = [],
   edit = null,
   invitacion = null,
+  cambioRopa: cambioRopaGuardado = null,
 }: {
   closet?: ClosetPick[];
   edit?: TripEditInit | null;
   invitacion?: TripInvitacionInit | null;
+  /** Lo que ya contestó de "¿cómo eres con la ropa?" (profiles.cambio_ropa). null = se pregunta aquí. */
+  cambioRopa?: CambioDeRopa | null;
 }) {
   const router = useRouter();
   const isEdit = edit !== null;
@@ -184,6 +190,10 @@ export function TripWizard({
   }
   // Multi-maleta: cantidades por tipo. Default 1 carry-on (lo más común).
   const [bolsas, setBolsas] = useState<Bolsas>(edit?.bolsas ?? { mano: 1 });
+  // Cuántas prendas base (2026-10-21): "¿cómo eres con la ropa?" sólo la
+  // primera vez; "¿vas a poder lavar?" sólo si ni a una por día le cabe.
+  const [cambioRopa, setCambioRopa] = useState<CambioDeRopa | null>(cambioRopaGuardado);
+  const [lavar, setLavar] = useState<boolean | null>(null);
   const [phase, setPhase] = useState<"form" | "gen" | "error">("form");
   // Por qué no salió la maleta: el freno del día trae su texto; lo demás, el genérico.
   const [errMsg, setErrMsg] = useState<string | null>(null);
@@ -292,6 +302,8 @@ export function TripWizard({
           bolsas,
           anclas: anclas.map((a) => a.id),
           contexto: contexto.trim() || undefined,
+          ...(cambioRopa ? { cambioRopa } : {}),
+          ...(lavar !== null && preguntarLavado(dias, [...ocasiones], luggageCapacity(bolsas)) ? { lavar } : {}),
           // Rehacer la maleta de un viaje existente: misma fila, mismo link.
           ...(edit ? { editId: edit.tripId } : {}),
           ...(invitacion && !edit ? { invitacion: invitacion.token } : {}),
@@ -450,7 +462,17 @@ export function TripWizard({
                 <ContextoField value={contexto} onChange={setContexto} />
               </>
             ) : (
-              <StepMaleta bolsas={bolsas} onChange={setBolsas} />
+              <StepMaleta
+                bolsas={bolsas}
+                onChange={setBolsas}
+                dias={dias}
+                ocasiones={[...ocasiones]}
+                preguntarCambio={cambioRopaGuardado === null}
+                cambioRopa={cambioRopa}
+                onCambioRopa={setCambioRopa}
+                lavar={lavar}
+                onLavar={setLavar}
+              />
             )}
           </div>
         </div>
@@ -1309,9 +1331,23 @@ function StepActividades({
 function StepMaleta({
   bolsas,
   onChange,
+  dias,
+  ocasiones,
+  preguntarCambio,
+  cambioRopa,
+  onCambioRopa,
+  lavar,
+  onLavar,
 }: {
   bolsas: Bolsas;
   onChange: (b: Bolsas) => void;
+  dias: number;
+  ocasiones: Occasion[];
+  preguntarCambio: boolean;
+  cambioRopa: CambioDeRopa | null;
+  onCambioRopa: (c: CambioDeRopa) => void;
+  lavar: boolean | null;
+  onLavar: (l: boolean) => void;
 }) {
   const setN = (tipo: Luggage, n: number) => {
     const clamped = Math.max(0, Math.min(n, 4));
@@ -1321,6 +1357,8 @@ function StepMaleta({
   };
   const total = bolsasCount(bolsas);
   const capacidad = luggageCapacity(bolsas);
+  const preguntaLavado = dias > 0 && preguntarLavado(dias, ocasiones, capacidad);
+  const piso = dias > 0 && total > 0 ? capsuleFloor(dias, ocasiones, capacidad, { cambio: cambioRopa, lavar: preguntaLavado ? lavar : null }) : null;
 
   return (
     <div className="flex flex-col gap-2.5">
@@ -1388,6 +1426,77 @@ function StepMaleta({
       <div className="flex items-start gap-2 text-xs leading-snug text-muted">
         <Icon name="destello" size={15} className="mt-px shrink-0 text-accent" />
         <span>es un techo, no una meta: empaco lo que tus días y planes piden — que combine todo, sin sobrar ni faltar.</span>
+      </div>
+      {preguntarCambio ? (
+        <Opciones
+          titulo="¿cómo eres con la ropa de viaje?"
+          valor={cambioRopa}
+          onElegir={onCambioRopa}
+          opciones={[
+            { valor: "repito", label: "repito sin problema", hint: "una camisa, playera o blusa por día" },
+            { valor: "seguido", label: "me cambio seguido", hint: "al llegar del vuelo, antes de cenar" },
+          ]}
+        />
+      ) : null}
+      {preguntaLavado ? (
+        <Opciones
+          titulo="¿vas a poder lavar?"
+          valor={lavar === null ? null : lavar ? "si" : "no"}
+          onElegir={(v) => onLavar(v === "si")}
+          opciones={[
+            { valor: "si", label: "sí, a mitad del viaje", hint: "llevo menos y lavo" },
+            { valor: "no", label: "no", hint: "llevo lo que quepa" },
+          ]}
+        />
+      ) : null}
+      {piso ? <p className="text-xs leading-snug text-muted">{lineaDeBase(piso, dias, cambioRopa, preguntaLavado ? lavar : null)}</p> : null}
+    </div>
+  );
+}
+
+// Cuántas prendas base van, dicho antes de armar: la cuenta que antes nadie
+// veía (las maletas de 8 días salían con 5 camisas y playeras).
+function lineaDeBase(piso: ReturnType<typeof capsuleFloor>, dias: number, cambio: CambioDeRopa | null, lavar: boolean | null): string {
+  const n = `${piso.base} ${piso.base === 1 ? "camisa, playera o blusa" : "camisas, playeras o blusas"}`;
+  if (piso.lava && piso.baseModo !== "no-cabe") return `van ${n} para una semana${piso.baseModo === "colchon" ? " con cambio extra" : ""}: lavas a mitad del viaje.`;
+  if (piso.baseModo === "colchon") return `para ${dias} días van ${n}: una por día y un cambio extra.`;
+  if (piso.baseModo === "no-cabe")
+    return `te caben ${n} para ${dias} días: ${lavar === true ? "lava a mitad del viaje" : lavar === false ? "vas a repetir" : "vas a repetir o a lavar"}.`;
+  return cambio === "seguido"
+    ? `para ${dias} días van ${n}, una por día: el cambio extra no cabe.`
+    : `para ${dias} días van ${n}, una por día.`;
+}
+
+function Opciones<T extends string>({
+  titulo,
+  valor,
+  onElegir,
+  opciones,
+}: {
+  titulo: string;
+  valor: T | null;
+  onElegir: (v: T) => void;
+  opciones: { valor: T; label: string; hint: string }[];
+}) {
+  return (
+    <div className="mt-4 flex flex-col gap-2.5">
+      <p className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted">{titulo}</p>
+      <div className="grid grid-cols-2 gap-[11px]">
+        {opciones.map((o) => {
+          const on = valor === o.valor;
+          return (
+            <button
+              key={o.valor}
+              type="button"
+              onClick={() => onElegir(o.valor)}
+              aria-pressed={on}
+              className={`flex flex-col gap-1 rounded-md border bg-surface p-[14px] text-left transition-colors ${on ? ON_CARD : "border-line hover:border-ink"}`}
+            >
+              <b className={`text-[14.5px] font-semibold leading-tight ${on ? "text-accent" : "text-ink"}`}>{o.label}</b>
+              <span className="text-xs leading-snug text-muted">{o.hint}</span>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

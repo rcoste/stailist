@@ -51,4 +51,23 @@ describe("avisosDeLoQueLlevas", () => {
     expect(a.length).toBeGreaterThan(0);
     for (const x of a) expect(x.texto).not.toMatch(/la maleta|no hay /);
   });
+  // Su maleta de Mineápolis (2026-10-21): 8 días, 5 camisas y playeras y 3
+  // suéteres. "Playeras y camisas no las voy a andar repitiendo."
+  it("pocas prendas base: lo dice en su voz y nombra la que le falta", () => {
+    const ctx = { paradas: [{ lugar: "Mineápolis", temp_c: 11, temp_min: 8, temp_max: 15 }], ocasiones: ["ciudad"], dias: 8, base: 6 };
+    const lleva = ["Camisa azul claro", "Camisa blanca", "Playera blanca", "Playera negra", "Polo marino"].map((n) => pieza(n, "top"));
+    const sueteres = ["Suéter de merino gris", "Cuello tortuga negro", "Suéter vino"].map((n) => pieza(n, "top", "sueter"));
+    const falta = pieza("Camisa oxford marino", "top", "camisa");
+    const t = target([...lleva, ...sueteres, pieza("Chamarra acolchada", "abrigo"), botines, falta]);
+    const m = match(...Array(10).fill("tienes"), "falta");
+    const a = avisosDeLoQueLlevas(t, m, null, ctx).find((x) => x.regla === "pocas-base");
+    expect(a?.texto).toBe("Llevas 5 prendas base (camisas, playeras, blusas: lo que va pegado a la piel) para 8 días y el viaje pide 6. Los suéteres no cuentan: se repiten.");
+    expect(a?.loResuelve).toBe("Camisa oxford marino");
+  });
+
+  it("sin el dato de la base no opina", () => {
+    const ctx = { paradas: [{ lugar: "Lima", temp_c: 20 }], ocasiones: ["ciudad"], dias: 8 };
+    const t = target([pieza("Playera negra", "top"), pieza("Jeans negros", "bottom"), botines]);
+    expect(avisosDeLoQueLlevas(t, match("tienes", "tienes", "tienes"), null, ctx).map((x) => x.regla)).not.toContain("pocas-base");
+  });
 });

@@ -16,6 +16,7 @@ import type {
   CapsuleOverrides,
   CapsuleTarget,
 } from "@/lib/capsule";
+import { esPrendaBase } from "@/lib/engine/piezas-tipo";
 
 export const OCCASIONS = [
   { value: "playa", label: "Playa o piscina" },
@@ -96,14 +97,40 @@ export function luggageSummary(
 // Este piso se calcula en código (determinista, testeable) y entra al prompt
 // como REGLA DURA. Es un MÍNIMO de suficiencia, no una meta: por encima del
 // piso sigue mandando mezcla-y-combina.
-export type CapsuleFloor = { tops: number; bottoms: number; calzado: number };
+export type CapsuleFloor = {
+  tops: number;
+  bottoms: number;
+  calzado: number;
+  /** Prendas BASE (lo que va pegado a la piel: camisas, playeras, polos,
+   *  blusas, vestidos — lib/engine/piezas-tipo.ts esPrendaBase). Incluidas en `tops`. */
+  base: number;
+  /** Cómo quedó la base: con colchón, una por día, lavando, o sin caber. */
+  baseModo: "colchon" | "una-por-dia" | "lavando" | "no-cabe";
+  /** Las de base que pediría el viaje a una por día, sin lavar (para el aviso). */
+  unaPorDia: number;
+  /** La cuenta supone que lava (dijo que sí y el viaje dura más de una semana). */
+  lava: boolean;
+};
+
+// CÓMO ES CON LA ROPA (2026-10-21, profiles.cambio_ropa): quien "se cambia
+// seguido" —llega del vuelo y se cambia, turistea y luego cena— necesita ~25%
+// más prendas base que una por día. Se pregunta una vez y se guarda.
+export type CambioDeRopa = "repito" | "seguido";
+export const COLCHON_SEGUIDO = 1.25;
+// Lugares que la base NO puede comerse al decidir si cabe: abrigo y capas
+// medias (suéteres). Sin la reserva, 27 días con tres bolsas (34) "cabían" con
+// 27 camisas y ningún abrigo. En equipaje chico son 2: el abrigo va puesto en
+// el avión, y con 4 ni 5 días en carry-on cabían a una por día.
+export const reservaDeCapas = (capacidad: number) => (capacidad >= CAPACIDAD_HOLGADA ? 4 : 2);
 
 export function capsuleFloor(
   days: number,
   ocasiones: Occasion[],
-  capacidad: number // techo de prendas del equipaje (0 = sin definir)
+  capacidad: number, // techo de prendas del equipaje (0 = sin definir)
+  ropa: { cambio?: CambioDeRopa | null; lavar?: boolean | null } = {}
 ): CapsuleFloor {
-  // Más de ~7 días se asume re-uso/lavado: el piso no crece infinito.
+  // Pantalones, zapatos y la capa de encima se repiten: su piso no crece más
+  // allá de una semana.
   const d = Math.max(1, Math.min(days, 7));
   const noche = ocasiones.includes("noche");
   // Tops: ~0.8 por día (+1 si hay noches — el look de día no sube solo), entre
@@ -114,13 +141,44 @@ export function capsuleFloor(
   let bottoms = Math.min(4, Math.max(d >= 3 ? 2 : 1, Math.ceil(d / 2)));
   // Calzado: 2 pares como base (1 solo en escapadas de 1-2 días con mochila).
   let calzado = d <= 2 && capacidad > 0 && capacidad <= 7 ? 1 : 2;
+
+  // LA BASE NO SE REPITE (2026-10-21): una por día de verdad, no 0.8 contando
+  // suéteres. Si dijo que lava, la cuenta es de una semana. Con colchón si se
+  // cambia seguido; y lo que no quepa se suelta en orden: primero el colchón,
+  // luego el tercer y cuarto pantalón, y sólo al final la base baja de una por
+  // día (y la maleta lo dice: lib/engine/trip-revision.ts "pocas-base").
+  const dias = Math.max(1, Math.round(days));
+  const diasBase = ropa.lavar === true ? Math.min(dias, 7) : dias;
+  let base = ropa.cambio === "seguido" ? Math.ceil(diasBase * COLCHON_SEGUIDO) : diasBase;
+  let baseModo: CapsuleFloor["baseModo"] =
+    ropa.cambio === "seguido" ? "colchon" : ropa.lavar === true && dias > 7 ? "lavando" : "una-por-dia";
+  if (capacidad > 0) {
+    const disponible = Math.max(0, capacidad - reservaDeCapas(capacidad));
+    if (base + bottoms + calzado > disponible && base > diasBase) {
+      base = diasBase;
+      baseModo = ropa.lavar === true && dias > 7 ? "lavando" : "una-por-dia";
+    }
+    while (base + bottoms + calzado > disponible && bottoms > 2) bottoms--;
+    if (base + bottoms + calzado > disponible) {
+      base = Math.max(Math.min(3, diasBase), disponible - bottoms - calzado);
+      baseModo = "no-cabe";
+    }
+  }
+  tops = Math.max(tops, base);
   // El techo del equipaje MANDA sobre el piso: si no cabe, se comprime en orden
   // tops → bottoms (el calzado ya está al mínimo útil).
   if (capacidad > 0) {
     while (tops + bottoms + calzado > capacidad && tops > 3) tops--;
     while (tops + bottoms + calzado > capacidad && bottoms > 2) bottoms--;
+    base = Math.min(base, tops);
   }
-  return { tops, bottoms, calzado };
+  return { tops, bottoms, calzado, base, baseModo, unaPorDia: dias, lava: ropa.lavar === true && dias > 7 };
+}
+
+/** ¿Hay que preguntarle si va a lavar? Sólo cuando ni a una prenda base por día le cabe la maleta. */
+export function preguntarLavado(days: number, ocasiones: Occasion[], capacidad: number): boolean {
+  if (capacidad <= 0) return false;
+  return capsuleFloor(days, ocasiones, capacidad, { cambio: "repito" }).baseModo === "no-cabe";
 }
 
 // ¿La cápsula generada cumple el piso? Un vestido cuenta como top Y como
@@ -128,14 +186,16 @@ export function capsuleFloor(
 // forzaría bottoms de sobra en mujer). Devuelve las categorías cortas, o []
 // si cumple — instrumentación, no bloqueo.
 export function capsuleFloorGaps(
-  items: { category: string }[],
-  floor: CapsuleFloor
+  items: { category: string; nombre?: string; tipo?: string }[],
+  floor: Pick<CapsuleFloor, "tops" | "bottoms" | "calzado"> & { base?: number }
 ): string[] {
   const n = (cat: string) => items.filter((i) => i.category === cat).length;
   const tops = n("top") + n("vestido");
   const bottoms = n("bottom") + n("vestido");
+  const base = items.filter((i) => esPrendaBase({ category: i.category, nombre: i.nombre ?? "", tipo: i.tipo ?? "" })).length;
   const gaps: string[] = [];
   if (tops < floor.tops) gaps.push(`tops ${tops}/${floor.tops}`);
+  if (typeof floor.base === "number" && base < floor.base) gaps.push(`base ${base}/${floor.base}`);
   if (bottoms < floor.bottoms) gaps.push(`bottoms ${bottoms}/${floor.bottoms}`);
   if (n("calzado") < floor.calzado) gaps.push(`calzado ${n("calzado")}/${floor.calzado}`);
   return gaps;

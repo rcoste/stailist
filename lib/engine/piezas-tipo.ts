@@ -53,3 +53,17 @@ export function esCalzadoCerrado(it: CapsuleItem): boolean {
 export function esLigera(it: CapsuleItem): boolean {
   return it.temporada === "calor" || /lino|short|bermuda|sandalia|tirantes|traje de bano|playera ligera/.test(txt(it));
 }
+
+/**
+ * Prenda BASE: la que va pegada a la piel y casi no se repite — camisa,
+ * playera, polo, blusa, top; un vestido también, porque viste el día entero
+ * (2026-10-21). Los suéteres, cárdigans, sudaderas y cuellos de tortuga de
+ * punto son capa media: se ponen encima y se repiten tres o cuatro veces. Antes
+ * el piso contaba todo como "top", y una maleta de 8 días cumplía con 5 camisas
+ * y 3 suéteres (las 14 maletas vivas traían de 3 a 6 prendas base, durara el
+ * viaje 2 días o 27). El traje de baño no viste un día de ciudad: no cuenta.
+ */
+export function esPrendaBase(it: { category: string; nombre: string; tipo?: string | null }): boolean {
+  if (it.category !== "top" && it.category !== "vestido") return false;
+  return !/sueter|cardigan|sudadera|hoodie|sobrecamisa|chaleco|cuello alto|tortuga|jersey|trajes? de bano|banador|bikini/.test(norm(`${it.nombre} ${it.tipo ?? ""}`));
+}

@@ -18,6 +18,7 @@ import {
   capsuleFloorGaps,
   luggageCapacity,
   type Bolsas,
+  type CambioDeRopa,
   type Occasion,
   type Luggage,
   type Parada,
@@ -99,6 +100,8 @@ export async function POST(request: NextRequest) {
     contexto?: string; // texto libre: qué va a hacer en el viaje (afina cápsula + looks)
     editId?: string; // rehacer la maleta de un viaje EXISTENTE (editar ruta y fechas)
     invitacion?: string; // llegó por el link de otra persona (lib/viaje-invitacion.ts)
+    cambioRopa?: string; // "repito" | "seguido": cómo es con la ropa (se guarda en su perfil)
+    lavar?: boolean; // si va a poder lavar (sólo se pregunta cuando no cabe una base por día)
   } = {};
   try {
     body = await request.json();
@@ -135,16 +138,18 @@ export async function POST(request: NextRequest) {
   // reusan sus coordenadas (igual que el PATCH) — menos round-trips al
   // geocoder y cero riesgo de perder coords si un label no re-resuelve.
   let previas: Parada[] = [];
+  let lavadoPrevio: boolean | null = null;
   if (editId) {
     const { data: existing } = await supabase
       .from("trips")
-      .select("id, paradas")
+      .select("id, paradas, lavado")
       .eq("id", editId)
       .eq("user_id", user.id)
       .is("deleted_at", null)
       .maybeSingle();
     if (!existing) return NextResponse.json({ error: "not_found" }, { status: 404 });
     previas = Array.isArray(existing.paradas) ? (existing.paradas as Parada[]) : [];
+    lavadoPrevio = typeof existing.lavado === "boolean" ? existing.lavado : null;
   }
 
   const ocasiones = (body.ocasiones ?? []).filter((o): o is Occasion =>
@@ -163,6 +168,13 @@ export async function POST(request: NextRequest) {
     typeof body.contexto === "string" && body.contexto.trim()
       ? body.contexto.trim().slice(0, 200)
       : null;
+
+  // Cuántas prendas base (2026-10-21, lib/trip.ts capsuleFloor): lo que contestó
+  // en la maleta. Un valor raro se ignora; "no contestó" queda como null.
+  const cambioRopaBody: CambioDeRopa | null =
+    body.cambioRopa === "repito" || body.cambioRopa === "seguido" ? body.cambioRopa : null;
+  // Rehacer desde "editar ruta y fechas" no pasa por la pregunta: se queda lo que dijo.
+  const lavar = typeof body.lavar === "boolean" ? body.lavar : lavadoPrevio;
 
   // Anclas: ids de prendas que la persona quiere llevar sí o sí (máx 4).
   const anclaIds = Array.isArray(body.anclas)
@@ -200,7 +212,7 @@ export async function POST(request: NextRequest) {
           supabase
             .from("profiles")
             .select(
-              "gender, taste_tags, style_archetype, palette_season, palette_flow, palette_quiz, style_vetoes, style_reference, style_words, body_build, body_volume, age_range, acento_apetito, acento_apetito_fuente, fit_pref"
+              "gender, taste_tags, style_archetype, palette_season, palette_flow, palette_quiz, style_vetoes, style_reference, style_words, body_build, body_volume, age_range, acento_apetito, acento_apetito_fuente, fit_pref, cambio_ropa"
             )
             .eq("id", user.id)
             .single(),
@@ -211,6 +223,14 @@ export async function POST(request: NextRequest) {
         // sin paleta) — que al menos quede ruido en los logs.
         if (profileErr) console.error(`trip_profile_select_failed: ${profileErr.message}`);
         const gender = (profile?.gender as "hombre" | "mujer" | null) ?? null;
+        // Lo que contestó hoy gana y se guarda (se pregunta una sola vez); si
+        // no contestó, lo de su perfil.
+        const cambioRopa: CambioDeRopa | null =
+          cambioRopaBody ?? ((profile?.cambio_ropa as CambioDeRopa | null) ?? null);
+        if (cambioRopaBody && cambioRopaBody !== profile?.cambio_ropa) {
+          const { error: ropaErr } = await supabase.from("profiles").update({ cambio_ropa: cambioRopaBody }).eq("id", user.id);
+          if (ropaErr) console.error(`trip_cambio_ropa_update_failed: ${ropaErr.message}`);
+        }
 
         // Resuelve las anclas contra el clóset real (propiedad + no borradas).
         let anclas: TripAncla[] = [];
@@ -288,6 +308,8 @@ export async function POST(request: NextRequest) {
           anclas,
           rechazadas,
           contexto,
+          cambioRopa,
+          lavar,
         },
           { supabase, userId: user.id });
 
@@ -323,7 +345,7 @@ export async function POST(request: NextRequest) {
         // señal para endurecer el prompt o agregar retry.
         const gaps = capsuleFloorGaps(
           target.items,
-          capsuleFloor(days, ocasiones, luggageCapacity(bolsas, maleta))
+          capsuleFloor(days, ocasiones, luggageCapacity(bolsas, maleta), { cambio: cambioRopa, lavar })
         );
         if (gaps.length > 0) {
           console.warn(`trip_capsule_underfloor user=${user.id} gaps=${gaps.join(",")}`);
@@ -357,6 +379,7 @@ export async function POST(request: NextRequest) {
           maleta,
           bolsas,
           contexto,
+          lavado: lavar,
           weather: aggWeather,
           capsule_target: target,
           capsule_match: match,
