@@ -221,6 +221,26 @@ describe("escalones de búsqueda: bajar sólo cuando hay cero, nunca cuando fall
     expect(r.items).toHaveLength(1);
   });
 
+  it("baja también cuando lo que vino no SIRVE (nada pasa los filtros), y si nada sirve se queda con lo más específico", async () => {
+    const pedidas: string[] = [];
+    const gris = { ...items[0], productId: "GRIS", colors: [{ name: "GRAY", displayCode: "03" }] };
+    const negro = { ...items[0], productId: "NEGRO", colors: [{ name: "BLACK", displayCode: "09" }] };
+    const fetchImpl = vi.fn(async (url: string | URL | Request) => {
+      const q = new URL(String(url)).searchParams.get("q")!;
+      pedidas.push(q);
+      return q === "turtleneck knit sweater" ? resp([gris]) : q === "turtleneck sweater" ? resp([gris, negro]) : resp([]);
+    });
+    const sirve = (its: UniqloItem[]) => its.some((i) => i.colors?.some((c) => c.name === "BLACK"));
+    const r = await consultarVitrina("us", "turtleneck knit sweater", { fetchImpl: fetchImpl as unknown as typeof fetch, sirve });
+    expect(pedidas).toEqual(["turtleneck knit sweater", "turtleneck sweater"]);
+    expect(r.q).toBe("turtleneck sweater");
+
+    // Nada sirve en ningún escalón: el más específico que trajo algo (de ahí sale la cercana).
+    const nada = await consultarVitrina("us", "turtleneck knit sweater", { fetchImpl: fetchImpl as unknown as typeof fetch, sirve: () => false });
+    expect(nada.q).toBe("turtleneck knit sweater");
+    expect(nada.items.map((i) => i.productId)).toEqual(["GRIS"]);
+  });
+
   it("si la API falla, NO baja de escalón (no multiplica esperas) y avisa una vez", async () => {
     const avisos: string[] = [];
     const f403 = vi.fn(async () => ({ ok: false, status: 403, headers: { get: () => null }, json: async () => ({}) }) as unknown as Response);
@@ -242,6 +262,42 @@ describe("escalones de búsqueda: bajar sólo cuando hay cero, nunca cuando fall
     expect(r.q).toBe("スウェット");
     expect(pedidas.at(-1)).toBe("スウェット#7");
     expect(r.filtradaPorCategoria).toBe(true);
+  });
+});
+
+describe("lo que un filtro exige va en la búsqueda (2026-10-21: el suéter de cuello alto que se quedaba vacío)", () => {
+  it("el cuello alto o en V entra al término, venga del tipo, del nombre o de la descripción", () => {
+    expect(terminoDe("sueter-cuello-alto", "Suéter de cuello alto negro")).toBe("turtleneck sweater");
+    expect(terminoDe("sueter", "Suéter de punto vino", "punto medio, cuello alto suelto, manga globo discreta")).toBe("turtleneck knit sweater");
+    expect(terminoDe("sueter", "Suéter de punto vino", "punto fino, cuello en V suave, silueta entallada")).toBe("v-neck knit sweater");
+    // Cuello redondo es el de siempre: no se pide.
+    expect(terminoDe("sueter", "Suéter de punto esmeralda", "punto grueso, cuello redondo, hombro caído")).toBe("knit sweater");
+    // La cabeza "cuello" ya dice turtleneck: no se duplica.
+    expect(terminoDe("cuello-alto", "Cuello alto negro")).toBe("turtleneck");
+  });
+
+  it("de la descripción sólo entra lo que filtra (piel, impermeable), no lo que ordena (punto, lana)", () => {
+    expect(terminoDe("bolso", "Bolso pequeño de hombro negro", "piel estructurada, correa corta")).toContain("leather");
+    expect(terminoDe("pantalon-vestir", "Pantalón de vestir gris recto", "lana fría, pinzas, tiro alto")).not.toContain("wool");
+  });
+
+  it("escalones: atributo + prenda en inglés, luego la frase local con el atributo, y sólo después se suelta", () => {
+    expect(consultasPara("turtleneck sweater", "us")).toEqual(["turtleneck sweater", "sweater"]);
+    expect(consultasPara("turtleneck knit sweater", "jp")).toEqual(["turtleneck knit sweater", "turtleneck sweater", "タートルネックセーター", "sweater"]);
+    expect(consultasPara("v-neck knit sweater", "kr")).toEqual(["v-neck knit sweater", "v-neck sweater", "브이넥 스웨터", "sweater"]);
+    expect(consultasPara("short sleeve shirt", "jp")).toEqual(["short sleeve shirt", "半袖シャツ", "shirt"]);
+    expect(consultasPara("leather jacket", "kr")).toEqual(["leather jacket", "레더 재킷", "jacket"]);
+    expect(consultasPara("rain jacket", "jp")).toEqual(["rain jacket", "ブロックテック", "jacket"]);
+    expect(consultasPara("smart straight pants", "jp")).toEqual(["smart straight pants", "smart pants", "スラックス", "pants"]);
+  });
+
+  it("con nombres reales: el cuello de tortuga pasa en los tres idiomas; medio cierre y cuello redondo no", () => {
+    const pieza = "Suéter de cuello alto negro";
+    expect(cuelloCompatible("Cashmere Turtleneck Sweater", pieza)).toBe(true);
+    expect(cuelloCompatible("3Dモックネックセーター", pieza)).toBe(true);
+    expect(cuelloCompatible("3D니트터틀넥스웨터", pieza)).toBe(true);
+    expect(cuelloCompatible("Cashmere Quarter-Zip Sweater", pieza)).toBe(false);
+    expect(cuelloCompatible("Merino Crew Neck Sweater", pieza)).toBe(false);
   });
 });
 
@@ -272,6 +328,13 @@ describe("lo que se perdió al bajar de escalón pasa a filtrar (medido en las 6
     expect(respetaModificadores("スウェットプルパーカ", "hoodie sweatshirt", "スウェット")).toBe(true);
     expect(respetaModificadores("Boots", "leather ankle boots", "boots")).toBe(false);
     expect(respetaModificadores("サイドゴアブーツ", "leather ankle boots", "boots")).toBe(true);
+  });
+
+  it("lino: si se perdió al bajar, la ficha tiene que decirlo (shorts de sudadera no cubren un short de lino)", () => {
+    expect(respetaModificadores("スウェットワイドショーツ", "linen shorts", "shorts")).toBe(false);
+    expect(respetaModificadores("リネンブレンドイージーショーツ", "linen shorts", "shorts")).toBe(true);
+    expect(respetaModificadores("옥스포드오버사이즈셔츠", "linen shirt", "shirt")).toBe(false);
+    expect(respetaModificadores("프리미엄린넨셔츠", "linen shirt", "shirt")).toBe(true);
   });
 
   it("'long sleeve' habla de la manga, no del largo: no exige nada de largo", () => {
