@@ -3,7 +3,10 @@ import { registrarError } from "@/lib/errores";
 import { VitrinaFranja } from "@/components/vitrina-franja";
 import {
   claveVitrina,
+  CERCANAS_ACTIVAS,
   consultarUniqloEnCategoria,
+  elegirCercana,
+  familiaDePieza,
   elegirPrendas,
   tasasAMxn,
   terminoDe,
@@ -74,9 +77,18 @@ export async function VitrinaHueco({
     Promise.all(mercados.map((m) => consultarUniqloEnCategoria(m, q, { onError }))),
     pesos ? tasasAMxn() : Promise.resolve(null),
   ]);
+  const hueco = { segmento, colorFamilia, termino: q, nombre, visual, temporada, viajeFrio };
+  // Dos pasadas: una exacta en CUALQUIER país le gana a cualquier cercana, y
+  // la cercana (una sola, que cede sólo el tono) aparece únicamente cuando
+  // ningún país tiene exacta. El orden entre países es el del viaje.
   let prendas: PrendaVitrina[] = [];
   for (let i = 0; i < mercados.length && prendas.length === 0; i++) {
-    prendas = elegirPrendas(consultas[i].items, { segmento, colorFamilia, termino: q, nombre, visual, temporada, viajeFrio }, mercados[i], consultas[i].vistoEl);
+    prendas = elegirPrendas(consultas[i].items, hueco, mercados[i], consultas[i].vistoEl);
+  }
+  if (prendas.length === 0 && CERCANAS_ACTIVAS) {
+    for (let i = 0; i < mercados.length && prendas.length === 0; i++) {
+      prendas = elegirCercana(consultas[i].items, hueco, mercados[i], consultas[i].vistoEl);
+    }
   }
   if (prendas.length === 0) return null;
 
@@ -88,6 +100,7 @@ export async function VitrinaHueco({
       tripId={tripId}
       index={index}
       tasas={tasas}
+      familia={familiaDePieza(colorFamilia, nombre)}
     />
   );
 }

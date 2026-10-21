@@ -153,6 +153,45 @@ describe("con término (v0.2.402.2): ropa interior y nombre que no dice la prend
   });
 });
 
+describe("la cercana en la medición: marcada aparte y sólo cuando no hubo exacta en ese mercado", () => {
+  const polo = (productId: string, codes: string[]): UniqloItem => ({
+    productId,
+    name: "DRY-EX Polo Shirt",
+    genderCategory: "MEN",
+    colors: codes.map((c) => ({ name: c === "69" ? "NAVY" : "BLUE", displayCode: c })),
+    prices: { base: { value: 29.9 } },
+    rating: { average: 4.5 },
+    images: { main: Object.fromEntries(codes.map((c) => [c, { image: `https://image.uniqlo.com/UQ/${c}.jpg` }])) },
+  });
+  const hueco = { segmento: "hombre" as const, colorFamilia: "azul", nombre: "Polo azul rey", termino: "polo shirt" };
+
+  it("sin exacta, la cercana queda marcada con su tono y en el color vecino; con exacta, no hay cercana", () => {
+    const out = armarCandidatos([polo("TINTA", ["68"]), polo("INTENSO", ["64"])], hueco, "us");
+    const intenso = out.find((c) => c.productId === "INTENSO")!;
+    expect(intenso.elegida).toBe(false);
+    expect(intenso.cercana).toBe(true);
+    expect(intenso.tonoCercano).toBe("azul intenso");
+    expect(intenso.displayCode).toBe("64");
+    expect(out.find((c) => c.productId === "TINTA")!.cercana).toBe(false);
+    const conExacta = armarCandidatos([polo("REY", ["67"]), polo("INTENSO", ["64"])], hueco, "us");
+    expect(conExacta.find((c) => c.productId === "REY")!.elegida).toBe(true);
+    expect(conExacta.every((c) => !c.cercana)).toBe(true);
+  });
+
+  it("el resumen cuenta las cercanas aparte de las elegidas", () => {
+    const r = resumenMedicion(
+      [
+        { huecoN: 1, elegida: true, juez: true, roberto: true },
+        { huecoN: 2, elegida: false, cercana: true, juez: false, roberto: true },
+        { huecoN: 3, elegida: false, cercana: true, juez: false, roberto: null },
+      ],
+      3
+    );
+    expect(r.elegidas).toEqual({ total: 1, votadas: 1, aprobadas: 1 });
+    expect(r.cercanas).toEqual({ total: 2, votadas: 1, aprobadas: 1 });
+  });
+});
+
 describe("muestraDeHuecos: cuatro huecos distintos, no cuatro suéteres", () => {
   const h = (tipo: string, segmento: "hombre" | "mujer", termino: string | null = "x") => ({ tipo, segmento, termino });
   it("alterna segmento, no repite la cabeza del tipo y salta lo que no se puede buscar", () => {

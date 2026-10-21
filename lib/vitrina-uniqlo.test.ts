@@ -18,6 +18,9 @@ import {
   coloresDe,
   colorQueEmpata,
   consultarUniqloEnCategoria,
+  elegirCercana,
+  familiasEnTexto,
+  vecinosDe,
   textoDePieza,
   familiaDePieza,
   tonosDe,
@@ -224,6 +227,23 @@ describe("tono por código de Uniqlo: 'GREEN' es la familia, el código es el to
     expect(familiaDePieza("vino", null)).toBe("vino");
   });
 
+  it("el nombre sólo estrecha, nunca ensancha: 'azul marino' con `marino` sigue siendo marino, y con `azul` se vuelve marino", () => {
+    // "marino" y "azul marino" son la misma familia (NAVY): lo que importa es que no se abra a BLUE.
+    expect(coloresDe(familiaDePieza("marino", "Jogger urbano azul marino"))).toEqual(["NAVY"]);
+    expect(coloresDe(familiaDePieza("azul", "Jogger urbano azul marino"))).toEqual(["NAVY"]);
+    expect(familiaDePieza("azul claro", "Camisa azul claro de lino")).toBe("azul claro");
+    expect(familiaDePieza("gris carbón", "Pantalón gris carbón")).toBe("gris carbon");
+    // Con `marino`, la palabra "azul" no abre la familia a 64-69.
+    expect(vecinosDe(familiaDePieza("marino", "Polo azul marino"), "polo shirt")).toEqual([]);
+  });
+
+  it("familiasEnTexto cuenta familias distintas sin contar dos veces 'azul' dentro de 'azul marino'", () => {
+    expect(familiasEnTexto("Playera de rayas blanco y negro")).toBe(2);
+    expect(familiasEnTexto("Jogger urbano azul marino")).toBe(1);
+    expect(familiasEnTexto("Cinturón de piel negro con hebilla dorada")).toBe(1);
+    expect(familiasEnTexto(null)).toBe(0);
+  });
+
   it("las familias con tono exigen el código; las demás van sólo por nombre", () => {
     expect(tonosDe("esmeralda")).toEqual(["55"]);
     expect(tonosDe("azul rey")).toEqual(["67"]);
@@ -265,6 +285,51 @@ describe("tono por código de Uniqlo: 'GREEN' es la familia, el código es el to
     const rubi = { ...base, productId: "RUBI", colors: [{ name: "RED", displayCode: "17" }], images: { main: { "17": { image: "https://image.uniqlo.com/UQ/y.jpg" } } } };
     const out = elegirPrendas([coral, rubi], { segmento: "mujer", colorFamilia: "rubí" }, "us");
     expect(out.map((p) => p.id)).toEqual(["us:RUBI:17"]);
+  });
+});
+
+describe("la más cercana: una sola prenda que cede únicamente el tono, hacia vecinos escritos a mano", () => {
+  const polo = (productId: string, codes: string[], name = "DRY-EX Polo Shirt", genderCategory = "MEN"): UniqloItem => ({
+    productId,
+    name,
+    genderCategory,
+    colors: codes.map((c) => ({ name: c === "69" ? "NAVY" : c === "63" ? "BLUE" : "BLUE", displayCode: c })),
+    prices: { base: { value: 29.9 } },
+    rating: { average: 4.5 },
+    images: { main: Object.fromEntries(codes.map((c) => [c, { image: `https://image.uniqlo.com/UQ/${c}.jpg` }])) },
+  });
+  const hueco = { segmento: "hombre" as const, colorFamilia: "azul", nombre: "Polo azul rey", termino: "polo shirt" };
+
+  it("azul rey: sin 67 no hay exacta; la cercana es el vecino más próximo que exista (66 > 65 > 64), con su palabra", () => {
+    const items = [polo("TINTA", ["68", "69"]), polo("INTENSO", ["64"]), polo("MEDIO", ["65"])];
+    expect(elegirPrendas(items, hueco, "us")).toEqual([]);
+    const out = elegirCercana(items, hueco, "us");
+    expect(out).toHaveLength(1);
+    expect(out[0].productId).toBe("MEDIO");
+    expect(out[0].colorCode).toBe("65");
+    expect(out[0].cercana).toBe("azul medio");
+    expect(out[0].url).toContain("colorDisplayCode=65");
+  });
+
+  it("el 68 (tinta) y el marino no son vecinos de azul rey: si sólo hay eso, no hay cercana", () => {
+    expect(elegirCercana([polo("TINTA", ["68", "69"])], hueco, "us")).toEqual([]);
+  });
+
+  it("la cercana pasa los MISMOS filtros que la exacta: un polo de mujer o a rayas no entra por ceder el tono", () => {
+    const items = [polo("MUJER", ["64"], "DRY-EX Polo Shirt", "WOMEN"), polo("RAYAS", ["64"], "DRY Pique Striped Polo Shirt")];
+    expect(elegirCercana(items, hueco, "us")).toEqual([]);
+  });
+
+  it("una pieza que nombra dos colores no tiene cercana (no sabemos cuál ceder)", () => {
+    expect(elegirCercana([polo("INTENSO", ["64"])], { ...hueco, nombre: "Polo azul rey con cuello blanco" }, "us")).toEqual([]);
+  });
+
+  it("`azul` a secas cede al celeste 63 sólo arriba (camisa), no en un pantalón; vino no cede nunca", () => {
+    expect(vecinosDe("azul", "linen shirt")).toEqual(["63"]);
+    expect(vecinosDe("azul", "pants")).toEqual([]);
+    expect(vecinosDe("vino", "sweater")).toEqual([]);
+    expect(vecinosDe("esmeralda", "knit sweater")).toEqual(["58"]);
+    expect(vecinosDe("rubi", "midi dress")).toEqual(["16"]);
   });
 });
 

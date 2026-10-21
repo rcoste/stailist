@@ -28,6 +28,7 @@ export function VitrinaFranja({
   tripId,
   index,
   tasas,
+  familia,
 }: {
   prendas: PrendaVitrina[];
   clave: string;
@@ -37,6 +38,8 @@ export function VitrinaFranja({
   index?: number;
   /** Pesos por unidad de moneda (null = no enseñar pesos). */
   tasas?: TasasMxn | null;
+  /** La familia de color pedida, en palabras ("azul rey"), para la etiqueta de la cercana. */
+  familia?: string | null;
 }) {
   const router = useRouter();
   const registrada = useRef(false);
@@ -49,11 +52,13 @@ export function VitrinaFranja({
     registrada.current = true;
     // En modo "ver como" el servidor contesta 403 a cualquier POST (es de sólo
     // lectura): la medición se pierde a propósito y no puede ensuciar la consola.
-    registrarVitrinaVista(clave, prendas.map((p) => p.id), prendas[0].tienda, desde).catch(() => {});
+    registrarVitrinaVista(clave, prendas.map((p) => p.id), prendas[0].tienda, desde, Boolean(prendas[0].cercana)).catch(() => {});
   }, [prendas, clave, desde]);
 
   if (prendas.length === 0) return null;
   const tienda = prendas[0].tienda;
+  // "La más cercana": una sola prenda que cede el tono, y la etiqueta lo dice.
+  const cercana = prendas[0].cercana ?? null;
   const visto = fechaCorta(prendas[0].vistoEl);
   const puedeComprar = typeof tripId === "string" && typeof index === "number";
 
@@ -70,6 +75,7 @@ export function VitrinaFranja({
         foto: p.foto,
         precio: p.precio,
         moneda: p.moneda,
+        cercana: Boolean(p.cercana),
       });
       if (r.ok) {
         setComprada(p.id);
@@ -88,7 +94,7 @@ export function VitrinaFranja({
     <div className="border-t border-line2 px-[13px] pb-3 pt-2.5">
       <div className="flex items-baseline justify-between gap-2">
         <span className="truncate text-[9.5px] font-bold uppercase tracking-[0.13em] text-faint">
-          la hay en {tienda}
+          {cercana ? `la más cercana en ${tienda}: ${cercana}${familia ? `, no ${familia}` : ""}` : `la hay en ${tienda}`}
         </span>
         {visto ? <span className="shrink-0 text-[10px] text-faint">visto el {visto}</span> : null}
       </div>
@@ -102,7 +108,7 @@ export function VitrinaFranja({
                 href={p.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={() => registrarTiendaClick(clave, p.id, p.tienda, desde).catch(() => {})}
+                onClick={() => registrarTiendaClick(clave, p.id, p.tienda, desde, Boolean(p.cercana)).catch(() => {})}
                 className="relative block aspect-[4/5] w-[44px] shrink-0 overflow-hidden bg-tile"
                 aria-label={`ver ${p.nombre} en ${p.tienda}`}
               >
@@ -123,7 +129,7 @@ export function VitrinaFranja({
                   href={p.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  onClick={() => registrarTiendaClick(clave, p.id, p.tienda, desde).catch(() => {})}
+                  onClick={() => registrarTiendaClick(clave, p.id, p.tienda, desde, Boolean(p.cercana)).catch(() => {})}
                   className="text-[12px] font-bold text-ink underline underline-offset-2"
                 >
                   verla

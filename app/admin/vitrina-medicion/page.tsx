@@ -73,7 +73,7 @@ export default async function VitrinaMedicionPage({
   // Roberto vota. Los 20 completos quedan a un clic, para el techo.
   const verTodos = sp.ver === "todos";
   const todos = await cargarCandidatos(hueco.id, mercado);
-  const candidatos = verTodos ? todos : todos.filter((k) => k.elegida);
+  const candidatos = verTodos ? todos : todos.filter((k) => k.elegida || k.cercana);
   const url = (h: number, m: Mercado = mercado, ver = verTodos) => `/admin/vitrina-medicion?c=${corrida.id}&h=${h}&m=${m}${ver ? "&ver=todos" : ""}`;
   const fecha = new Intl.DateTimeFormat("es-MX", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "America/Mexico_City" }).format(new Date(corrida.creada));
 
@@ -172,7 +172,7 @@ function Cifras({ r }: { r: ResumenMedicion }) {
         label="Elecciones de la vitrina que aprobaste"
         valor={aprob === null ? "—" : `${aprob}%`}
         unidad={`${r.elegidas.aprobadas} de ${r.elegidas.votadas} calificadas`}
-        sub={`${r.elegidas.total} elegidas en total (hasta 2 por hueco y mercado)`}
+        sub={`${r.elegidas.total} elegidas (hasta 2 por hueco y país)${r.cercanas.total ? ` · cercanas: ${r.cercanas.aprobadas} de ${r.cercanas.votadas} aprobadas, ${r.cercanas.total} en total` : ""}`}
         barra={{ n: r.elegidas.aprobadas, de: r.elegidas.votadas }}
         tono={aprob === null ? "ink" : aprob >= 70 ? "success" : "error"}
       />
@@ -239,7 +239,7 @@ function Pieza({ hueco, anterior, siguiente }: { hueco: HuecoUI; anterior: strin
 
 function Candidato({ k }: { k: CandidatoUI }) {
   return (
-    <li className={`flex flex-col gap-2 rounded-lg border p-2 ${k.elegida ? "border-2 border-ink" : "border-line"}`}>
+    <li className={`flex flex-col gap-2 rounded-lg border p-2 ${k.elegida || k.cercana ? "border-2 border-ink" : "border-line"}`}>
       <a href={k.url ?? "#"} target="_blank" rel="noopener noreferrer" className="relative block aspect-[4/5] w-full overflow-hidden rounded-md bg-tile">
         {k.foto ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -256,7 +256,13 @@ function Candidato({ k }: { k: CandidatoUI }) {
           {k.rating ? ` · ★${k.rating.toFixed(1)}` : ""}
         </span>
         <span className="flex flex-wrap gap-1 pt-1">
-          {k.elegida ? <Chip tono="ink">la enseña</Chip> : <Chip>{MOTIVO[k.motivo ?? ""] ?? k.motivo}</Chip>}
+          {k.elegida ? (
+            <Chip tono="ink">la enseña</Chip>
+          ) : k.cercana ? (
+            <Chip tono="ink">la más cercana{k.tonoCercano ? `: ${k.tonoCercano}` : ""}</Chip>
+          ) : (
+            <Chip>{MOTIVO[k.motivo ?? ""] ?? k.motivo}</Chip>
+          )}
           {k.genero ? <Chip>{k.genero.toLowerCase()}</Chip> : null}
         </span>
       </div>

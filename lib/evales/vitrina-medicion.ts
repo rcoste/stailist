@@ -4,6 +4,7 @@ import {
   colorQueEmpata,
   coloresDe,
   cuelloCompatible,
+  elegirCercana,
   elegirPrendas,
   esRopaInterior,
   estampadoNoPedido,
@@ -133,6 +134,9 @@ export type CandidatoMedicion = {
   rating: number | null;
   elegida: boolean;
   motivo: MotivoDescarte | null;
+  /** true si es "la más cercana" (se enseña cediendo el tono porque no hubo exacta en este mercado). */
+  cercana: boolean;
+  tonoCercano: string | null;
 };
 
 /**
@@ -171,6 +175,9 @@ export function motivoDescarte(it: UniqloItem, hueco: HuecoParaElegir): Exclude<
  */
 export function armarCandidatos(items: UniqloItem[] | null | undefined, hueco: HuecoParaElegir, mercado: Mercado): CandidatoMedicion[] {
   const elegidas = new Set(elegirPrendas(items, hueco, mercado).map((p) => p.id));
+  // La cercana sólo existe si en ESTE mercado no hubo exacta (la página además
+  // exige que no la haya en ningún país; aquí se mide por mercado).
+  const cercana = elegidas.size === 0 ? elegirCercana(items, hueco, mercado)[0] ?? null : null;
   const salida: CandidatoMedicion[] = [];
   (items ?? []).forEach((it, orden) => {
     if (!it?.productId || !it.name) return;
@@ -178,8 +185,14 @@ export function armarCandidatos(items: UniqloItem[] | null | undefined, hueco: H
     // de la familia por nombre (para ver el tono que se descartó); si no, el primero.
     const colores = coloresDe(hueco.colorFamilia);
     const enFamilia = colorQueEmpata(it.colors, hueco).color ?? (it.colors ?? []).find((c) => colores.includes((c.name ?? "").toUpperCase()));
-    const color = enFamilia ?? (it.colors ?? [])[0] ?? null;
-    const displayCode = color?.displayCode ?? null;
+    let color = enFamilia ?? (it.colors ?? [])[0] ?? null;
+    let displayCode = color?.displayCode ?? null;
+    const esCercana = cercana?.productId === it.productId;
+    if (esCercana) {
+      // Se enseña en el color vecino, no en el primero de la familia.
+      color = (it.colors ?? []).find((c) => c.displayCode === cercana!.colorCode) ?? color;
+      displayCode = color?.displayCode ?? null;
+    }
     const id = `${mercado}:${it.productId}:${displayCode ?? ""}`;
     const elegida = elegidas.has(id);
     const precio = typeof it.prices?.base?.value === "number" ? it.prices.base.value : null;
@@ -202,6 +215,8 @@ export function armarCandidatos(items: UniqloItem[] | null | undefined, hueco: H
       rating: typeof it.rating?.average === "number" ? it.rating.average : null,
       elegida,
       motivo: elegida ? null : (motivoDescarte(it, hueco) ?? "rating"),
+      cercana: esCercana,
+      tonoCercano: esCercana ? (cercana?.cercana ?? null) : null,
     });
   });
   return salida;
@@ -238,6 +253,8 @@ export function muestraDeHuecos<H extends { tipo: string; segmento: Segmento; te
 export type VotoFila = {
   huecoN: number;
   elegida: boolean;
+  /** "La más cercana": se mide aparte de las elegidas exactas. */
+  cercana?: boolean;
   juez: boolean | null;
   roberto: boolean | null;
 };
@@ -245,6 +262,8 @@ export type VotoFila = {
 export type ResumenMedicion = {
   /** De las que la vitrina enseña: cuántas calificó Roberto y cuántas aprobó. */
   elegidas: { total: number; votadas: number; aprobadas: number };
+  /** Las cercanas (ceden el tono): aparte, con su propia aprobación de Roberto. */
+  cercanas: { total: number; votadas: number; aprobadas: number };
   /** Candidatos con los dos veredictos, y en cuántos coinciden. */
   acuerdo: { comparables: number; coinciden: number };
   /** Huecos con al menos un candidato correcto entre los 20 (× mercados). */
@@ -254,6 +273,7 @@ export type ResumenMedicion = {
 
 export function resumenMedicion(filas: VotoFila[], nHuecos: number): ResumenMedicion {
   const elegidas = filas.filter((f) => f.elegida);
+  const cercanas = filas.filter((f) => f.cercana);
   const comparables = filas.filter((f) => f.juez !== null && f.roberto !== null);
   const conSiRoberto = new Set<number>();
   const conSiJuez = new Set<number>();
@@ -268,6 +288,11 @@ export function resumenMedicion(filas: VotoFila[], nHuecos: number): ResumenMedi
       total: elegidas.length,
       votadas: elegidas.filter((f) => f.roberto !== null).length,
       aprobadas: elegidas.filter((f) => f.roberto === true).length,
+    },
+    cercanas: {
+      total: cercanas.length,
+      votadas: cercanas.filter((f) => f.roberto !== null).length,
+      aprobadas: cercanas.filter((f) => f.roberto === true).length,
     },
     acuerdo: {
       comparables: comparables.length,

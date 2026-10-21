@@ -699,25 +699,42 @@ export const TONOS: Record<string, string[]> = {
   azul: ["64", "65", "66", "67", "68", "69"],
 };
 
-/** Las familias con tono, de la más específica (dos palabras) a la más general. */
-const FAMILIAS_CON_TONO = Object.keys(TONOS).sort((a, b) => b.length - a.length);
+/** Todas las familias, de la más larga a la más corta: "azul marino" antes que "azul". */
+const FAMILIAS_POR_LARGO = Object.keys(COLORES).sort((a, b) => b.length - a.length);
 
 /**
- * La familia que de verdad pide la pieza: la del nombre si nombra un tono
- * ("Camiseta esmeralda" → esmeralda, "Suéter azul rey" → azul rey); si no, la
- * de la cápsula. Sólo se asciende a una familia con tono que quepa en la misma
- * familia de nombres: "Jeans negros rectos" no se vuelve "rojo" por nada.
+ * La familia que de verdad pide la pieza: la del nombre si nombra una familia
+ * MÁS ESTRECHA que la de la cápsula ("Camiseta esmeralda" con `verde` →
+ * esmeralda; "Jogger azul marino" con `azul` → marino); si no, la de la
+ * cápsula. El nombre sólo puede estrechar, nunca ensanchar: con `marino`, la
+ * palabra "azul" de "azul marino" no asciende a `azul` (64-69), que fue el bug
+ * cazado el 2026-10-21 al revisar los casos límite. Y nunca salta de familia:
+ * "Bufanda negra con rojo" sigue siendo negra.
  */
 export function familiaDePieza(colorFamilia: string | null | undefined, nombre?: string | null): string | null {
   const base = colorFamilia ? slug(colorFamilia) : null;
   const texto = slug(nombre ?? "");
   const nombresBase = coloresDe(base);
-  for (const f of FAMILIAS_CON_TONO) {
+  for (const f of FAMILIAS_POR_LARGO) {
     if (!new RegExp(`(^|[^a-z])${f}([^a-z]|$)`).test(texto)) continue;
-    const nombresF = COLORES[f] ?? COLORES[f.split(" ")[0]] ?? [];
-    if (nombresBase.length === 0 || nombresF.some((n) => nombresBase.includes(n))) return f;
+    const nombresF = COLORES[f];
+    // Cabe dentro de la familia de la cápsula: todos sus nombres están en ella.
+    if (nombresBase.length === 0 || nombresF.every((n) => nombresBase.includes(n))) return f;
   }
   return base;
+}
+
+/** Cuántas familias de color distintas nombra un texto ("rayas blanco y negro" → 2). */
+export function familiasEnTexto(texto: string | null | undefined): number {
+  const t = slug(texto ?? "");
+  const vistas = new Set<string>();
+  for (const f of FAMILIAS_POR_LARGO) {
+    if (!new RegExp(`(^|[^a-z])${f}([^a-z]|$)`).test(t)) continue;
+    // "azul marino" ya contó; que "azul" y "marino" no cuenten otra vez.
+    if ([...vistas].some((v) => v.includes(f) || f.includes(v))) continue;
+    vistas.add(f);
+  }
+  return vistas.size;
 }
 
 /** Los códigos de tono que valen para una familia; null si esa familia va sólo por nombre. */
@@ -725,6 +742,62 @@ export function tonosDe(familia: string | null | undefined): string[] | null {
   if (!familia) return null;
   const s = slug(familia);
   return TONOS[s] ?? null;
+}
+
+// --- La más cercana: UNA concesión, dicha en voz alta ---------------------------
+//
+// Cuando con todos los filtros un país se queda en cero, se puede enseñar UNA
+// prenda que ceda sólo el TONO hacia un vecino que una stylist firmaría, con
+// etiqueta ("la más cercana a azul rey: azul intenso"). Diseño del 2026-10-21
+// con Roberto, a partir de su "Polo azul rey": Uniqlo no tiene un polo 67, pero
+// sí un DRY-EX 64 "azul intenso" que hace el papel; el 68 tinta, a medias; el
+// marino, no. Todo lo demás (tipo, sección, manga, cuello, patrón, función,
+// temporada, material, familia de color por nombre) sigue filtrando igual: la
+// cercana nunca es dos concesiones.
+//
+// Los vecinos se escriben a mano por familia, en orden de cercanía; no por
+// aritmética de códigos (el 64 fue celeste en tres camisas y "azul intenso"
+// en un polo: los códigos no son perfectos y la lista se afina con lo que
+// Roberto vea). Las familias por nombre (vino, marino, negro…) no tienen
+// vecino: si no hay, no hay.
+export const VECINOS: Record<string, string[]> = {
+  "azul rey": ["66", "65", "64"],
+  cobalto: ["66", "65", "64"],
+  esmeralda: ["58"],
+  rubi: ["16"],
+};
+
+/** `azul` a secas cede al celeste 63 sólo en camisas, blusas y playeras (un oxford celeste sí; un pantalón, no). */
+const VECINOS_SOLO_ARRIBA: Record<string, string[]> = { azul: ["63"] };
+const CABEZAS_DE_ARRIBA = new Set(["shirt", "overshirt", "blouse", "t-shirt"]);
+
+/** La palabra de persona para el tono cedido; sin ella la etiqueta no informa. */
+export const NOMBRE_TONO: Record<string, string> = {
+  "63": "azul claro",
+  "64": "azul intenso",
+  "65": "azul medio",
+  "66": "azul medio",
+  "68": "azul tinta",
+  "58": "verde petróleo",
+  "16": "rojo profundo",
+};
+
+/**
+ * EL INTERRUPTOR (regla escrita antes de prender, 2026-10-21): si al 7 de
+ * noviembre las cercanas reciben menos de la mitad de clics por vista que las
+ * exactas, o Roberto aprueba menos de la mitad de las que se enseñaron, esto
+ * pasa a false y los huecos vuelven a quedar vacíos. Es un interruptor, no una
+ * reconstrucción. La lectura separa cercanas de exactas por `data.cercana`.
+ */
+export const CERCANAS_ACTIVAS = true;
+
+/** Los códigos vecinos que valen como cercana para una familia y una prenda; vacío = no hay cercana. */
+export function vecinosDe(familia: string | null | undefined, termino?: string | null): string[] {
+  if (!familia) return [];
+  const s = slug(familia);
+  if (VECINOS[s]) return VECINOS[s];
+  if (VECINOS_SOLO_ARRIBA[s] && termino && CABEZAS_DE_ARRIBA.has(cabezaDeTermino(termino))) return VECINOS_SOLO_ARRIBA[s];
+  return [];
 }
 
 /**
@@ -775,6 +848,8 @@ export type PrendaVitrina = {
   foto: string;
   /** ISO de cuando la API contestó (header `date` de la respuesta, cacheada o no). */
   vistoEl: string | null;
+  /** Si es "la más cercana": el tono que cede, en palabras ("azul intenso"). null = exacta. */
+  cercana?: string | null;
 };
 
 const HOST_FOTO = "https://image.uniqlo.com/UQ/";
@@ -807,28 +882,37 @@ export function precioTexto(mercado: Mercado, valor: number): string {
  * calificación. El filtro de género va AQUÍ porque el parámetro
  * `genderCategory=` de la URL no filtra nada (medido: misma mezcla con y sin).
  */
-export function elegirPrendas(
+type HuecoVitrina = {
+  segmento: Segmento;
+  colorFamilia: string;
+  termino?: string | null;
+  nombre?: string | null;
+  /** La descripción visual de la cápsula: de ahí salen cuello, manga y material que el nombre calla. */
+  visual?: string | null;
+  temporada?: string | null;
+  viajeFrio?: boolean | null;
+};
+
+type Candidata = PrendaVitrina & { rating: number; puntos: number; vecino: number };
+
+/**
+ * El embudo completo menos el color: sección, ropa interior, nombre, manga,
+ * patrón, cuello, función, temporada, material, precio y foto. El color lo
+ * decide `elegirColor` (exacto o vecino) para que la exacta y la cercana
+ * pasen por LOS MISMOS filtros y sólo difieran en el tono.
+ */
+function candidatasDe(
   items: UniqloItem[] | null | undefined,
-  hueco: {
-    segmento: Segmento;
-    colorFamilia: string;
-    termino?: string | null;
-    nombre?: string | null;
-    /** La descripción visual de la cápsula: de ahí salen cuello, manga y material que el nombre calla. */
-    visual?: string | null;
-    temporada?: string | null;
-    viajeFrio?: boolean | null;
-  },
+  hueco: HuecoVitrina,
   mercado: Mercado,
-  vistoEl: string | null = null,
-  maximo = 2
-): PrendaVitrina[] {
+  vistoEl: string | null,
+  elegirColor: (colors: UniqloColor[] | null | undefined) => { color: UniqloColor | null; vecino: number }
+): Candidata[] {
   const generos = new Set([hueco.segmento === "hombre" ? "MEN" : "WOMEN", "UNISEX"]);
-  if (coloresDe(familiaDePieza(hueco.colorFamilia, hueco.nombre)).length === 0) return [];
   const termino = hueco.termino ?? "";
   const pieza = textoDePieza(hueco);
   const manga = mangaDe(pieza);
-  const candidatas: (PrendaVitrina & { rating: number; puntos: number })[] = [];
+  const candidatas: Candidata[] = [];
   for (const it of items ?? []) {
     if (!it?.productId || !it.name || !generos.has(it.genderCategory ?? "")) continue;
     // Ni ropa interior ni algo que no diga la prenda pedida (2026-10-21: a un
@@ -846,8 +930,7 @@ export function elegirPrendas(
     if (!materialCompatible(it.name, pieza)) continue;
     const precio = it.prices?.base?.value;
     if (typeof precio !== "number") continue;
-    // En la familia Y en el tono (código): un verde pálido no cubre "esmeralda".
-    const { color } = colorQueEmpata(it.colors, hueco);
+    const { color, vecino } = elegirColor(it.colors);
     if (!color?.displayCode) continue;
     const foto = fotoSegura(it.images?.main?.[color.displayCode]?.image);
     if (!foto) continue;
@@ -867,14 +950,61 @@ export function elegirPrendas(
       vistoEl,
       rating: it.rating?.average ?? 0,
       puntos: termino ? puntosDeModificador(it.name, termino) : 0,
+      vecino,
     });
   }
+  return candidatas;
+}
+
+const sinExtras = ({ rating: _r, puntos: _p, vecino: _v, ...p }: Candidata): PrendaVitrina => p;
+
+/**
+ * Hasta dos prendas del mercado para un hueco: del segmento (o UNISEX; nunca
+ * KIDS), en un color de la familia Y en el tono (código), con foto de ese
+ * color, ordenadas por parecido y luego por calificación. El filtro de género
+ * va AQUÍ porque el parámetro `genderCategory=` de la URL no filtra nada.
+ */
+export function elegirPrendas(
+  items: UniqloItem[] | null | undefined,
+  hueco: HuecoVitrina,
+  mercado: Mercado,
+  vistoEl: string | null = null,
+  maximo = 2
+): PrendaVitrina[] {
+  if (coloresDe(familiaDePieza(hueco.colorFamilia, hueco.nombre)).length === 0) return [];
+  // En la familia Y en el tono (código): un verde pálido no cubre "esmeralda".
+  const candidatas = candidatasDe(items, hueco, mercado, vistoEl, (colors) => ({ color: colorQueEmpata(colors, hueco).color, vecino: 0 }));
   // Primero la que más se parece a lo pedido (dice "linen", "knit"…), luego la mejor calificada.
   candidatas.sort((a, b) => b.puntos - a.puntos || b.rating - a.rating);
-  return candidatas.slice(0, maximo).map((c) => {
-    const { rating: _r, puntos: _p, ...p } = c;
-    return p;
+  return candidatas.slice(0, maximo).map(sinExtras);
+}
+
+/**
+ * LA MÁS CERCANA: una sola prenda que cede únicamente el tono hacia un vecino
+ * de la lista, con el tono cedido en palabras. Sólo tiene sentido llamarla
+ * cuando `elegirPrendas` devolvió vacío en TODOS los países (eso lo decide
+ * quien pinta). Vacío si la familia no tiene vecinos, si la pieza nombra dos
+ * colores (no sabemos cuál ceder) o si nada pasa el resto de los filtros.
+ */
+export function elegirCercana(items: UniqloItem[] | null | undefined, hueco: HuecoVitrina, mercado: Mercado, vistoEl: string | null = null): PrendaVitrina[] {
+  const familia = familiaDePieza(hueco.colorFamilia, hueco.nombre);
+  const nombres = coloresDe(familia);
+  const vecinos = vecinosDe(familia, hueco.termino);
+  if (nombres.length === 0 || vecinos.length === 0) return [];
+  if (familiasEnTexto(hueco.nombre) > 1) return [];
+  const candidatas = candidatasDe(items, hueco, mercado, vistoEl, (colors) => {
+    const enFamilia = (colors ?? []).filter((c) => nombres.includes((c.name ?? "").toUpperCase()));
+    for (let i = 0; i < vecinos.length; i++) {
+      const c = enFamilia.find((x) => x.displayCode === vecinos[i]);
+      if (c) return { color: c, vecino: i };
+    }
+    return { color: null, vecino: 0 };
   });
+  // Primero el vecino más cercano, luego el parecido, luego la calificación.
+  candidatas.sort((a, b) => a.vecino - b.vecino || b.puntos - a.puntos || b.rating - a.rating);
+  const mejor = candidatas[0];
+  if (!mejor) return [];
+  return [{ ...sinExtras(mejor), cercana: NOMBRE_TONO[mejor.colorCode] ?? mejor.color.toLowerCase() }];
 }
 
 /** La clave con la que se cuentan vistas y clics: segmento|tipo canónico|color. */
@@ -1050,6 +1180,8 @@ export type CompraDeTienda = {
   foto: string;
   precio: number;
   moneda: string;
+  /** true si se compró "la más cercana" (cedió el tono): la lectura las separa. */
+  cercana?: boolean;
 };
 
 export function validarCompra(c: Partial<CompraDeTienda> | null | undefined): CompraDeTienda | null {
@@ -1067,5 +1199,6 @@ export function validarCompra(c: Partial<CompraDeTienda> | null | undefined): Co
     foto,
     precio: typeof c.precio === "number" && Number.isFinite(c.precio) ? c.precio : 0,
     moneda: texto(c.moneda, 3).toUpperCase(),
+    cercana: c.cercana === true,
   };
 }
