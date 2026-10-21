@@ -44,6 +44,35 @@ import { palabras } from "@/lib/ya-la-tienes";
 
 const sinTildes = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
+// CLASE FINA dentro de "accesorio": la zona no alcanza. Un reloj y unos lentes son
+// ambos 'accesorio', así que el guard de zona los daba por intercambiables — le
+// pasó a Roberto: "Reloj de acero con detalles en oro" emparejado con "Lentes
+// redondos". El prompt YA pide distinguirlos y el modelo se lo saltó; esto lo
+// blinda en código, que es donde no se olvida.
+const CLASES_ACCESORIO: [string, RegExp][] = [
+  ["reloj", /reloj/],
+  ["lentes", /lentes|gafas|anteojos/],
+  ["cinturon", /cinturon/],
+  ["bufanda", /bufanda|pashmina|mascada|panuelo/],
+  // El gorro de punto abriga; la gorra y el sombrero tapan el sol. A 8 °C una
+  // gorra no cubre un gorro (su maleta de Mineápolis, 2026-10-21: "Gorro de
+  // punto negro" salió "tienes" con su "Gorra negra"). Va ANTES: "gorro" no
+  // debe caer en la clase de la gorra.
+  ["gorro", /gorro|beanie/],
+  ["sombrero", /gorra|sombrero|boina/],
+  ["bolsa", /bolsa|bolso|cartera|mochila|morral|maletin|bandolera|tote/],
+  ["joyeria", /collar|arete|anillo|pulsera|brazalete|joyer|cadena/],
+  ["corbata", /corbata|pajarita/],
+  ["calcetin", /calcet|medias/],
+  ["guantes", /guante/],
+];
+/** null = clase desconocida → no bloquea (mejor dejar pasar que falsear un hueco). */
+export function claseAccesorio(texto: string): string | null {
+  const n = sinTildes(texto);
+  for (const [clase, re] of CLASES_ACCESORIO) if (re.test(n)) return clase;
+  return null;
+}
+
 // Familia de color por palabra clave, en orden: lo más específico primero
 // ("azul marino" antes que "azul", "gris oscuro" cae en gris).
 const FAMILIAS: [string, RegExp][] = [
@@ -83,6 +112,22 @@ export function familiaDePrenda(p: Pick<ClosetItemLite, "color" | "color_hex" | 
     familiaDeColor(p.nombre) ??
     (p.color_hex ? familiaDeColor(coloresCercanos(p.color_hex, 1)[0]?.name) : null)
   );
+}
+
+// La familia de una pieza IDEAL: la que escribió la cápsula, salvo que el
+// nombre la estreche. La cápsula escribe "azul" en la familia y "marino" en el
+// nombre (6 de 24 piezas "azul" de los viajes vivos al 2026-10-21), y la
+// persona lee el nombre. Sin esto su "Chamarra acolchada azul marino" (marino)
+// no cubría la "Chamarra acolchada marino" (azul) y el duelo le ofrecía la
+// misma chamarra dos veces. SÓLO estrecha, nunca cambia de familia: el orden de
+// FAMILIAS no es el orden del texto, y "Camisa blanca de rayas marino" no es
+// marino. Marino es la única familia que vive dentro de otra (azul).
+const ESTRECHA: Record<string, string> = { azul: "marino" };
+export function familiaDePieza(p: Pick<CapsuleItem, "colorFamilia" | "nombre">): string | null {
+  const deFamilia = familiaDeColor(p.colorFamilia);
+  const delNombre = familiaDeColor(p.nombre);
+  if (!deFamilia) return delNombre;
+  return delNombre && ESTRECHA[deFamilia] === delNombre ? delNombre : deFamilia;
 }
 
 const OSCUROS = new Set(["negro", "gris", "marino"]);
@@ -157,12 +202,17 @@ export function aplicarReglasDelCruce(
   items.forEach((it, i) => {
     const e = out[i];
     if (!e || e.status === "falta") return;
-    const real = prendaDe(e.by);
+    // Dos prendas suyas con el MISMO nombre y distinto color (le pasa: dos
+    // "Pantalón técnico marino", uno marino y otro azul): el nombre no dice
+    // cuál quiso la IA, así que cuenta la que sí empata en color.
+    const homonimas = e.by ? closet.filter((c) => norm(c.nombre) === norm(e.by!)) : [];
+    const real =
+      homonimas.find((c) => techoPorColor(familiaDePieza(it), familiaDePrenda(c)) === null) ?? prendaDe(e.by);
     if (!real) return;
-    const techo = techoPorColor(familiaDeColor(it.colorFamilia), familiaDePrenda(real));
+    const techo = techoPorColor(familiaDePieza(it), familiaDePrenda(real));
     if (techo === "falta") cambiar(i, 1, { status: "falta", by: null, difiere: null });
     else if (techo === "parecido" && e.status === "tienes")
-      cambiar(i, 1, { status: "parecido", by: e.by, difiere: `${familiaDePrenda(real)} en vez de ${familiaDeColor(it.colorFamilia)}` });
+      cambiar(i, 1, { status: "parecido", by: e.by, difiere: `${familiaDePrenda(real)} en vez de ${familiaDePieza(it)}` });
   });
 
   // 1b · unos jeans son jeans
@@ -173,6 +223,57 @@ export function aplicarReglasDelCruce(
     if (!real) return;
     const realEsJeans = esJeans(`${real.nombre} ${real.material ?? ""}`);
     if (esJeans(`${it.nombre} ${it.tipo}`) !== realEsJeans) cambiar(i, 1, { status: "falta", by: null, difiere: null });
+  });
+
+  // 1c · la clase fina del accesorio, también aquí: el cruce de la IA ya la
+  // revisa, pero al recalcular una maleta lo ya cubierto se conserva sin pasar
+  // por ese guard — su gorra seguía cubriendo al gorro de punto.
+  items.forEach((it, i) => {
+    const e = out[i];
+    if (!e || e.status === "falta" || it.category !== "accesorio") return;
+    const real = prendaDe(e.by);
+    if (!real) return;
+    const ideal = claseAccesorio(`${it.nombre} ${it.tipo}`);
+    const suya = claseAccesorio(real.nombre);
+    if (ideal && suya && ideal !== suya) cambiar(i, 1, { status: "falta", by: null, difiere: null });
+  });
+
+  // 1d · un saco de traje no va suelto. La pieza "Saco de lana marino" es un
+  // blazer (la cápsula deja los blazers sueltos a propósito, lib/capsule.ts
+  // `conjunto`), y la IA le daba el saco de su traje marino teniendo su "Blazer
+  // marino" (su maleta de Mineápolis, 2026-10-21; una de dos corridas). El saco
+  // de un traje solo, con jeans, se ve como el de un traje al que le falta el
+  // pantalón. Si hay un saco suelto suyo del color, va ése; si no, el de traje
+  // queda como "parecido" y el duelo le pregunta.
+  const esDeTraje = (nombre: string, conjunto?: string | null) => !!conjunto || /\btraje\b|smoking|esmoquin/.test(norm(nombre));
+  items.forEach((it, i) => {
+    const e = out[i];
+    if (!e || e.status === "falta" || it.category !== "saco" || esDeTraje(`${it.nombre} ${it.tipo}`, it.conjunto)) return;
+    const real = prendaDe(e.by);
+    if (!real || !esDeTraje(real.nombre, real.conjunto)) return;
+    const ocupadas = new Set(out.filter((x, j) => j !== i && x.status !== "falta" && x.by).map((x) => norm(prendaDe(x.by)?.nombre ?? x.by!)));
+    const sueltos = closet.filter((c) => c.category === "saco" && !esDeTraje(c.nombre, c.conjunto) && !ocupadas.has(norm(c.nombre)));
+    const fam = familiaDePieza(it);
+    const suelto =
+      sueltos.find((c) => techoPorColor(fam, familiaDePrenda(c)) === null) ??
+      sueltos.find((c) => techoPorColor(fam, familiaDePrenda(c)) === "parecido");
+    if (suelto) {
+      // La IA juzgó OTRA prenda: el "tienes" sólo se hereda si el suelto es del
+      // mismo color y liso; un saco de cuadros por uno liso es "parecido".
+      const mismoColor = techoPorColor(fam, familiaDePrenda(suelto)) === null;
+      const estampado = !!suelto.patron && suelto.patron !== "liso";
+      cambiar(
+        i,
+        1,
+        !mismoColor
+          ? { status: "parecido", by: suelto.nombre, difiere: `${familiaDePrenda(suelto)} en vez de ${fam}` }
+          : estampado
+            ? { status: "parecido", by: suelto.nombre, difiere: `con ${suelto.patron}` }
+            : { status: e.status, by: suelto.nombre, difiere: e.difiere ?? null }
+      );
+    } else if (e.status === "tienes") {
+      cambiar(i, 1, { status: "parecido", by: e.by, difiere: "es el saco de un traje" });
+    }
   });
 
   // 2a · ni dos "tienes": la pieza que va primero (la de más prioridad) se la queda
@@ -194,7 +295,7 @@ export function aplicarReglasDelCruce(
   const usadas = new Set(out.filter((e) => e.status !== "falta" && e.by).map((e) => norm(prendaDe(e.by)?.nombre ?? e.by!)));
   items.forEach((it, i) => {
     if (out[i]?.status !== "falta") return;
-    const famIdeal = familiaDeColor(it.colorFamilia);
+    const famIdeal = familiaDePieza(it);
     if (!famIdeal) return;
     // DOS palabras de clase en común, sin contar materiales ni colores: "abrigo
     // largo", "bolsa cruzada", "medias opacas". Con una sola, la corrida en seco

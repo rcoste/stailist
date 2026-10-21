@@ -53,6 +53,86 @@ describe("regla 1 · el color", () => {
     expect(r.entries[0]).toMatchObject({ status: "parecido", by: "Camisa negra" });
   });
 
+  // Su maleta de Mineápolis (2026-10-21): la cápsula escribió "marino" en el
+  // nombre y "azul" en la familia. Su "Chamarra acolchada azul marino" es
+  // marino, así que azul contra marino la tiraba a "falta" — y el duelo le
+  // preguntaba "¿la sugerida o la tuya?" entre dos chamarras idénticas.
+  it("el nombre de la pieza estrecha el color: 'marino' en el nombre gana a 'azul' en la familia", () => {
+    const r = aplicarReglasDelCruce(
+      [ideal("Chamarra acolchada marino", "azul", "abrigo"), ideal("Saco de lana marino", "azul", "saco")],
+      [e("tienes", "Chamarra acolchada azul marino"), e("tienes", "Blazer marino")],
+      [mia("Chamarra acolchada azul marino", "abrigo", "azul marino"), mia("Blazer marino", "saco", "azul marino")]
+    );
+    expect(r.entries.map((x) => x.status)).toEqual(["tienes", "tienes"]);
+  });
+
+  it("y el rescate también la encuentra si la IA la dejó como falta", () => {
+    const r = aplicarReglasDelCruce(
+      [ideal("Chamarra acolchada marino", "azul", "abrigo")],
+      [e("falta")],
+      [mia("Chamarra acolchada azul marino", "abrigo", "azul marino")]
+    );
+    expect(r.entries[0]).toMatchObject({ status: "parecido", by: "Chamarra acolchada azul marino" });
+  });
+
+  it("sin color en el nombre manda la familia: una camisa azul no la cubre una marino como 'tienes'", () => {
+    const r = aplicarReglasDelCruce([ideal("Camisa oxford", "azul")], [e("tienes", "Camisa marino")], [mia("Camisa marino", "top", "azul marino")]);
+    expect(r.entries[0].status).toBe("falta");
+  });
+
+  it("dos prendas suyas con el mismo nombre: cuenta la que empata en color", () => {
+    const r = aplicarReglasDelCruce(
+      [ideal("Pantalón técnico marino", "azul", "bottom")],
+      [e("tienes", "Pantalón técnico marino")],
+      [mia("Pantalón técnico marino", "bottom", "azul marino"), mia("Pantalón técnico marino", "bottom", "azul")]
+    );
+    expect(r.entries[0]).toMatchObject({ status: "tienes", by: "Pantalón técnico marino" });
+  });
+
+  // Su maleta de Mineápolis: en una de dos corridas la IA le dio el saco de su
+  // traje marino a la pieza "Saco de lana marino", teniendo su "Blazer marino".
+  describe("un saco de traje no va suelto", () => {
+    const deTraje = { ...mia("Saco de traje azul marino", "saco", "azul marino"), conjunto: "c1" } as ClosetItemLite;
+    const blazer = mia("Blazer marino", "saco", "azul marino");
+
+    it("si tiene un blazer del color, va el blazer", () => {
+      const r = aplicarReglasDelCruce([ideal("Saco de lana marino", "azul", "saco", "saco")], [e("tienes", "Saco de traje azul marino")], [deTraje, blazer]);
+      expect(r.entries[0]).toMatchObject({ status: "tienes", by: "Blazer marino" });
+    });
+
+    it("sin blazer, el de traje queda como 'parecido' para que ella decida", () => {
+      const r = aplicarReglasDelCruce([ideal("Saco de lana marino", "azul", "saco", "saco")], [e("tienes", "Saco de traje azul marino")], [deTraje]);
+      expect(r.entries[0]).toMatchObject({ status: "parecido", by: "Saco de traje azul marino", difiere: "es el saco de un traje" });
+    });
+
+    it("si la pieza ES un traje, su saco de traje la cubre", () => {
+      const pieza = { ...ideal("Saco de traje marino", "marino", "saco", "saco"), conjunto: "t1" } as CapsuleItem;
+      const r = aplicarReglasDelCruce([pieza], [e("tienes", "Saco de traje azul marino")], [deTraje, blazer]);
+      expect(r.entries[0]).toMatchObject({ status: "tienes", by: "Saco de traje azul marino" });
+    });
+
+    it("un saco suelto de cuadros por uno liso entra como 'parecido'", () => {
+      const cuadros = { ...mia("Saco gris de microcuadros", "saco", "gris"), patron: "cuadros" } as ClosetItemLite;
+      const carbon = { ...mia("Saco de traje gris carbón", "saco", "gris carbón"), conjunto: "c2" } as ClosetItemLite;
+      const r = aplicarReglasDelCruce([ideal("Saco de lana gris carbón", "gris", "saco", "saco")], [e("tienes", "Saco de traje gris carbón")], [carbon, cuadros]);
+      expect(r.entries[0]).toMatchObject({ status: "parecido", by: "Saco gris de microcuadros", difiere: "con cuadros" });
+    });
+
+    it("también reconoce el traje por el nombre, sin lazo", () => {
+      const r = aplicarReglasDelCruce([ideal("Blazer azul marino", "marino", "saco", "saco")], [e("tienes", "Traje de lana azul marino")], [mia("Traje de lana azul marino", "saco", "marino"), blazer]);
+      expect(r.entries[0]).toMatchObject({ status: "tienes", by: "Blazer marino" });
+    });
+  });
+
+  it("su gorra no cubre el gorro de punto, tampoco cuando el cruce viene guardado", () => {
+    const r = aplicarReglasDelCruce(
+      [ideal("Gorro de punto negro", "negro", "accesorio", "gorro")],
+      [e("tienes", "Gorra negra")],
+      [mia("Gorra negra", "accesorio", "negro")]
+    );
+    expect(r.entries[0].status).toBe("falta");
+  });
+
   it("los vecinos (camel y café, rubí y vino) se quedan en 'parecido'", () => {
     const r = aplicarReglasDelCruce(
       [ideal("Chamarra trucker camel", "camel", "abrigo"), ideal("Bufanda de lana rubí", "rubí", "accesorio")],

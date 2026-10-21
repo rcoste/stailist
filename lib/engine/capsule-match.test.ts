@@ -76,6 +76,16 @@ describe("claseAccesorio — reloj ≠ lentes ≠ cinturón", () => {
     expect(claseAccesorio("Corbata de seda vino")).toBe("corbata");
   });
 
+  // Su maleta de Mineápolis (2026-10-21): "Gorro de punto negro" quedó como
+  // "tienes" con su "Gorra negra". A 8 °C una gorra no te tapa las orejas: el
+  // gorro de punto es abrigo, la gorra es sol. Clases distintas.
+  it("un gorro de punto no es una gorra", () => {
+    expect(claseAccesorio("Gorro de punto negro")).toBe("gorro");
+    expect(claseAccesorio("Beanie gris")).toBe("gorro");
+    expect(claseAccesorio("Gorra negra")).toBe("sombrero");
+    expect(claseAccesorio("Gorro de punto negro")).not.toBe(claseAccesorio("Gorra negra"));
+  });
+
   it("clase desconocida devuelve null (no bloquea: mejor pasar que falsear hueco)", () => {
     expect(claseAccesorio("Accesorio raro sin nombre claro")).toBeNull();
   });

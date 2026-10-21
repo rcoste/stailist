@@ -116,6 +116,7 @@ export async function loadClosetLite(
       corte?: string;
       color_secundario?: string;
       contexto?: string;
+      conjunto?: string;
     };
     return {
       id: r.id as string,
@@ -130,6 +131,7 @@ export async function loadClosetLite(
       corte: attrs.corte ?? null,
       color_secundario: attrs.color_secundario ?? null,
       contexto: attrs.contexto ?? null,
+      conjunto: attrs.conjunto ?? null,
     };
   });
 }
