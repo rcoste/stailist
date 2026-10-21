@@ -20,6 +20,7 @@ import {
   consultarUniqloEnCategoria,
   consultarVitrina,
   consultasPara,
+  puntosDeParecido,
   respetaModificadores,
   elegirCercana,
   familiasEnTexto,
@@ -262,6 +263,53 @@ describe("escalones de búsqueda: bajar sólo cuando hay cero, nunca cuando fall
     expect(r.q).toBe("スウェット");
     expect(pedidas.at(-1)).toBe("スウェット#7");
     expect(r.filtradaPorCategoria).toBe(true);
+  });
+});
+
+describe("el orden: parecido con la pieza en los tres idiomas; las estrellas sólo desempatan", () => {
+  const p = (nombreFicha: string, pieza: Parameters<typeof puntosDeParecido>[1]) => puntosDeParecido(nombreFicha, pieza);
+  it("suma lo que la pieza pide y la ficha dice, en japonés y coreano también", () => {
+    const abrigo = { termino: "long wool coat", nombre: "Abrigo largo de lana negro", temporada: "frio", formalidad: "formal-casual" };
+    expect(p("더블페이스릴랙스롱코트", abrigo)).toBeGreaterThan(p("트렌치코트", abrigo));
+    const cuello = { termino: "turtleneck sweater", nombre: "Suéter de cuello alto negro" };
+    expect(p("カシミヤタートルネックセーター", cuello)).toBeGreaterThan(p("3Dモックネックセーター", cuello));
+    const cardigan = { termino: "long knit cardigan", nombre: "Cárdigan largo de punto negro" };
+    expect(p("メリノVネックカーディガン", cardigan)).toBeGreaterThan(p("スムースコットンフルジップカーディガン", cardigan));
+  });
+
+  it("resta lo que contradice la pieza: forrado para ligero, cepillado para popelina, plumas para lana, borrego para punto", () => {
+    const pantalon = { termino: "smart pants", nombre: "Pantalón de vestir negro ligero" };
+    expect(p("ウォームスマートパンツ", pantalon)).toBeLessThan(p("2Wayストレッチスマートパンツ", pantalon));
+    const camisa = { termino: "shirt", nombre: "Camisa de popelina negra" };
+    expect(p("ブラッシュドコットンシャツ", camisa)).toBeLessThan(p("スーパーノンアイロンスリムシャツ/セミワイド", camisa));
+    const abrigo = { termino: "long wool coat", nombre: "Abrigo largo de lana negro" };
+    expect(p("シームレスダウンロングコート", abrigo)).toBeLessThan(p("ダブルフェイスリラックスロングコート", abrigo));
+    const cardigan = { termino: "long knit cardigan", nombre: "Cárdigan largo de punto negro" };
+    expect(p("보아후리스릴랙스가디건", cardigan)).toBeLessThan(p("플러피캐시미어릴랙스가디건", cardigan));
+  });
+
+  it("'manga larga' no cuenta como 'largo' de la prenda", () => {
+    expect(p("Long Coat", { nombre: "Playera de manga larga rayas" })).toBe(0);
+  });
+
+  it("en elegirPrendas: una sin reseñas que se parece más gana a una de 4.9 que se parece menos", () => {
+    const base = items.find((i) => i.genderCategory === "WOMEN" && i.colors?.some((c) => c.name === "BLACK"))!;
+    const negro = (productId: string, name: string, average: number) => ({
+      ...base,
+      productId,
+      name,
+      colors: [{ name: "BLACK", displayCode: "09" }],
+      rating: { average },
+      images: { main: { "09": { image: `https://image.uniqlo.com/UQ/${productId}.jpg` } } },
+    });
+    const out = elegirPrendas(
+      [negro("TRENCH", "Trench Coat", 4.9), negro("DOBLE", "Double Face Relaxed Long Coat", 0)],
+      { segmento: "mujer", colorFamilia: "negro", termino: "long wool coat", nombre: "Abrigo largo de lana negro" },
+      "us",
+      null,
+      1
+    );
+    expect(out.map((x) => x.productId)).toEqual(["DOBLE"]);
   });
 });
 
@@ -539,7 +587,10 @@ describe("elegirPrendas: tu segmento, tu color, hasta dos, las mejor calificadas
     expect(elegirPrendas(items, { segmento: "mujer", colorFamilia: "plata" }, "us")).toEqual([]);
   });
 
-  it("tope de dos y orden por calificación; calificación ausente cuenta como 0", () => {
+  // Hasta v0.2.410 "sin reseñas" contaba como 0 y quedaba al final. Se cambió
+  // a propósito (2026-10-21): las estrellas no predicen si la prenda cubre el
+  // hueco, y una prenda nueva sin reseñas no es peor que una de 3.1.
+  it("tope de dos; con el mismo parecido desempatan las estrellas, y sin reseñas cuenta como la mediana (4.7)", () => {
     const base = items.find((i) => i.genderCategory === "WOMEN")!;
     const clon = (id: string, rating: number | null): UniqloItem => ({
       ...base,
@@ -549,7 +600,7 @@ describe("elegirPrendas: tu segmento, tu color, hasta dos, las mejor calificadas
       images: { main: { "09": { image: "https://image.uniqlo.com/UQ/ST3/us/imagesgoods/x/item/x_09.jpg" } } },
     });
     const out = elegirPrendas([clon("E1-000", 3.1), clon("E2-000", null), clon("E3-000", 4.9)], { segmento: "mujer", colorFamilia: "negro" }, "jp");
-    expect(out.map((p) => p.id)).toEqual(["jp:E3-000:09", "jp:E1-000:09"]);
+    expect(out.map((p) => p.id)).toEqual(["jp:E3-000:09", "jp:E2-000:09"]);
     expect(out[0].precioTexto).toMatch(/^¥/);
   });
 

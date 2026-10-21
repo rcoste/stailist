@@ -192,6 +192,7 @@ export default async function ViajeDetallePage({
             nombre={r.item.nombre}
             visual={r.item.visual}
             temporada={r.item.temporada}
+            formalidad={r.item.formalidad}
             viajeFrio={frioDelViaje}
             colorFamilia={r.item.colorFamilia}
             segmento={gender}

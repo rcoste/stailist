@@ -552,11 +552,76 @@ const NOMBRES_ASIA: Record<string, RegExp> = {
   gloves: /手袋|グローブ|장갑|글러브/,
 };
 
-/** Cuántos modificadores del término ("linen", "knit") dice el nombre: desempata hacia la prenda más parecida. */
-export function puntosDeModificador(nombre: string, termino: string): number {
-  const mods = termino.trim().split(" ").slice(0, -1);
-  return mods.filter((m) => nombre.toLowerCase().includes(m.toLowerCase())).length;
+// --- El orden: parecido con la pieza, no estrellas ---------------------------------
+//
+// Medido el 2026-10-21 sobre tres corridas guardadas: entre las prendas que
+// pasan TODOS los filtros, el juez aprueba ~50% en cualquier rango de
+// calificación (< 4.3: 53%; ≥ 4.6: 50%; sin reseñas: 56%). Las estrellas dicen
+// si a la gente le gustó la prenda, no si cubre el hueco. Y el orden de antes
+// (adjetivos del término en inglés, luego estrellas) en Japón y Corea era puro
+// estrellas: los nombres vienen en su idioma. Con las mismas prendas, elegir
+// mejor las dos que se enseñan podía subir lo aprobado de 59% a 79%.
+//
+// Cada rasgo: qué palabra de la PIEZA lo pide (nombre, descripción, término,
+// temporada, formalidad) y cómo lo dice la FICHA en inglés, japonés o coreano.
+// Suma lo que coincide; resta lo que lo contradice. Las estrellas sólo
+// desempatan, y "sin reseñas" cuenta como la mediana medida (4.7), no como 0:
+// el "Double Face Relaxed Long Coat", nuevo y sin reseñas, perdía contra un
+// trench de algodón de 4.9 para un abrigo largo de lana.
+const RASGOS: { pieza: RegExp; ficha: RegExp }[] = [
+  { pieza: /\blino\b|linen/, ficha: /linen|リネン|麻|린넨|리넨/i },
+  { pieza: /\blana\b|wool/, ficha: /wool|merino|cashmere|lambswool|ウール|メリノ|カシミヤ|ラム|울|메리노|캐시미어|램스/i },
+  { pieza: /cachemira|cashmere/, ficha: /cashmere|カシミヤ|캐시미어/i },
+  { pieza: /merino/, ficha: /merino|メリノ|메리노/i },
+  { pieza: /\bpunto\b|knit/, ficha: /knit|merino|cashmere|lambswool|ニット|メリノ|カシミヤ|니트|메리노|캐시미어/i },
+  { pieza: /algodon|cotton/, ficha: /cotton|コットン|綿|코튼/i },
+  { pieza: /popelina|poplin/, ficha: /poplin|broadcloth|non-iron|easy care|ブロード|ノンアイロン|イージーケア|브로드|논아이론|이지케어/i },
+  { pieza: /oxford/, ficha: /oxford|オックスフォード|옥스포드/i },
+  { pieza: /mezclilla|denim/, ficha: /denim|デニム|데님/i },
+  { pieza: /\bpiel\b|cuero|leather/, ficha: /leather|レザー|가죽|레더/i },
+  { pieza: /\blarg[oa]\b|\blong\b/, ficha: /\blong\b(?![- ]sleeve)|ロング|롱(?!슬리브)/i },
+  { pieza: /\brect[oa]s?\b|straight/, ficha: /straight|ストレート|스트레이트/i },
+  // La tortuga exacta por encima del mock cuando la pieza dice tortuga o cuello alto.
+  { pieza: /cuello (alto|tortuga|de tortuga)|turtleneck/, ficha: /turtle ?neck|タートル|터틀/i },
+  { pieza: /cuello (en )?v\b|v-neck/, ficha: /v-?neck|Vネック|브이넥|V넥/i },
+  { pieza: /cargo/, ficha: /cargo|カーゴ|카고/i },
+  { pieza: /\bchino\b/, ficha: /chino|チノ|치노/i },
+  { pieza: /\bvestir\b|\bsmart\b/, ficha: /smart|slacks|スマート|スラックス|스마트|슬랙스/i },
+];
+
+const CONTRARIOS: { pieza: RegExp; ficha: RegExp }[] = [
+  // Ligero o de calor: nada forrado ni térmico ("ウォームスマートパンツ" para un pantalón ligero).
+  { pieza: /liger[oa]|\bcalor\b/, ficha: /warm|heattech|fleece|\bboa\b|pile|\bdown\b|puffer|ウォーム|暖|ヒートテック|フリース|ボア|ダウン|웜|히트텍|후리스|보아|다운/i },
+  // De vestir o formal: nada de sudadera, borrego ni gráfico.
+  { pieza: /\bformal\b|\bvestir\b|sastre|traje/, ficha: /sweat|fleece|\bboa\b|graphic|\bUT\b|スウェット|フリース|ボア|스웨트|후리스|보아/i },
+  // De punto: el borrego y el polar no son punto (un cárdigan de borrego para "cárdigan de punto").
+  { pieza: /\bpunto\b|knit/, ficha: /fleece|\bboa\b|pile|フリース|ボア|후리스|보아/i },
+  // De lana: un abrigo de plumas no es un abrigo de lana, aunque sea largo.
+  { pieza: /\blana\b|wool/, ficha: /\bdown\b|puffer|padded|ダウン|中綿|다운|패딩/i },
+  // Popelina: el algodón cepillado es casi franela.
+  { pieza: /popelina|poplin/, ficha: /brushed|flannel|ブラッシュド|フランネル|브러시드|플란넬/i },
+];
+
+/** Lo que pide la pieza, en un solo texto: término, nombre, descripción, temporada y formalidad (sin "manga larga/corta"). */
+function textoParaParecido(h: { termino?: string | null; nombre?: string | null; visual?: string | null; temporada?: string | null; formalidad?: string | null }): string {
+  return slug([h.termino, h.nombre, h.visual, h.temporada, h.formalidad].filter(Boolean).join(" ").replace(/-/g, " ")).replace(/manga (larga|corta)/g, " ");
 }
+
+/** Cuánto se parece la ficha a la pieza: +1 por rasgo que coincide, −2 por rasgo que la contradice. */
+export function puntosDeParecido(
+  nombreFicha: string,
+  pieza: { termino?: string | null; nombre?: string | null; visual?: string | null; temporada?: string | null; formalidad?: string | null }
+): number {
+  const t = textoParaParecido(pieza);
+  let puntos = 0;
+  for (const r of RASGOS) if (r.pieza.test(t) && r.ficha.test(nombreFicha)) puntos += 1;
+  for (const c of CONTRARIOS) if (c.pieza.test(t) && c.ficha.test(nombreFicha)) puntos -= 2;
+  return puntos;
+}
+
+/** La calificación para desempatar: sin reseñas cuenta como la mediana medida (4.7), no como cero. */
+export const RATING_SIN_RESENAS = 4.7;
+
 
 // --- Categoría de Uniqlo: filtrar en origen ------------------------------------
 //
@@ -923,6 +988,8 @@ type HuecoVitrina = {
   /** La descripción visual de la cápsula: de ahí salen cuello, manga y material que el nombre calla. */
   visual?: string | null;
   temporada?: string | null;
+  /** "casual" | "formal-casual" | "formal": ordena (resta lo de sudadera en una pieza de vestir). */
+  formalidad?: string | null;
   viajeFrio?: boolean | null;
   /** La palabra con que se buscó en este país (escalones): lo que se perdió al bajar pasa a filtrar. */
   consulta?: string | null;
@@ -985,8 +1052,8 @@ function candidatasDe(
       url: urlDeFicha(mercado, it.productId, color.displayCode),
       foto,
       vistoEl,
-      rating: it.rating?.average ?? 0,
-      puntos: termino ? puntosDeModificador(it.name, termino) : 0,
+      rating: it.rating?.average && it.rating.average > 0 ? it.rating.average : RATING_SIN_RESENAS,
+      puntos: puntosDeParecido(it.name, hueco),
       vecino,
     });
   }
@@ -1011,7 +1078,7 @@ export function elegirPrendas(
   if (coloresDe(familiaDePieza(hueco.colorFamilia, hueco.nombre)).length === 0) return [];
   // En la familia Y en el tono (código): un verde pálido no cubre "esmeralda".
   const candidatas = candidatasDe(items, hueco, mercado, vistoEl, (colors) => ({ color: colorQueEmpata(colors, hueco).color, vecino: 0 }));
-  // Primero la que más se parece a lo pedido (dice "linen", "knit"…), luego la mejor calificada.
+  // Primero la que más se parece a la pieza (en los tres idiomas); las estrellas sólo desempatan.
   candidatas.sort((a, b) => b.puntos - a.puntos || b.rating - a.rating);
   return candidatas.slice(0, maximo).map(sinExtras);
 }
