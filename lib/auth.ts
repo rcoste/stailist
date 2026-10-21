@@ -101,6 +101,12 @@ export type Profile = {
    * null = todavía sin preguntar.
    */
   work_dress_code: string | null;
+  /**
+   * Cómo es con la ropa de viaje ('repito' | 'seguido'). Se pregunta la
+   * primera vez que arma una maleta, igual que work_dress_code: decide
+   * cuántas prendas base lleva (lib/trip.ts capsuleFloor). null = sin preguntar.
+   */
+  cambio_ropa?: "repito" | "seguido" | null;
 };
 
 // Cookie del modo "ver como" (admin ve la app con los datos de otro usuario,

@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   capsuleFloor,
   capsuleFloorGaps,
+  preguntarLavado,
   fmtDiaMes,
   rangoFechas,
   nombreDeViaje,
@@ -19,14 +20,26 @@ describe("capsuleFloor — piso de suficiencia (v24)", () => {
     expect(f.calzado).toBe(2);
   });
 
-  it("sin noches no suma el top extra", () => {
-    expect(capsuleFloor(5, ["ciudad"], 16).tops).toBe(4);
+  // Hasta el 2026-10-21 eran ~0.8 tops por día contando suéteres (5 días sin
+  // noches = 4). La base no se repite: ahora es una por día.
+  it("sin noches: una prenda base por día", () => {
+    const f = capsuleFloor(5, ["ciudad"], 16);
+    expect(f.base).toBe(5);
+    expect(f.tops).toBe(5);
   });
 
-  it("viajes largos no crecen infinito (se asume lavar/re-usar)", () => {
+  // Antes se suponía que lavas y el piso se topaba en 8. Ahora sólo si lo dice:
+  // pantalones y calzado sí se topan (se repiten), la base no.
+  it("viaje largo sin decir que lava: una base por día si cabe; los pantalones no crecen", () => {
     const f = capsuleFloor(14, ["ciudad", "noche"], 32);
-    expect(f.tops).toBeLessThanOrEqual(8);
+    expect(f.base).toBe(14);
     expect(f.bottoms).toBeLessThanOrEqual(4);
+  });
+
+  it("viaje largo y lava: la base es de una semana", () => {
+    const f = capsuleFloor(14, ["ciudad", "noche"], 32, { lavar: true });
+    expect(f.base).toBe(7);
+    expect(f.baseModo).toBe("lavando");
   });
 
   it("escapada corta con mochila: piso mínimo compacto", () => {
@@ -52,6 +65,50 @@ describe("capsuleFloor — piso de suficiencia (v24)", () => {
   });
 });
 
+// Su maleta de Mineápolis (2026-10-21): 8 días, carry-on y maleta (27). Le
+// quedaron 5 camisas y playeras y 3 suéteres, y el piso de 7 "tops" se
+// cumplía. "Abrigos, suéteres y pantalones se repiten; playeras y camisas no."
+describe("capsuleFloor — la base no se repite", () => {
+  it("su caso: 8 días, se cambia seguido, 27 de espacio → 10 prendas base con colchón", () => {
+    const f = capsuleFloor(8, ["ciudad", "traslado", "noche"], 27, { cambio: "seguido" });
+    expect(f.base).toBe(10);
+    expect(f.baseModo).toBe("colchon");
+    expect(f.tops).toBeGreaterThanOrEqual(10);
+  });
+
+  it("si repite sin problema: una por día", () => {
+    expect(capsuleFloor(8, ["ciudad"], 27, { cambio: "repito" })).toMatchObject({ base: 8, baseModo: "una-por-dia" });
+  });
+
+  it("si el colchón no cabe, se suelta primero el colchón", () => {
+    // 5 días con carry-on (11): con colchón serían 7 + 3 + 2 = 12 sin dejar lugar al abrigo.
+    const f = capsuleFloor(5, ["ciudad"], 11, { cambio: "seguido" });
+    expect(f.base).toBe(5);
+    expect(f.baseModo).toBe("una-por-dia");
+  });
+
+  it("si ni una por día cabe, baja y lo marca", () => {
+    const f = capsuleFloor(8, ["ciudad"], 11, { cambio: "repito" });
+    expect(f.baseModo).toBe("no-cabe");
+    expect(f.base).toBeLessThan(8);
+    expect(f.unaPorDia).toBe(8);
+    expect(f.tops + f.bottoms + f.calzado).toBeLessThanOrEqual(11);
+  });
+
+  it("27 días con tres bolsas: el abrigo y los suéteres guardan lugar, así que pregunta si lava", () => {
+    expect(preguntarLavado(27, ["ciudad", "noche"], 34)).toBe(true);
+    expect(capsuleFloor(27, ["ciudad", "noche"], 34, { cambio: "seguido", lavar: true }).base).toBe(9);
+  });
+
+  it("8 días con carry-on y maleta: cabe, no pregunta", () => {
+    expect(preguntarLavado(8, ["ciudad", "noche"], 27)).toBe(false);
+  });
+
+  it("sin equipaje definido no pregunta", () => {
+    expect(preguntarLavado(20, ["ciudad"], 0)).toBe(false);
+  });
+});
+
 describe("capsuleFloorGaps — validación contra el piso", () => {
   const floor = { tops: 5, bottoms: 3, calzado: 2 };
   const items = (counts: Record<string, number>) =>
@@ -70,6 +127,15 @@ describe("capsuleFloorGaps — validación contra el piso", () => {
       floor
     );
     expect(gaps).toEqual([]);
+  });
+
+  it("los suéteres no cuentan como base", () => {
+    const lista = [
+      ...["Camisa blanca", "Playera negra", "Polo marino"].map((nombre) => ({ category: "top", nombre, tipo: "x" })),
+      ...["Suéter de merino gris", "Cuello tortuga negro"].map((nombre) => ({ category: "top", nombre, tipo: "x" })),
+      ...items({ bottom: 3, calzado: 2 }),
+    ];
+    expect(capsuleFloorGaps(lista, { ...floor, base: 5 })).toEqual(["base 3/5"]);
   });
 
   it("cápsula que cumple devuelve []", () => {

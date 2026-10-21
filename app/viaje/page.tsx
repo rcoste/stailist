@@ -78,5 +78,5 @@ export default async function ViajePage({
     }
   }
 
-  return <TripWizard closet={closet} edit={edit} invitacion={invitacion} />;
+  return <TripWizard closet={closet} edit={edit} invitacion={invitacion} cambioRopa={profile.cambio_ropa ?? null} />;
 }

@@ -2,6 +2,43 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.413.0] - 2026-10-21 — la maleta cuenta las camisas aparte: una por día, con colchón si te cambias seguido
+
+Salió de una maleta real de 8 días: 5 camisas y playeras y 3 suéteres. "Abrigos,
+suéteres y pantalones se repiten; playeras y camisas no." El piso de la maleta
+contaba todo como "tops" (~0.8 por día, tope 8), así que los suéteres lo
+cumplían. Medido sobre las 14 maletas vivas: todas traían de 3 a 6 prendas
+base, durara el viaje 2 días o 27; las 10 de 5 días o más quedaban debajo de una
+por día.
+
+- **Prendas base aparte** (`esPrendaBase`, `lib/engine/piezas-tipo.ts`):
+  camisas, playeras, polos, blusas, tops y vestidos. Los suéteres, cárdigans,
+  sudaderas y cuellos de tortuga de punto son capa media y no cuentan.
+- **Una por día, con colchón** (`capsuleFloor`, `lib/trip.ts`). Quien "se
+  cambia seguido" (al llegar del vuelo, antes de cenar) lleva ×1.25. Lo que no
+  cabe se suelta en orden: primero el colchón, luego el tercer y cuarto
+  pantalón, y sólo al final baja de una por día. Al decidir si cabe se guardan
+  lugares para el abrigo y los suéteres (2 en equipaje chico, 4 en grande): sin
+  esa reserva, 27 días con tres bolsas "cabían" con 27 camisas y ningún abrigo.
+- **Dos preguntas, sólo cuando cambian algo** (paso de la maleta del
+  formulario): "¿cómo eres con la ropa de viaje?" una sola vez por persona
+  (`profiles.cambio_ropa`), y "¿vas a poder lavar?" sólo cuando ni a una por
+  día le cabe el equipaje (`trips.lavado`). Si lava, la cuenta es de una
+  semana. Debajo, una línea en vivo: "para 8 días van 10 camisas o playeras:
+  una por día y un cambio extra".
+- **El motor lo lee** (`textoDeBase` en el piso del prompt) y **el juez lo
+  revisa** (regla `pocas-base` en `lib/engine/trip-revision.ts`): al armar,
+  pide la segunda pasada si faltan; en la maleta ya armada avisa "Llevas 5
+  prendas base … para 8 días y el viaje pide 10", también en las maletas de
+  antes.
+- Migración `0187_cambio_de_ropa.sql` (dos columnas vacías, ya aplicada).
+
+Medido en seco con IA, cuatro maletas reales rearmadas sin guardar (antes →
+ahora, prendas base): 8 días con carry-on y maleta, se cambia seguido, 5 → 10
+(23 prendas de 27); 8 días con sólo carry-on y lava, 5 → 6 (ahora cabe en 11;
+antes eran 14); 5 días con carry-on, 4 → 5 (11 de 11); 27 días con tres bolsas
+y lava, 5 → 9 (el juez pidió la segunda pasada; 69 s, la ruta tiene 300).
+
 ## [0.2.412.0] - 2026-10-21 — la maleta ve lo que ya tienes: tu chamarra marino, tu blazer y la diferencia entre gorro y gorra
 
 Salió de una maleta real para Mineápolis. Tres errores del cruce entre la

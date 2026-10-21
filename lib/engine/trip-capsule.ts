@@ -15,6 +15,8 @@ import {
   capsuleFloor,
   CAPACIDAD_HOLGADA,
   type Bolsas,
+  type CambioDeRopa,
+  type CapsuleFloor,
   type Luggage,
   type Occasion,
   type TripWeather,
@@ -63,6 +65,10 @@ export type TripCapsuleInputs = {
   fitPref?: "recta" | "holgada" | "mixta" | null; // cómo le gusta que le quede la ropa (pares de corte)
   ageStyling?: string | null; // orientación por edad (life-stage) — señal suave, solo extremos
   tasteSignal?: TasteSignal; // feedback real (worn/votos) — señal suave
+  // 2026-10-21 — cuántas prendas BASE (lo pegado a la piel): cómo es con la
+  // ropa (profiles.cambio_ropa) y si va a lavar (trips.lavado). Ver capsuleFloor.
+  cambioRopa?: CambioDeRopa | null;
+  lavar?: boolean | null;
 };
 
 // La cápsula IDEAL del viaje: una lista mínima de prendas concretas que combinan
@@ -162,6 +168,21 @@ export function lineaReferenciasMaleta(styleReference: string | null | undefined
     : "";
 }
 
+// LA BASE DICHA AL MOTOR (2026-10-21): cuántas de esos tops van pegados a la
+// piel, y por qué ese número. Antes el piso contaba suéteres como tops y una
+// maleta de 8 días salía con 5 camisas. Exportada para test.
+export function textoDeBase(floor: CapsuleFloor, days: number): string {
+  const porque =
+    floor.lava && floor.baseModo !== "no-cabe"
+      ? `para una semana${floor.baseModo === "colchon" ? " con cambio extra (se cambia seguido)" : ""}: va a lavar`
+      : floor.baseModo === "colchon"
+        ? "una por día más un cambio extra cada pocos días (llegar del vuelo, la cena después de turistear): se cambia seguido"
+        : floor.baseModo === "no-cabe"
+          ? `es lo que cabe en su equipaje (no le caben ${floor.unaPorDia}, una por día)`
+          : "una por día";
+  return `De esos tops, al menos ${floor.base} deben ser PRENDAS BASE —camisas, playeras, polos, blusas o tops: lo que va pegado a la piel y no se repite— para ${days} días (${porque}). Los suéteres, cárdigans, sudaderas y cuellos de tortuga de punto NO cuentan como base: son capa media y se repiten.`;
+}
+
 export async function generateTripCapsuleTarget(
   inputs: TripCapsuleInputs,
   /** Quién paga la llamada: deja su recibo en ai_calls (lib/recibos.ts). null = sin sesión (scripts). */
@@ -210,8 +231,8 @@ export async function generateTripCapsuleTarget(
       ? `Equipaje: ${resumen}. TECHO de ~${capacidad} prendas — no lo pases. Si el viaje pediría más, prioriza lo más versátil y recorta lo opcional.${capacidad >= CAPACIDAD_HOLGADA ? " Hay espacio de sobra: NUNCA recortes por espacio — recorta solo lo que no gane su lugar por versatilidad." : ""}`
       : "Maleta no definida: mantén la cápsula mínima y versátil.";
   // Piso de suficiencia calculado en código (v24): entra como REGLA DURA.
-  const floor = capsuleFloor(inputs.days, inputs.ocasiones, capacidad);
-  const pisoTxt = `PISO DE SUFICIENCIA (REGLA DURA, calculado para ESTE viaje): al menos ${floor.tops} tops, ${floor.bottoms} bottoms y ${floor.calzado} par(es) de calzado. Un VESTIDO cuenta como top Y como bottom a la vez (cubre el día entero). Las ANCLAS cuentan para el piso: tus items + las anclas JUNTOS deben cumplirlo (no lo dupliques por encima de ellas). Este piso YA asume mezcla-y-combina — cumplirlo NO es sobre-empacar; quedarse debajo deja días sin qué ponerse.`;
+  const floor = capsuleFloor(inputs.days, inputs.ocasiones, capacidad, { cambio: inputs.cambioRopa, lavar: inputs.lavar });
+  const pisoTxt = `PISO DE SUFICIENCIA (REGLA DURA, calculado para ESTE viaje): al menos ${floor.tops} tops, ${floor.bottoms} bottoms y ${floor.calzado} par(es) de calzado. ${textoDeBase(floor, inputs.days)} Un VESTIDO cuenta como top Y como bottom a la vez (cubre el día entero). Las ANCLAS cuentan para el piso: tus items + las anclas JUNTOS deben cumplirlo (no lo dupliques por encima de ellas). Este piso YA asume mezcla-y-combina — cumplirlo NO es sobre-empacar; quedarse debajo deja días sin qué ponerse.`;
   const vetoTxt = inputs.vetoes.length
     ? `VETOS — jamás incluyas: ${inputs.vetoes.join(", ")}.`
     : "";
@@ -371,7 +392,7 @@ Al final devuelve "firma": 1-2 líneas cálidas (tuteo) que expliquen la LÓGICA
   const paradasClima: ClimaParada[] = (inputs.paradas?.length ? inputs.paradas : [{ lugar: "", weather: inputs.weather }])
     .filter((p) => p.weather)
     .map((p) => ({ lugar: p.lugar?.split(",")[0], ...(p.weather as TripWeather) }));
-  const ctxMaleta = { paradas: paradasClima, ocasiones: inputs.ocasiones, dias: inputs.days, capacidad: luggageCapacity(inputs.bolsas, inputs.maleta) };
+  const ctxMaleta = { paradas: paradasClima, ocasiones: inputs.ocasiones, dias: inputs.days, capacidad: luggageCapacity(inputs.bolsas, inputs.maleta), base: floor.base };
   let revision = revisarMaleta(items, ctxMaleta);
   let reparacion: { hallazgos: string[]; quitadas: string[]; agregadas: string[] } | undefined;
   if (revision.length) {

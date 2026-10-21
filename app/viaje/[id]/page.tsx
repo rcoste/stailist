@@ -13,6 +13,8 @@ import { catalogPublicUrl } from "@/lib/catalog-render";
 import {
   tripDays,
   tripLogicLine,
+  capsuleFloor,
+  luggageCapacity,
   luggageSummary,
   rangoFechas,
   nombreDeViaje,
@@ -48,7 +50,7 @@ export default async function ViajeDetallePage({
   const { data: trip } = await supabase
     .from("trips")
     .select(
-      "id, lugar, paradas, fecha_inicio, fecha_fin, ocasiones, maleta, bolsas, weather, capsule_target, capsule_match, overrides, empacado, outfits, outfits_stale, contexto"
+      "id, lugar, paradas, fecha_inicio, fecha_fin, ocasiones, maleta, bolsas, weather, capsule_target, capsule_match, overrides, empacado, outfits, outfits_stale, contexto, lavado"
     )
     .eq("id", id)
     .eq("user_id", profile.id)
@@ -207,11 +209,20 @@ export default async function ViajeDetallePage({
     }
   }
 
+  // Cuántas prendas base pide el viaje, con lo que contestó (2026-10-21): el
+  // aviso "llevas 5 para 8 días" sale sobre lo que de verdad lleva.
+  const pisoBase = capsuleFloor(
+    days,
+    (trip.ocasiones as Occasion[] | null) ?? [],
+    luggageCapacity(trip.bolsas as Bolsas | null, trip.maleta as Luggage | null),
+    { cambio: profile.cambio_ropa ?? null, lavar: (trip.lavado as boolean | null) ?? null }
+  ).base;
   const avisos = avisosDeLoQueLlevas(target, match, overrides, {
     paradas: climaParadas,
     ocasiones: (trip.ocasiones as string[] | null) ?? [],
     dias: days,
     contexto: (trip.contexto as string | null) ?? null,
+    base: pisoBase,
   });
 
   // Título: una parada → su nombre; varias → el país compartido ("Japón") o

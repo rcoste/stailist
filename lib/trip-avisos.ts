@@ -19,6 +19,7 @@ export type AvisoMaleta = { regla: string; texto: string; loResuelve: string | n
 // La regla dicha a ella: el juez escribe para el motor ("la maleta no trae").
 const VOZ: [RegExp, string][] = [
   [/la maleta no trae/g, "no llevas"],
+  [/La maleta trae/g, "Llevas"],
   [/no hay nada que la aguante/g, "no llevas nada que la aguante"],
   [/no hay piezas ligeras para la parada calurosa/g, "no llevas nada ligero para la parada de calor"],
   [/no hay ninguna pieza formal/g, "no llevas ninguna pieza formal"],
@@ -31,7 +32,7 @@ export function avisosDeLoQueLlevas(
   target: CapsuleTarget,
   match: CapsuleMatch | null,
   overrides: CapsuleOverrides | null,
-  ctx: { paradas: ClimaParada[]; ocasiones: string[]; dias: number; contexto?: string | null }
+  ctx: { paradas: ClimaParada[]; ocasiones: string[]; dias: number; contexto?: string | null; base?: number }
 ): AvisoMaleta[] {
   // "Trabajo o formal" es un solo chip: quien escribió que su trabajo es
   // informal no necesita que le digan que no lleva nada formal (viaje real).

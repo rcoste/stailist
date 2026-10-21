@@ -10,7 +10,7 @@ import type { CapsuleItem } from "@/lib/capsule";
 import { FRIO_DE_ABRIGO, CALOR_DE_LIGERO } from "@/lib/engine/trip-capsule";
 import { CAPACIDAD_HOLGADA } from "@/lib/trip";
 import { hayLluvia } from "@/lib/weather";
-import { esAbrigoDeInvierno, esCalzadoCerrado, esCapaExterior, esLigera, esParaLluvia } from "@/lib/engine/piezas-tipo";
+import { esAbrigoDeInvierno, esCalzadoCerrado, esCapaExterior, esLigera, esParaLluvia, esPrendaBase } from "@/lib/engine/piezas-tipo";
 import type { HallazgoCapsula } from "@/lib/engine/capsule-revision";
 
 export type ClimaParada = { lugar?: string; temp_c: number; temp_min?: number; temp_max?: number; condition?: string | null };
@@ -21,6 +21,8 @@ export type ContextoMaleta = {
   dias: number;
   /** Techo de prendas del equipaje (lib/trip.ts luggageCapacity); 0 = no se sabe. */
   capacidad: number;
+  /** Prendas base que pide el viaje (lib/trip.ts capsuleFloor().base). Sin el dato, la regla no opina. */
+  base?: number;
 };
 
 export function revisarMaleta(items: CapsuleItem[], ctx: ContextoMaleta): HallazgoCapsula[] {
@@ -57,7 +59,15 @@ export function revisarMaleta(items: CapsuleItem[], ctx: ContextoMaleta): Hallaz
     v.push({ regla: "sin-formal", detalle: `El viaje incluye "trabajo o formal" y no hay ninguna pieza formal.` });
   }
 
-  // 5. QUE QUEPA en el equipaje, cuando el equipaje sí limita (mochila o mano).
+  // 5. PRENDAS BASE SUFICIENTES (2026-10-21): camisas, playeras, polos, lo que
+  //    va pegado a la piel. Los suéteres se repiten; esto no. Su maleta de 8
+  //    días traía 5 y cumplía el piso de "tops" con los suéteres.
+  const base = items.filter(esPrendaBase).length;
+  if (typeof ctx.base === "number" && ctx.base > 0 && base < ctx.base) {
+    v.push({ regla: "pocas-base", detalle: `La maleta trae ${base} ${base === 1 ? "prenda base" : "prendas base"} (camisas, playeras, blusas: lo que va pegado a la piel) para ${ctx.dias} días y el viaje pide ${ctx.base}. Los suéteres no cuentan: se repiten.` });
+  }
+
+  // 6. QUE QUEPA en el equipaje, cuando el equipaje sí limita (mochila o mano).
   const ropa = items.filter((i) => i.category !== "accesorio").length;
   if (ctx.capacidad > 0 && ctx.capacidad < CAPACIDAD_HOLGADA && ropa > ctx.capacidad) {
     v.push({ regla: "no-cabe", detalle: `Son ${ropa} prendas para un equipaje de ~${ctx.capacidad}.` });
