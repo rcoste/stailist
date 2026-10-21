@@ -419,6 +419,7 @@ export async function markTripFaltaOwned(
                 entrada: compra.entrada,
                 precio: compra.precio,
                 moneda: compra.moneda,
+                ...(compra.cercana ? { cercana: true } : {}),
               },
               ...(fotoTienda ? { preferir_foto: true } : {}),
             }
@@ -437,7 +438,7 @@ export async function markTripFaltaOwned(
     await registrarEvento(supabase, {
       user_id: user.id,
       type: "tienda_compra",
-      data: { trip_id: tripId, index, entrada: compra.entrada, tienda: compra.tienda, precio: compra.precio, moneda: compra.moneda, con_foto: !!fotoTienda },
+      data: { trip_id: tripId, index, entrada: compra.entrada, tienda: compra.tienda, precio: compra.precio, moneda: compra.moneda, con_foto: !!fotoTienda, cercana: compra.cercana === true },
     });
   }
 

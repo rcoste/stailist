@@ -51,6 +51,8 @@ export type CandidatoUI = {
   rating: number | null;
   elegida: boolean;
   motivo: MotivoDescarte | null;
+  cercana: boolean;
+  tonoCercano: string | null;
   juez: boolean | null;
   juezLinea: string | null;
   juezError: string | null;
@@ -93,7 +95,7 @@ export async function cargarCorrida(corridaId: string): Promise<{
     );
     if (hs.length === 0) return null;
     const { rows: votos } = await c.query(
-      `select k.hueco_id, h.n, k.mercado, k.elegida, k.juez, k.roberto, k.juez_costo_usd
+      `select k.hueco_id, h.n, k.mercado, k.elegida, k.cercana, k.juez, k.roberto, k.juez_costo_usd
          from public.vitrina_medicion_candidatos k
          join public.vitrina_medicion_huecos h on h.id = k.hueco_id
         where h.corrida_id = $1`,
@@ -104,6 +106,7 @@ export async function cargarCorrida(corridaId: string): Promise<{
       huecoN: Number(v.n),
       mercado: v.mercado as Mercado,
       elegida: Boolean(v.elegida),
+      cercana: Boolean(v.cercana),
       juez: v.juez === null ? null : Boolean(v.juez),
       roberto: v.roberto === null ? null : Boolean(v.roberto),
       costo: v.juez_costo_usd === null ? 0 : Number(v.juez_costo_usd),
@@ -147,7 +150,7 @@ export async function cargarCorrida(corridaId: string): Promise<{
 export async function cargarCandidatos(huecoId: string, mercado: Mercado): Promise<CandidatoUI[]> {
   return withDb(async (c) => {
     const { rows } = await c.query(
-      `select id, mercado, orden, nombre, color, genero, precio_texto, foto, url, rating, elegida, motivo,
+      `select id, mercado, orden, nombre, color, genero, precio_texto, foto, url, rating, elegida, motivo, cercana, tono_cercano,
               juez, juez_linea, juez_error, roberto
          from public.vitrina_medicion_candidatos where hueco_id = $1 and mercado = $2 order by orden`,
       [huecoId, mercado]
@@ -165,6 +168,8 @@ export async function cargarCandidatos(huecoId: string, mercado: Mercado): Promi
       rating: r.rating === null ? null : Number(r.rating),
       elegida: Boolean(r.elegida),
       motivo: r.motivo as MotivoDescarte | null,
+      cercana: Boolean(r.cercana),
+      tonoCercano: r.tono_cercano,
       juez: r.juez === null ? null : Boolean(r.juez),
       juezLinea: r.juez_linea,
       juezError: r.juez_error,

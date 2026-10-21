@@ -2,6 +2,30 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.408.0] - 2026-10-21 — "la más cercana": cuando no hay la pieza exacta, una que cede sólo el tono, y lo dice
+
+- **La más cercana** (`elegirCercana`, `VECINOS`, `NOMBRE_TONO` en
+  `lib/vitrina-uniqlo.ts`). Cuando con todos los filtros ningún país tiene la
+  pieza exacta, la maleta puede enseñar UNA prenda que cede únicamente el
+  tono hacia un vecino escrito a mano por familia (azul rey → azul medio o
+  intenso; esmeralda → verde petróleo; rubí → rojo profundo; "azul" a secas →
+  celeste sólo en camisas, blusas y playeras), etiquetada: "la más cercana en
+  Uniqlo EE. UU.: azul intenso, no azul rey". Nació del polo azul rey de
+  Roberto: Uniqlo no tenía un polo 67, pero sí un DRY-EX 64 que hace el
+  papel. Reglas: una exacta en cualquier país le gana a cualquier cercana;
+  una sola, nunca dos; pasa los MISMOS filtros que la exacta (sección, manga,
+  cuello, patrón, función, temporada, material); una pieza que nombra dos
+  colores no tiene cercana; vino, marino, negro y grises no ceden.
+- **Se mide aparte**: vistas, clics y compras llevan `cercana` en el evento;
+  la medición la marca y la cuenta en su propia cifra. Interruptor
+  `CERCANAS_ACTIVAS` con la regla escrita: si al 7 de noviembre reciben menos
+  de la mitad de clics por vista que las exactas, o Roberto aprueba menos de
+  la mitad, se apagan.
+- **Bug cazado al revisar casos límite**: el nombre de la pieza podía
+  ENSANCHAR la familia de color en vez de afinarla ("Jogger azul marino" con
+  `marino` ascendía a `azul`, códigos 64-69). Ahora el nombre sólo estrecha:
+  la familia que nombra tiene que caber dentro de la de la cápsula.
+
 ## [0.2.407.0] - 2026-10-21 — la vitrina busca dentro de la categoría de Uniqlo y lee la descripción de la pieza
 
 - **Filtra en origen con la categoría de Uniqlo** (`consultarUniqloEnCategoria`,

@@ -9,6 +9,21 @@
 -- vitrina_vista se cuenta por cuenta, clave y DÍA (DISTINCT), nunca por filas:
 -- una card se pinta en cada render y cada regreso a la lista.
 
+-- 0) Cercanas contra exactas (desde v0.2.408.0, `data.cercana`): el interruptor
+--    CERCANAS_ACTIVAS se apaga si las cercanas reciben menos de la mitad de
+--    clics por vista que las exactas (lib/vitrina-uniqlo.ts).
+select
+  coalesce((data->>'cercana')::boolean, false)            as cercana,
+  count(distinct (user_id, data->>'clave', created_at::date))
+        filter (where type = 'vitrina_vista')             as vistas_cuenta_clave_dia,
+  count(*) filter (where type = 'tienda_click')           as clics,
+  count(*) filter (where type = 'tienda_compra')          as compras
+from public.events
+where type in ('vitrina_vista', 'tienda_click', 'tienda_compra')
+  and created_at >= '2026-10-20'
+group by 1
+order by 1;
+
 -- 1) Resumen: cuentas distintas que vieron y que tocaron, por mercado.
 select
   data->>'tienda'                                         as tienda,

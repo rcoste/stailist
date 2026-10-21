@@ -31,7 +31,9 @@ export async function registrarVitrinaVista(
   clave: string,
   entradas: string[],
   tienda: string,
-  desde: DesdeVitrina
+  desde: DesdeVitrina,
+  /** true si lo que se pintó fue "la más cercana" (cedió el tono): la lectura las separa. */
+  cercana = false
 ): Promise<void> {
   if (!clave || entradas.length === 0) return;
   const q = await quien();
@@ -39,7 +41,7 @@ export async function registrarVitrinaVista(
   await registrarEvento(q.supabase, {
     user_id: q.userId,
     type: "vitrina_vista",
-    data: { clave: limpia(clave), entradas: entradas.slice(0, 4).map((e) => limpia(e)), tienda: limpia(tienda, 40), desde },
+    data: { clave: limpia(clave), entradas: entradas.slice(0, 4).map((e) => limpia(e)), tienda: limpia(tienda, 40), desde, cercana },
   });
 }
 
@@ -47,7 +49,8 @@ export async function registrarTiendaClick(
   clave: string,
   entrada: string,
   tienda: string,
-  desde: DesdeVitrina
+  desde: DesdeVitrina,
+  cercana = false
 ): Promise<void> {
   if (!clave || !entrada) return;
   const q = await quien();
@@ -55,6 +58,6 @@ export async function registrarTiendaClick(
   await registrarEvento(q.supabase, {
     user_id: q.userId,
     type: "tienda_click",
-    data: { clave: limpia(clave), entrada: limpia(entrada), tienda: limpia(tienda, 40), desde },
+    data: { clave: limpia(clave), entrada: limpia(entrada), tienda: limpia(tienda, 40), desde, cercana },
   });
 }

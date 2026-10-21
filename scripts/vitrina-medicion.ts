@@ -152,9 +152,9 @@ async function nuevaCorrida(limiteHuecos: number | null): Promise<string> {
           for (const k of candidatos) {
             await c.query(
               `insert into public.vitrina_medicion_candidatos
-                 (hueco_id, mercado, orden, product_id, nombre, color, display_code, genero, precio, precio_texto, foto, url, rating, elegida, motivo)
-               values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)`,
-              [huecoId, m, k.orden, k.productId, k.nombre, k.color, k.displayCode, k.genero, k.precio, k.precioTexto, k.foto, k.url, k.rating, k.elegida, k.motivo]
+                 (hueco_id, mercado, orden, product_id, nombre, color, display_code, genero, precio, precio_texto, foto, url, rating, elegida, motivo, cercana, tono_cercano)
+               values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17)`,
+              [huecoId, m, k.orden, k.productId, k.nombre, k.color, k.displayCode, k.genero, k.precio, k.precioTexto, k.foto, k.url, k.rating, k.elegida, k.motivo, k.cercana, k.tonoCercano]
             );
             nCandidatos++;
           }
