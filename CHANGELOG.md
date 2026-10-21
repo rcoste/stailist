@@ -2,6 +2,28 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.410.0] - 2026-10-21 — lo que un filtro exige va en la búsqueda: el suéter de cuello alto deja de quedarse vacío
+
+- **Los atributos que un filtro exige entran a la búsqueda** (`terminoDe`, que
+  ahora lee también la descripción de la pieza). Lo cazó Roberto al votar:
+  "Suéter de cuello alto negro" buscaba "sweater", entre los 20 primeros de
+  EE. UU. no había ningún cuello de tortuga, y el filtro de cuello los tiraba
+  todos, cuando "turtleneck sweater" trae un Cashmere Turtleneck Sweater de
+  hombre en negro. Ahora cuello alto o en V, manga, piel e impermeable van en
+  la búsqueda, vengan del tipo, del nombre o de la descripción ("cuello alto
+  suelto"). De la descripción NO entra lo que sólo ordena (punto, lana).
+- **Escalones con el atributo antes de soltarlo** (`consultasPara`): primero
+  "atributo + prenda" en inglés y, en Japón y Corea, la frase local medida
+  (タートルネックセーター, 터틀넥 스웨터, Vネックセーター, 半袖シャツ, 반팔셔츠,
+  레더 재킷, ブロックテック, スラックス).
+- **Se baja de escalón cuando nada SIRVE, no sólo cuando no hay nada**
+  (`consultarVitrina` con `sirve`). "turtleneck knit sweater" devolvía un solo
+  suéter gris en EE. UU. y se quedaba ahí; "v-neck knit sweater", uno rosa en
+  Japón. Si ningún escalón deja algo que enseñar, se usa el más específico (de
+  ahí sale "la más cercana", como antes).
+- **El lino, si se pierde al bajar, se exige** (リネン, 麻, 린넨): un short de
+  lino no se cubre con shorts de sudadera.
+
 ## [0.2.409.0] - 2026-10-21 — Japón y Corea dejan de quedarse en blanco: la búsqueda baja de escalón sólo cuando no hay nada
 
 - **Escalones de búsqueda** (`consultasPara`, `consultarVitrina` en

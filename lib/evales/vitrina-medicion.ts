@@ -86,7 +86,7 @@ export function huecosDeViaje(
       porque: r.item.porque ?? null,
       // Con el NOMBRE, igual que components/vitrina-hueco.tsx desde v0.2.402.2:
       // de ahí salen los modificadores ("Short de lino negro" → "linen shorts").
-      termino: terminoDe(r.item.tipo, r.item.nombre),
+      termino: terminoDe(r.item.tipo, r.item.nombre, r.item.visual),
       viajeFrio,
     }));
 }

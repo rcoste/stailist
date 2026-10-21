@@ -94,19 +94,33 @@ async function nuevaCorrida(limiteHuecos: number | null): Promise<string> {
   const sinTermino = huecos.filter((h) => !h.termino).map((h) => h.tipo);
   if (sinTermino.length) console.log(`  sin término (la vitrina no los busca): ${[...new Set(sinTermino)].join(", ")}`);
 
-  // Una consulta por (mercado, término): muchos huecos comparten "sweater".
+  // Una consulta por hueco y mercado: desde v0.2.410 el escalón depende de la
+  // PIEZA (se baja mientras nada pase sus filtros), así que dos huecos con el
+  // mismo término pueden terminar en palabras distintas. Las peticiones
+  // repetidas a Uniqlo salen de la caché de este proceso.
   const consultas = new Map<string, Consulta & { q: string }>();
+  const cache = new Map<string, Response>();
+  const fetchCacheado: typeof fetch = async (url, init) => {
+    const k = String(url);
+    if (!cache.has(k)) {
+      const r = await fetchPlano(url, init);
+      if (!r.ok) return r;
+      cache.set(k, new Response(await r.text(), { status: r.status, headers: r.headers }));
+    }
+    return cache.get(k)!.clone();
+  };
   const errores: string[] = [];
-  const claves = [...new Set(conTermino.map((h) => h.termino!))];
   for (const m of MERCADOS) {
-    for (const q of claves) {
+    for (const h of conTermino) {
+      const q = h.termino!;
       const r = await consultarVitrina(m, q, {
-        fetchImpl: fetchPlano,
+        fetchImpl: fetchCacheado,
         onError: (mercado, msg) => {
           errores.push(`${mercado} ${q}: ${msg}`);
         },
+        sirve: (items, usada) => armarCandidatos(items, { ...h, consulta: usada }, m).some((k) => k.elegida),
       });
-      consultas.set(`${m}|${q}`, r);
+      consultas.set(`${m}|${h.itemIndex}|${h.tripId}`, r);
       process.stdout.write(`  ${m} ${q}: ${r.items.length}${r.q !== q ? ` (q=${r.q})` : ""}${r.filtradaPorCategoria ? " (por categoría)" : ""}\n`);
     }
   }
@@ -118,7 +132,7 @@ async function nuevaCorrida(limiteHuecos: number | null): Promise<string> {
   // tenis, justo lo que la API no devuelve).
   if (limiteHuecos) {
     const conAlgo = huecos.filter(
-      (h) => h.termino && MERCADOS.some((m) => armarCandidatos(consultas.get(`${m}|${h.termino}`)?.items, { ...h, consulta: consultas.get(`${m}|${h.termino}`)?.q ?? null }, m).some((k) => k.elegida))
+      (h) => h.termino && MERCADOS.some((m) => armarCandidatos(consultas.get(`${m}|${h.itemIndex}|${h.tripId}`)?.items, { ...h, consulta: consultas.get(`${m}|${h.itemIndex}|${h.tripId}`)?.q ?? null }, m).some((k) => k.elegida))
     );
     huecos = muestraDeHuecos(conAlgo, limiteHuecos);
     console.log(`muestra de ${huecos.length} huecos (de ${conAlgo.length} con algo que enseñar): ${huecos.map((h) => `${h.nombre} (${h.segmento})`).join(" · ")}`);
@@ -147,14 +161,14 @@ async function nuevaCorrida(limiteHuecos: number | null): Promise<string> {
         const huecoId = hr[0].id as string;
         if (!h.termino) continue;
         for (const m of MERCADOS) {
-          const items = consultas.get(`${m}|${h.termino}`)?.items ?? [];
-          const candidatos = armarCandidatos(items, { ...h, consulta: consultas.get(`${m}|${h.termino}`)?.q ?? null }, m);
+          const items = consultas.get(`${m}|${h.itemIndex}|${h.tripId}`)?.items ?? [];
+          const candidatos = armarCandidatos(items, { ...h, consulta: consultas.get(`${m}|${h.itemIndex}|${h.tripId}`)?.q ?? null }, m);
           for (const k of candidatos) {
             await c.query(
               `insert into public.vitrina_medicion_candidatos
                  (hueco_id, mercado, orden, product_id, nombre, color, display_code, genero, precio, precio_texto, foto, url, rating, elegida, motivo, cercana, tono_cercano, consulta)
                values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18)`,
-              [huecoId, m, k.orden, k.productId, k.nombre, k.color, k.displayCode, k.genero, k.precio, k.precioTexto, k.foto, k.url, k.rating, k.elegida, k.motivo, k.cercana, k.tonoCercano, consultas.get(`${m}|${h.termino}`)?.q ?? h.termino]
+              [huecoId, m, k.orden, k.productId, k.nombre, k.color, k.displayCode, k.genero, k.precio, k.precioTexto, k.foto, k.url, k.rating, k.elegida, k.motivo, k.cercana, k.tonoCercano, consultas.get(`${m}|${h.itemIndex}|${h.tripId}`)?.q ?? h.termino]
             );
             nCandidatos++;
           }

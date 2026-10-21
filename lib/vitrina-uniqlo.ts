@@ -194,7 +194,24 @@ const MODIFICADORES: Record<string, string> = {
  * pieza: "Short de lino negro" trae tipo "short" a secas, y buscar "shorts"
  * sin "linen" le devolvió a Roberto bóxers y shorts de sudadera (2026-10-21).
  */
-export function terminoDe(tipo: string | null | undefined, nombre?: string | null): string | null {
+/**
+ * Los atributos que un FILTRO exige que la ficha diga y que por eso tienen que
+ * ir en la búsqueda: si no van, los primeros 20 resultados casi nunca los traen
+ * y el hueco se queda vacío aunque Uniqlo sí tenga la prenda. Caso que lo
+ * destapó (2026-10-21, al votar): "Suéter de cuello alto negro" buscaba
+ * "sweater"; entre los 20 primeros de EE. UU. no había ningún cuello de
+ * tortuga y el filtro de cuello los tiró todos, cuando "turtleneck sweater"
+ * trae un Cashmere Turtleneck Sweater de hombre en negro.
+ * Se leen del tipo, del nombre Y de la descripción visual: "Suéter de punto
+ * vino" guarda el cuello en la descripción ("cuello alto suelto"). De la
+ * descripción entran SÓLO estos (lo que filtra), no "punto" ni "lana" (que
+ * sólo ordenan): sumar todo a la búsqueda fue lo que vació Japón y Corea.
+ */
+const CUELLO_ALTO_PEDIDO = /cuello (alto|tortuga|de tortuga|vuelto|mock)|turtleneck|mock neck/;
+const CUELLO_V_PEDIDO = /cuello (en )?v\b|escote (en )?v\b|v-neck/;
+const DE_LA_DESCRIPCION: Record<string, string> = { piel: "leather", cuero: "leather", impermeable: "rain" };
+
+export function terminoDe(tipo: string | null | undefined, nombre?: string | null, visual?: string | null): string | null {
   if (!tipo) return null;
   const canon = tipoCanonico(tipo);
   const [cabeza, ...restoCrudo] = canon.split("-");
@@ -214,16 +231,26 @@ export function terminoDe(tipo: string | null | undefined, nombre?: string | nul
     const t = MODIFICADORES[m];
     if (t && !mods.includes(t) && !base.includes(t)) mods.push(t);
   }
+  // De la descripción, sólo lo que un filtro exige (piel, impermeable).
+  for (const w of visual ? tipoCanonico(visual).split("-") : []) {
+    const t = DE_LA_DESCRIPCION[w];
+    if (t && !mods.includes(t) && !base.includes(t)) mods.push(t);
+  }
   // "De vestir" es "Smart" sólo en pantalones (Smart Ankle Pants…); en una camisa estorba la búsqueda.
   if (base !== "pants" && mods.includes("smart")) mods.splice(mods.indexOf("smart"), 1);
   // La manga va en la búsqueda sólo cuando contradice la convención de Uniqlo
   // para esa prenda (una camisa sin etiqueta es de manga larga; una playera o
   // un polo sin etiqueta, de manga corta): "short sleeve shirt" trae camisas
   // de manga corta; "shirt" a secas trae puras de manga larga.
-  const manga = mangaDe(`${tipo} ${nombre ?? ""}`);
+  const pieza = `${tipo} ${nombre ?? ""} ${visual ?? ""}`;
+  const manga = mangaDe(pieza);
   if (manga && MANGA_POR_DEFECTO[base] && MANGA_POR_DEFECTO[base] !== manga && manga !== "sin") {
     mods.unshift(manga === "corta" ? "short sleeve" : "long sleeve");
   }
+  // El cuello que el filtro exige, primero: "turtleneck sweater", "v-neck knit sweater".
+  const texto = slug(pieza.replace(/-/g, " "));
+  const cuello = CUELLO_ALTO_PEDIDO.test(texto) ? "turtleneck" : CUELLO_V_PEDIDO.test(texto) ? "v-neck" : null;
+  if (cuello && !base.includes(cuello)) mods.unshift(cuello);
   return [...mods, base].join(" ");
 }
 
@@ -1171,6 +1198,9 @@ const NOMBRE_LOCAL: Record<string, Partial<Record<Mercado, string>>> = {
  */
 const MODIFICADOR_PERDIDO: Record<string, { requiere?: RegExp; excluye?: RegExp }> = {
   denim: { requiere: /denim|デニム|데님/i },
+  // El lino define una pieza de calor (2026-10-21: al bajar de "linen shorts" a
+  // "shorts", Japón enseñaba shorts de sudadera; Corea, camisas de algodón).
+  linen: { requiere: /linen|リネン|麻|린넨|리넨/i },
   hoodie: { requiere: /hood|parka|パーカ|フーディ|후드|후디|파카/i },
   zip: { requiere: /zip|ジップ|집업|지퍼|지업/i },
   cargo: { requiere: /cargo|カーゴ|카고/i },
@@ -1211,6 +1241,26 @@ export function respetaModificadores(nombreFicha: string, termino: string, consu
   return true;
 }
 
+/**
+ * Los atributos que un filtro exige, en el orden en que se buscan. Al bajar de
+ * escalón NO se sueltan de golpe: primero se prueba "atributo + prenda" en
+ * inglés y, en Japón y Corea, la frase local que lleva el atributo pegado a la
+ * prenda. Medido el 2026-10-21: "turtleneck sweater" 3 en EE. UU. y 0 en JP/KR;
+ * "タートルネックセーター" 8; "터틀넥 스웨터" 6. "タートルネック" a secas trae
+ * HEATTECH y playeras térmicas: por eso la frase lleva la prenda.
+ */
+const ATRIBUTOS_EXIGIDOS = ["short sleeve", "long sleeve", "turtleneck", "v-neck", "leather", "rain", "smart"];
+
+/** Frase local "atributo + prenda"; sólo las medidas que traen la prenda (2026-10-21). */
+const FRASE_LOCAL: Record<string, Partial<Record<Mercado, string>>> = {
+  "turtleneck sweater": { jp: "タートルネックセーター", kr: "터틀넥 스웨터" }, // 0 → 8 / 6
+  "v-neck sweater": { jp: "Vネックセーター", kr: "브이넥 스웨터" }, // → 18 / 7
+  "short sleeve shirt": { jp: "半袖シャツ", kr: "반팔셔츠" }, // → 61 / 23
+  "leather jacket": { kr: "레더 재킷" }, // 0 → 3 (GU, piel sintética)
+  "rain jacket": { jp: "ブロックテック" }, // → 2 (BLOCKTECH)
+  "smart pants": { jp: "スラックス", kr: "슬랙스" }, // → 21 / 1
+};
+
 /** Los escalones de búsqueda de un término en un mercado, sin repetir, del más fino al más general. */
 export function consultasPara(termino: string, mercado: Mercado): string[] {
   const t = termino.trim();
@@ -1218,27 +1268,48 @@ export function consultasPara(termino: string, mercado: Mercado): string[] {
   const cabeza = cabezaDeTermino(t);
   const base = BASE_DE[cabeza] ?? cabeza;
   const local = NOMBRE_LOCAL[base]?.[mercado];
-  return [...new Set([t, cabeza, base, ...(local ? [local] : [])].filter(Boolean))];
+  const atributo = ATRIBUTOS_EXIGIDOS.find((a) => new RegExp(`(^|\\s)${a}(\\s|$)`).test(t)) ?? null;
+  const conAtributo = atributo ? (cabeza.includes(atributo) ? cabeza : `${atributo} ${cabeza}`) : null;
+  const atributoLocal = conAtributo ? FRASE_LOCAL[conAtributo]?.[mercado] : undefined;
+  return [
+    ...new Set(
+      [t, ...(conAtributo ? [conAtributo] : []), ...(atributoLocal ? [atributoLocal] : []), cabeza, base, ...(local ? [local] : [])].filter(Boolean)
+    ),
+  ];
 }
 
 /**
- * LA CONSULTA DE LA VITRINA, con escalones: el primero que devuelva algo gana;
- * si uno falla, se detiene ahí. Devuelve también qué palabra se usó (la
- * medición la enseña: "q = boots" no es lo mismo que "q = leather ankle boots").
+ * LA CONSULTA DE LA VITRINA, con escalones. Se baja de escalón cuando lo que
+ * vino no SIRVE (nada pasa los filtros de la pieza: `sirve`), no sólo cuando
+ * vino vacío. Medido el 2026-10-21: "turtleneck knit sweater" devolvía 1 suéter
+ * gris en EE. UU. y nunca llegaba a "turtleneck sweater"; "v-neck knit
+ * sweater" devolvía 1 rosa en Japón y nunca llegaba a "Vネックセーター" (18).
+ * Si ningún escalón sirve, se devuelve el más específico que trajo algo (de
+ * ahí sale "la más cercana", como antes). Si uno falla, se detiene ahí.
+ * Devuelve también qué palabra se usó: la medición la enseña.
  */
 export async function consultarVitrina(
   mercado: Mercado,
   termino: string,
-  opts: { onError?: (mercado: Mercado, mensaje: string) => Promise<void> | void; fetchImpl?: typeof fetch } = {}
+  opts: {
+    onError?: (mercado: Mercado, mensaje: string) => Promise<void> | void;
+    fetchImpl?: typeof fetch;
+    /** ¿Estos ítems dejan algo que enseñar con esta palabra? Sin él, basta con que vengan ítems. */
+    sirve?: (items: UniqloItem[], q: string) => boolean;
+  } = {}
 ): Promise<Consulta & { q: string }> {
-  const escalones = consultasPara(termino, mercado);
+  const { sirve, ...resto } = opts;
+  let primeraConItems: (Consulta & { q: string }) | null = null;
   let ultima: Consulta & { q: string } = { items: [], vistoEl: null, categorias: [], q: termino };
-  for (const q of escalones) {
-    const r = await consultarUniqloEnCategoria(mercado, q, { ...opts, termino });
+  for (const q of consultasPara(termino, mercado)) {
+    const r = await consultarUniqloEnCategoria(mercado, q, { ...resto, termino });
     ultima = { ...r, q };
-    if (r.fallo || r.items.length > 0) break;
+    if (r.fallo) return primeraConItems ?? ultima;
+    if (r.items.length === 0) continue;
+    primeraConItems ??= ultima;
+    if (!sirve || sirve(r.items, q)) return ultima;
   }
-  return ultima;
+  return primeraConItems ?? ultima;
 }
 
 /** Fecha corta para la card: "20 oct". */
