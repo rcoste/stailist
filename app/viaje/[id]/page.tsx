@@ -190,6 +190,7 @@ export default async function ViajeDetallePage({
           <VitrinaHueco
             tipo={r.item.tipo}
             nombre={r.item.nombre}
+            visual={r.item.visual}
             temporada={r.item.temporada}
             viajeFrio={frioDelViaje}
             colorFamilia={r.item.colorFamilia}

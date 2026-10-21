@@ -303,16 +303,23 @@ export function estampadoNoPedido(nombreFicha: string, nombrePieza: string | nul
 //
 // "Suéter de cuello alto negro" recibía suéteres de cuello redondo (クルーネック).
 // Si la pieza pide un cuello, la ficha tiene que decirlo.
-const CUELLOS: [RegExp, RegExp][] = [
-  [/cuello (alto|tortuga|de tortuga|vuelto|mock)|turtleneck|mock neck/, /turtle ?neck|mock neck|high neck|タートル|ハイネック|モックネック|터틀넥|하이넥|모크넥/i],
-  [/cuello (en )?v\b|escote (en )?v\b|v-neck/, /v-?neck|Vネック|브이넥|V넥/i],
-  [/cuello redondo|crew neck/, /crew ?neck|クルーネック|크루넥/i],
-];
+const DICE_ALTO = /turtle ?neck|mock neck|high neck|タートル|ハイネック|モックネック|터틀넥|하이넥|모크넥/i;
+const DICE_V = /v-?neck|Vネック|브이넥|V넥/i;
 
-/** ¿La ficha respeta el cuello que pide la pieza? Sin cuello pedido, siempre. */
+/**
+ * ¿La ficha respeta el cuello que pide la pieza? Sin cuello pedido, siempre.
+ *
+ * Alto o en V: la ficha tiene que DECIRLO (Uniqlo lo escribe cuando no es el
+ * de siempre). Redondo: es el cuello por defecto de suéteres y playeras, así
+ * que basta con que la ficha no diga otro —exigir "Crew Neck" en el nombre
+ * dejó sin prenda a tres huecos en EE. UU. el 2026-10-21 ("Merino Sweater" es
+ * de cuello redondo y no lo dice).
+ */
 export function cuelloCompatible(nombreFicha: string, nombrePieza: string | null | undefined): boolean {
   const pieza = slug(nombrePieza ?? "");
-  for (const [pide, dice] of CUELLOS) if (pide.test(pieza)) return dice.test(nombreFicha);
+  if (/cuello (alto|tortuga|de tortuga|vuelto|mock)|turtleneck|mock neck/.test(pieza)) return DICE_ALTO.test(nombreFicha);
+  if (/cuello (en )?v\b|escote (en )?v\b|v-neck/.test(pieza)) return DICE_V.test(nombreFicha);
+  if (/cuello redondo|crew neck/.test(pieza)) return !DICE_ALTO.test(nombreFicha) && !DICE_V.test(nombreFicha);
   return true;
 }
 
@@ -516,6 +523,83 @@ const NOMBRES_ASIA: Record<string, RegExp> = {
 export function puntosDeModificador(nombre: string, termino: string): number {
   const mods = termino.trim().split(" ").slice(0, -1);
   return mods.filter((m) => nombre.toLowerCase().includes(m.toLowerCase())).length;
+}
+
+// --- Categoría de Uniqlo: filtrar en origen ------------------------------------
+//
+// La búsqueda por texto de Uniqlo es semántica y generosa: "t-shirt" en Corea
+// devuelve pantalones de sudadera, "sweater" trae ropa de dormir. Pero la
+// respuesta trae el árbol de categorías en que caen los resultados, y
+// `categoryId` SÍ filtra en origen (medido el 2026-10-21: q=t-shirt en EE. UU.
+// pasa de 498 resultados a 33 playeras de verdad; acepta varias separadas por
+// coma; `genderId`, `classId` y `subcategoryId` NO filtran, probadas las cuatro
+// grafías). Los ids cambian por mercado y por sección, así que no se guardan:
+// se leen del árbol de la primera respuesta y se eligen por NOMBRE, en los
+// tres idiomas. Lo que no está aquí no se filtra (se queda como hasta hoy).
+const CATEGORIAS: Record<string, RegExp> = {
+  "t-shirt": /^T-Shirts( and Tank Tops)?$|^Tシャツ・カットソー$|^티셔츠 \(긴팔 & 반팔\)$/,
+  "polo shirt": /^Polo Shirts$|^ポロシャツ$|^폴로셔츠 \(카라티\)$/,
+  shirt: /^(Casual |Dress )?Shirts( & Blouses)?$|^カジュアルシャツ$|^シャツ・ブラウス$|^ドレスシャツ・ワイシャツ$|^셔츠$|^캐주얼셔츠$|^정장셔츠 \(와이셔츠\)$|^셔츠 & 블라우스$/,
+  overshirt: /^Casual Shirts$|^Shirts( & Blouses)?$|^カジュアルシャツ$|^シャツ・ブラウス$|^셔츠$|^캐주얼셔츠$/,
+  blouse: /^Shirts & Blouses$|^Casual Shirts$|^シャツ・ブラウス$|^셔츠 & 블라우스$/,
+  sweater: /^Sweaters$|^Sweaters (&|And) Cardigans$|^Knitwear$|^ニット・セーター$|^セーター・カーディガン$|^니트$|^니트 & 가디건$/,
+  turtleneck: /^Sweaters$|^Sweaters (&|And) Cardigans$|^Knitwear$|^ニット・セーター$|^セーター・カーディガン$|^니트$|^니트 & 가디건$/,
+  cardigan: /^Cardigans$|^Sweaters (&|And) Cardigans$|^カーディガン$|^セーター・カーディガン$|^가디건$|^니트 & 가디건$/,
+  sweatshirt: /^Sweatshirts & Hoodies$|^スウェット$|^スウェット・パーカ$|^스웨트셔츠 & 후드(집업|티)$/,
+  pants: /^Pants$|^Dress Pants$|^Chinos$|^Ankle Pants( & Cropped Pants)?$|^Wide Leg Pants$|^Easy Pants$|^Barrel Pants$|^Warm Pants$|^パンツ・ズボン$|^ワイドパンツ$|^イージーパンツ$|^トラウザー$|^チノ・ワークパンツ$|^感動パンツ$|^ロングパンツ・アンクルパンツ$|^팬츠$|^캐주얼 팬츠$|^와이드 팬츠$|^웜 팬츠$|^청바지 & 팬츠$/,
+  chinos: /^Chinos$|^Pants$|^Ankle Pants( & Cropped Pants)?$|^チノ・ワークパンツ$|^パンツ・ズボン$|^팬츠$|^캐주얼 팬츠$/,
+  joggers: /^Sweatpants$|^Easy Pants$|^スウェット$|^イージーパンツ$|^스웨트 팬츠 & 조거 팬츠$/,
+  jeans: /^Jeans$|^ジーンズ$|^청바지 & 팬츠$/,
+  shorts: /^Shorts( & Culottes)?$|^ショートパンツ$|^キュロット・ショートパンツ$|^쇼트 팬츠\(반바지\)$|^반바지$/,
+  jacket: /^Jackets & Parkas$|^Lightweight Puffers$|^Down Jackets & Coats$|^Outerwear$|^ブルゾン・パーカ$|^ジャケット$|^感動ジャケット$|^アウター$|^재킷( & 파카| & 블레이저)?$|^파카 & 블루종$|^아우터$/,
+  "rain jacket": /^Jackets & Parkas$|^Outerwear$|^ブルゾン・パーカ$|^アウター$|^재킷( & 파카)?$|^파카 & 블루종$|^아우터$/,
+  windbreaker: /^Jackets & Parkas$|^Outerwear$|^ブルゾン・パーカ$|^アウター$|^재킷( & 파카)?$|^파카 & 블루종$|^아우터$/,
+  parka: /^Jackets & Parkas$|^Down Jackets & Coats$|^Outerwear$|^ブルゾン・パーカ$|^アウター$|^재킷( & 파카)?$|^파카 & 블루종$|^아우터$/,
+  coat: /^Coats$|^Down Jackets & Coats$|^コート$|^코트$/,
+  "trench coat": /^Coats$|^コート$|^코트$/,
+  blazer: /^Blazers$|^ジャケット$|^感動ジャケット$|^재킷 & 블레이저$/,
+  dress: /^Dresses( & Skirts)?$|^ワンピース$|^スコート・ワンピース$|^원피스( & 스커트)?$|^스커트 & 원피스$/,
+  skirt: /^Skirts$|^Dresses & Skirts$|^スカート$|^스커트( & 원피스)?$|^원피스 & 스커트$/,
+  boots: /^Shoes( & Sandals)?$|^靴・ルームシューズ$|^신발$/,
+  "ankle boots": /^Shoes( & Sandals)?$|^靴・ルームシューズ$|^신발$/,
+  sneakers: /^Shoes( & Sandals)?$|^靴・ルームシューズ$|^신발$/,
+  sandals: /^Shoes( & Sandals)?$|^靴・ルームシューズ$|^신발$/,
+  bag: /^Bags$|^バッグ$|^가방$/,
+  belt: /^Belts$|^벨트$/,
+  scarf: /^Scarves$|^マフラー(・ストール)?$/,
+  beanie: /^Hats & Caps$|^帽子・キャップ・ハット$|^모자$/,
+  beret: /^Hats & Caps$|^帽子・キャップ・ハット$|^모자$/,
+  tights: /^Leggings( & Tights)?$|^レギンス・タイツ$|^레깅스/,
+  leggings: /^Leggings( & Tights)?$|^レギンス・タイツ$|^레깅스/,
+};
+
+/** La cabeza de un término de búsqueda: "linen shorts" → "shorts", "short sleeve polo shirt" → "polo shirt". */
+export function cabezaDeTermino(termino: string): string {
+  const partes = termino.trim().split(" ");
+  const dos = partes.slice(-2).join(" ");
+  return partes.length > 1 && (NOMBRES_EN[dos] || CATEGORIAS[dos]) ? dos : (partes.at(-1) ?? "");
+}
+
+export type CategoriaUniqlo = { id: number | string; name: string };
+
+/** Los ids de categoría del árbol de la respuesta que nombran la prenda buscada; vacío = no filtrar. */
+export function categoriasQueEmpatan(categorias: CategoriaUniqlo[] | null | undefined, termino: string): string[] {
+  const re = CATEGORIAS[cabezaDeTermino(termino)];
+  if (!re) return [];
+  const ids = new Set<string>();
+  for (const c of categorias ?? []) if (c?.name && re.test(c.name.trim())) ids.add(String(c.id));
+  return [...ids];
+}
+
+/**
+ * El texto de la pieza con el que se juzgan manga, cuello, patrón, función y
+ * material: el nombre Y la descripción visual de la cápsula. La cápsula guarda
+ * "Suéter de punto vino" y aparte "punto medio, cuello alto suelto, manga globo
+ * discreta"; hasta v0.2.406 sólo se leía el nombre y el cuello alto se perdía.
+ * NO alimenta la búsqueda (sumar modificadores a `q` vacía Japón y Corea).
+ */
+export function textoDePieza(pieza: { nombre?: string | null; visual?: string | null }): string {
+  return [pieza.nombre, pieza.visual].filter((t): t is string => Boolean(t && t.trim())).join(". ");
 }
 
 // --- Color ------------------------------------------------------------------
@@ -730,6 +814,8 @@ export function elegirPrendas(
     colorFamilia: string;
     termino?: string | null;
     nombre?: string | null;
+    /** La descripción visual de la cápsula: de ahí salen cuello, manga y material que el nombre calla. */
+    visual?: string | null;
     temporada?: string | null;
     viajeFrio?: boolean | null;
   },
@@ -740,7 +826,8 @@ export function elegirPrendas(
   const generos = new Set([hueco.segmento === "hombre" ? "MEN" : "WOMEN", "UNISEX"]);
   if (coloresDe(familiaDePieza(hueco.colorFamilia, hueco.nombre)).length === 0) return [];
   const termino = hueco.termino ?? "";
-  const manga = mangaDe(hueco.nombre);
+  const pieza = textoDePieza(hueco);
+  const manga = mangaDe(pieza);
   const candidatas: (PrendaVitrina & { rating: number; puntos: number })[] = [];
   for (const it of items ?? []) {
     if (!it?.productId || !it.name || !generos.has(it.genderCategory ?? "")) continue;
@@ -752,11 +839,11 @@ export function elegirPrendas(
     // manga corta le salían playeras, una de manga larga, y la única camisa de
     // manga corta disponible era estampada).
     if (!mangaCompatible(it.name, manga, termino)) continue;
-    if (estampadoNoPedido(it.name, hueco.nombre)) continue;
-    if (!cuelloCompatible(it.name, hueco.nombre)) continue;
-    if (!funcionCompatible(it.name, hueco.nombre)) continue;
-    if (!temporadaCompatible(it.name, hueco)) continue;
-    if (!materialCompatible(it.name, hueco.nombre)) continue;
+    if (estampadoNoPedido(it.name, pieza)) continue;
+    if (!cuelloCompatible(it.name, pieza)) continue;
+    if (!funcionCompatible(it.name, pieza)) continue;
+    if (!temporadaCompatible(it.name, { ...hueco, nombre: pieza })) continue;
+    if (!materialCompatible(it.name, pieza)) continue;
     const precio = it.prices?.base?.value;
     if (typeof precio !== "number") continue;
     // En la familia Y en el tono (código): un verde pálido no cubre "esmeralda".
@@ -801,7 +888,14 @@ export const LIMITE_RESPUESTA = 20; // limit=40 pesa 216 KB; se eligen 2
 const CACHE_SEGUNDOS = 7 * 24 * 60 * 60;
 const TIMEOUT_MS = 3000;
 
-export type Consulta = { items: UniqloItem[]; vistoEl: string | null };
+export type Consulta = {
+  items: UniqloItem[];
+  vistoEl: string | null;
+  /** El árbol de categorías en que caen los resultados (aggregations.tree.categories). */
+  categorias: CategoriaUniqlo[];
+  /** true si estos ítems vienen ya filtrados por categoría de Uniqlo. */
+  filtradaPorCategoria?: boolean;
+};
 
 /**
  * Una consulta al mercado, cacheada 7 días por URL en la Data Cache de Next
@@ -815,15 +909,18 @@ export async function consultarUniqlo(
   opts: {
     onError?: (mercado: Mercado, mensaje: string) => Promise<void> | void;
     fetchImpl?: typeof fetch;
+    /** Ids de categoría de Uniqlo separados por coma: filtra en origen. */
+    categoryId?: string;
   } = {}
 ): Promise<Consulta> {
-  const vacia: Consulta = { items: [], vistoEl: null };
+  const vacia: Consulta = { items: [], vistoEl: null, categorias: [] };
   if (!q.trim()) return vacia;
   const params = new URLSearchParams({
     q,
     offset: "0",
     limit: String(LIMITE_RESPUESTA),
     httpFailure: "true",
+    ...(opts.categoryId ? { categoryId: opts.categoryId } : {}),
   });
   const url = `https://www.uniqlo.com/${mercado}/api/commerce/v5/${MERCADOS[mercado].idioma}/products?${params}`;
   const doFetch = opts.fetchImpl ?? fetch;
@@ -837,17 +934,44 @@ export async function consultarUniqlo(
       await opts.onError?.(mercado, `http ${res.status}`);
       return vacia;
     }
-    const json = (await res.json()) as { status?: string; result?: { items?: UniqloItem[] } };
+    const json = (await res.json()) as {
+      status?: string;
+      result?: { items?: UniqloItem[]; aggregations?: { tree?: { categories?: CategoriaUniqlo[] } } };
+    };
     if (json.status !== "ok") {
       await opts.onError?.(mercado, `status ${json.status ?? "sin status"}`);
       return vacia;
     }
-    return { items: json.result?.items ?? [], vistoEl: res.headers?.get?.("date") ?? null };
+    return {
+      items: json.result?.items ?? [],
+      vistoEl: res.headers?.get?.("date") ?? null,
+      categorias: json.result?.aggregations?.tree?.categories ?? [],
+    };
   } catch (e) {
     const mensaje = e instanceof Error && e.name === "TimeoutError" ? "timeout" : e instanceof Error ? e.message : String(e);
     await opts.onError?.(mercado, mensaje);
     return vacia;
   }
+}
+
+/**
+ * LA CONSULTA DE LA VITRINA: dos pasos. Primero la búsqueda de texto (como
+ * siempre), que además devuelve en qué categorías de Uniqlo caen los
+ * resultados; si alguna NOMBRA la prenda buscada (CATEGORIAS), se repite la
+ * misma búsqueda filtrada por esas categorías y se usan esos ítems. Si el
+ * filtro deja vacío (o la cabeza no está en el diccionario), se queda la
+ * primera: nunca menos que hoy. Las dos van a la caché de 7 días.
+ */
+export async function consultarUniqloEnCategoria(
+  mercado: Mercado,
+  q: string,
+  opts: { onError?: (mercado: Mercado, mensaje: string) => Promise<void> | void; fetchImpl?: typeof fetch } = {}
+): Promise<Consulta> {
+  const primera = await consultarUniqlo(mercado, q, opts);
+  const ids = categoriasQueEmpatan(primera.categorias, q);
+  if (ids.length === 0) return primera;
+  const segunda = await consultarUniqlo(mercado, q, { ...opts, categoryId: ids.join(",") });
+  return segunda.items.length > 0 ? { ...segunda, filtradaPorCategoria: true } : primera;
 }
 
 /** Fecha corta para la card: "20 oct". */

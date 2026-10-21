@@ -2,6 +2,26 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.407.0] - 2026-10-21 — la vitrina busca dentro de la categoría de Uniqlo y lee la descripción de la pieza
+
+- **Filtra en origen con la categoría de Uniqlo** (`consultarUniqloEnCategoria`,
+  `CATEGORIAS`). La búsqueda de texto de Uniqlo es generosa: "t-shirt" en
+  Corea traía pantalones de sudadera. La respuesta dice en qué categorías
+  caen los resultados y `categoryId` sí filtra (medido: 498 → 33 playeras en
+  EE. UU.; género, clase y subcategoría no filtran). Dos pasos: la búsqueda de
+  siempre, y si alguna categoría NOMBRA la prenda buscada (inglés, japonés o
+  coreano), la misma búsqueda filtrada; si deja vacío, se queda la primera.
+  Nunca menos que antes.
+- **La descripción visual de la cápsula también manda** (`textoDePieza`).
+  "Suéter de punto vino" guarda aparte "cuello alto suelto, manga globo";
+  hasta hoy sólo se leía el nombre y el cuello alto se perdía. Ahora cuello,
+  manga, patrón, función y material se juzgan con nombre + descripción. NO
+  entra a la búsqueda: sumar modificadores a `q` vacía Japón y Corea.
+- **Juez de la medición jv3**: UNISEX cuenta para ambos (la vitrina lo admite
+  a propósito), no se castiga lo que la pieza no pide, y de la descripción
+  visual sólo lo que cambia el carácter de la prenda. Si el acuerdo con
+  Roberto sube, el juez queda calibrado.
+
 ## [0.2.406.0] - 2026-10-21 — la vitrina distingue el tono: un verde pálido ya no cubre "esmeralda"
 
 - **El color de la vitrina ahora empata por tono, no sólo por nombre**
