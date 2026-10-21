@@ -588,17 +588,19 @@ export function coloresDe(colorFamilia: string | null | undefined): string[] {
 //
 // Medido el 2026-10-21 mirando hasta tres prendas por código de las corridas
 // guardadas de la medición (docs/designs/vitrina-de-tienda.md, "Medición en
-// seco"): 51-53 verdes pálidos, 54-55 botella/esmeralda, 56-57 oliva, 58-59
+// seco"): 51-53 verdes pálidos, 55 botella/esmeralda, 56-57 oliva, 58-59
 // verde petróleo y oliva oscuro; 13-15 rojo vivo y coral, 16-17 rojo profundo,
 // 18-19 vino; 60-63 celestes (aunque 61-63 se llamen "BLUE"), 65-66 azul medio,
-// 67 azul rey, 68 azul tinta, 69 marino.
+// 67 azul rey, 68 azul tinta, 69 marino. El 54 es MIXTO (un bóxer gris, una
+// camisa menta, un suéter esmeralda, y en la corrida con tono un cachemir 54
+// que el juez con foto leyó "menta claro y deslavado"): no entra en esmeralda.
 //
 // Sólo las familias donde el nombre se queda corto llevan tonos; las demás
 // siguen por nombre. Y el tono FINO se lee del nombre de la pieza igual que el
 // tipo lee ahí sus modificadores: la cápsula guarda `colorFamilia: "verde"` y
 // `nombre: "Camiseta esmeralda"`, y lo que pide es esmeralda.
 export const TONOS: Record<string, string[]> = {
-  esmeralda: ["54", "55"],
+  esmeralda: ["55"],
   botella: ["55", "58"],
   verde: ["53", "54", "55", "58"],
   menta: ["51", "53"],

@@ -10,8 +10,8 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
   del tono… no es verde esmeralda". El nombre de color de Uniqlo ("GREEN") es
   la familia; el código numérico es el tono y es el mismo en los tres países.
   Medido mirando hasta tres prendas por código de las corridas guardadas:
-  51-53 verdes pálidos, 54-55 esmeralda/botella, 58-59 petróleo y oliva
-  oscuro; 13-15 rojo vivo y coral, 17-19 rubí y vino; 60-63 celestes (aunque
+  51-53 verdes pálidos, 55 esmeralda/botella (el 54 es mixto y no entra),
+  58-59 petróleo y oliva oscuro; 13-15 rojo vivo y coral, 17-19 rubí y vino; 60-63 celestes (aunque
   61-63 se llamen BLUE), 67 azul rey, 69 marino. Sólo esas familias llevan
   tono; las demás siguen por nombre.
 - **El tono fino se lee del nombre de la pieza**, igual que el tipo lee ahí sus

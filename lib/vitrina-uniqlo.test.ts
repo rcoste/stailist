@@ -130,7 +130,7 @@ describe("tono por código de Uniqlo: 'GREEN' es la familia, el código es el to
   });
 
   it("las familias con tono exigen el código; las demás van sólo por nombre", () => {
-    expect(tonosDe("esmeralda")).toEqual(["54", "55"]);
+    expect(tonosDe("esmeralda")).toEqual(["55"]);
     expect(tonosDe("azul rey")).toEqual(["67"]);
     expect(tonosDe("negro")).toBeNull();
     expect(tonosDe("vino")).toBeNull();
