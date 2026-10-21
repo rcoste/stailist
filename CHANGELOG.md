@@ -2,6 +2,29 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.413.1] - 2026-10-21 — una camisa de lino ya no cubre una de franela
+
+En una maleta real para mañanas de 8 °C, la pieza "Camisa blanca de franela
+ligera" (frío) salió como "parecido" de una "Camisa de lino blanca" (calor),
+con el duelo "¿te sirve la tuya?". El prompt del cruce dice que la temporada
+sólo afina entre "tienes" y "parecido" y nunca crea un "falta". Con ojo de
+stylist, una camisa de verano no es una versión de una de invierno: es otra
+prenda para otro clima.
+
+- **Regla 1e del cruce** (`temporadaCompatible`, `lib/engine/capsule-match-reglas.ts`):
+  una pieza de frío no la cubre una prenda de calor ni una de lino (salvo que
+  la pieza misma sea de lino), y una de calor no la cubre una de frío. Corre
+  después de la IA, también al recalcular una maleta y en el rescate (regla 3).
+  Sin temporada en alguno de los dos, no bloquea.
+- **El mismo filtro en los sustitutos** (`candidatasPosibles`): la búsqueda de
+  "¿te sirve la tuya?" y "ya lo tengo" tampoco ofrece lino para una pieza de frío.
+
+Medido en seco, reglas de producción contra las nuevas sobre los 33 cruces
+guardados (893 piezas): cambian 2, las dos en esa maleta y las dos a bien (la
+franela y una "playera gris jaspeado de manga larga" de invierno que cubría una
+playera de verano). En los 56 duelos de sustitutos guardados no había ningún
+caso: ese filtro es preventivo.
+
 ## [0.2.413.0] - 2026-10-21 — la maleta cuenta las camisas aparte: una por día, con colchón si te cambias seguido
 
 Salió de una maleta real de 8 días: 5 camisas y playeras y 3 suéteres. "Abrigos,

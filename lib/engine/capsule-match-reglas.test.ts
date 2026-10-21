@@ -124,6 +124,22 @@ describe("regla 1 · el color", () => {
     });
   });
 
+  // Su maleta rehecha de Mineápolis (2026-10-21): "Camisa blanca de franela
+  // ligera" (frío) salió "parecido" con su "Camisa de lino blanca" (calor).
+  it("una camisa de lino de verano no es 'parecido' de una franela de invierno", () => {
+    const franela = { ...ideal("Camisa blanca de franela ligera", "blanco", "top", "camisa-franela"), temporada: "frio" } as CapsuleItem;
+    const lino = { ...mia("Camisa de lino blanca", "top", "blanco"), temporada: "calor" } as ClosetItemLite;
+    const r = aplicarReglasDelCruce([franela], [{ status: "parecido", by: "Camisa de lino blanca", difiere: "lino ligero vs franela" }], [lino]);
+    expect(r.entries[0].status).toBe("falta");
+  });
+
+  it("y si la pieza es de todo el año, el lino no se bloquea", () => {
+    const camisa = ideal("Camisa blanca de popelina", "blanco", "top", "camisa");
+    const lino = { ...mia("Camisa de lino blanca", "top", "blanco"), temporada: "calor" } as ClosetItemLite;
+    const r = aplicarReglasDelCruce([camisa], [e("parecido", "Camisa de lino blanca")], [lino]);
+    expect(r.entries[0].status).toBe("parecido");
+  });
+
   it("su gorra no cubre el gorro de punto, tampoco cuando el cruce viene guardado", () => {
     const r = aplicarReglasDelCruce(
       [ideal("Gorro de punto negro", "negro", "accesorio", "gorro")],

@@ -86,3 +86,34 @@ describe("un suéter es un suéter entre top y abrigo", () => {
     expect(sirveComoSustituto({ nombre: "Blusa de satén rubí", category: "top" }, { nombre: "Suéter de punto morado", category: "abrigo" })).toBe(false);
   });
 });
+
+// Su maleta de Mineápolis (2026-10-21): para "Camisa blanca de franela ligera"
+// (frío, mañanas de 8 °C) el duelo le ofreció su "Camisa de lino blanca".
+describe("la temporada también manda en los sustitutos", async () => {
+  const { candidatasPosibles } = await import("@/lib/engine/trip-substitutes");
+  const closet = [
+    { nombre: "Camisa de lino blanca", category: "top", temporada: "calor" },
+    { nombre: "Camisa oxford blanca", category: "top", temporada: "todo-el-año" },
+    { nombre: "Camisa de franela gris", category: "top", temporada: "frio" },
+    { nombre: "Camisa blanca", category: "top", temporada: null, material: "lino" },
+  ];
+  const franela = { nombre: "Camisa blanca de franela ligera", tipo: "camisa", category: "top" as const, temporada: "frio" };
+
+  it("una pieza de frío no la cubre una de calor ni una de lino", () => {
+    expect(candidatasPosibles(franela, closet).map((c) => c.nombre)).toEqual(["Camisa oxford blanca", "Camisa de franela gris"]);
+  });
+
+  it("si la pieza pide lino, el lino sí entra", () => {
+    const lino = { nombre: "Camisa de lino blanca", tipo: "camisa", category: "top" as const, temporada: "frio" };
+    expect(candidatasPosibles(lino, closet).map((c) => c.nombre)).toContain("Camisa blanca");
+  });
+
+  it("una pieza de calor no la cubre una de frío", () => {
+    const calor = { nombre: "Camisa blanca de manga larga", tipo: "camisa", category: "top" as const, temporada: "calor" };
+    expect(candidatasPosibles(calor, closet).map((c) => c.nombre)).not.toContain("Camisa de franela gris");
+  });
+
+  it("sin temporada en la pieza no bloquea nada", () => {
+    expect(candidatasPosibles({ nombre: "Camisa blanca", tipo: "camisa", category: "top" }, closet)).toHaveLength(4);
+  });
+});

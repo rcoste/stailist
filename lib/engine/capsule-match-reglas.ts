@@ -73,6 +73,24 @@ export function claseAccesorio(texto: string): string | null {
   return null;
 }
 
+// LA TEMPORADA TAMBIÉN MANDA (2026-10-21): para "Camisa blanca de franela
+// ligera" en un viaje con mañanas de 8 °C, el cruce le dio su "Camisa de lino
+// blanca" como "parecido" ("lino ligero vs franela"): el prompt dice que la
+// temporada sólo afina entre "tienes" y "parecido", y una camisa de verano no
+// es una versión de una de invierno — es otra prenda para otro clima. Una pieza de frío no la cubre
+// una de calor ni una de lino (salvo que la pieza misma sea de lino), y una de
+// calor no la cubre una de frío. Sin temporada en alguno de los dos, no bloquea.
+export function temporadaCompatible(
+  falta: { nombre: string; tipo?: string | null; temporada?: string | null },
+  c: { nombre: string; temporada?: string | null; material?: string | null }
+): boolean {
+  const pideLino = /\blino\b|linen/i.test(`${falta.nombre} ${falta.tipo ?? ""}`);
+  const esLino = /\blino\b|linen/i.test(`${c.nombre} ${c.material ?? ""}`);
+  if (falta.temporada === "frio") return c.temporada !== "calor" && (pideLino || !esLino);
+  if (falta.temporada === "calor") return c.temporada !== "frio";
+  return true;
+}
+
 // Familia de color por palabra clave, en orden: lo más específico primero
 // ("azul marino" antes que "azul", "gris oscuro" cae en gris).
 const FAMILIAS: [string, RegExp][] = [
@@ -276,6 +294,14 @@ export function aplicarReglasDelCruce(
     }
   });
 
+  // 1e · la temporada: una pieza de frío no la cubre una de calor ni una de lino
+  items.forEach((it, i) => {
+    const e = out[i];
+    if (!e || e.status === "falta") return;
+    const real = prendaDe(e.by);
+    if (real && !temporadaCompatible(it, real)) cambiar(i, 1, { status: "falta", by: null, difiere: null });
+  });
+
   // 2a · ni dos "tienes": la pieza que va primero (la de más prioridad) se la queda
   const yaTiene = new Set<string>();
   out.forEach((e, i) => {
@@ -306,6 +332,7 @@ export function aplicarReglasDelCruce(
         !usadas.has(norm(c.nombre)) &&
         c.category === it.category &&
         familiaDePrenda(c) === famIdeal &&
+        temporadaCompatible(it, c) &&
         [...deClaseReal(c)].filter((w) => clase.has(w)).length >= 2
     );
     if (!libre) return;

@@ -4,6 +4,7 @@ import type { CapsuleItem, ClosetItemLite } from "@/lib/capsule";
 import { medirAnthropic, type QuienMide } from "@/lib/recibos";
 import { NOMBRE_FUNCION, funcionDe, sirveComoSustituto } from "@/lib/funcion-prenda";
 import { claseAccesorio, claseBottom, contextosCompatibles } from "@/lib/engine/capsule-match";
+import { temporadaCompatible } from "@/lib/engine/capsule-match-reglas";
 
 /**
  * Lo que la IA puede ver como sustituto: misma categoría y misma función
@@ -13,10 +14,9 @@ import { claseAccesorio, claseBottom, contextosCompatibles } from "@/lib/engine/
  * atributo guardado de la prenda si lo tiene). Largo y accesorio, como en el
  * match: si una de las dos no se reconoce, no bloquea.
  */
-export function candidatasPosibles<T extends { nombre: string; category: string; contexto?: string | null }>(
-  missing: Pick<CapsuleItem, "nombre" | "tipo" | "category">,
-  closet: T[]
-): T[] {
+export function candidatasPosibles<
+  T extends { nombre: string; category: string; contexto?: string | null; temporada?: string | null; material?: string | null }
+>(missing: Pick<CapsuleItem, "nombre" | "tipo" | "category"> & { temporada?: string | null }, closet: T[]): T[] {
   const ideal = `${missing.nombre} ${missing.tipo}`;
   const choca = (f: (t: string) => string | null, real: string) => {
     const a = f(ideal);
@@ -28,9 +28,11 @@ export function candidatasPosibles<T extends { nombre: string; category: string;
       sirveComoSustituto(missing, c) &&
       !(missing.category === "bottom" && choca(claseBottom, c.nombre)) &&
       !(missing.category === "accesorio" && choca(claseAccesorio, c.nombre)) &&
-      contextosCompatibles(ideal, c.nombre, c.contexto)
+      contextosCompatibles(ideal, c.nombre, c.contexto) &&
+      temporadaCompatible(missing, c)
   );
 }
+
 
 // "Buscar en mi clóset": dada UNA prenda que falta para el viaje, propone hasta 3
 // prendas del clóset real que pueden SUSTITUIRLA (misma clase, uso compatible) —
