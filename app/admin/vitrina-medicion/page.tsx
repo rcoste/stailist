@@ -21,6 +21,7 @@ const MOTIVO: Record<string, string> = {
   genero: "otra sección",
   "ropa-interior": "ropa interior",
   "nombre-no-coincide": "el nombre no dice la prenda",
+  modificador: "le falta lo que pide (largo, recto, mezclilla…)",
   manga: "otra manga",
   estampado: "liso/estampado al revés",
   cuello: "otro cuello",
@@ -130,7 +131,7 @@ export default async function VitrinaMedicionPage({
           extra={
             hueco.termino ? (
               <>
-                q = <span className="text-ink">{hueco.termino}</span> · {verTodos ? `${todos.length} candidatos` : `enseña ${candidatos.length} de ${todos.length}`}
+                q = <span className="text-ink">{todos[0]?.consulta ?? hueco.termino}</span> · {verTodos ? `${todos.length} candidatos` : `enseña ${candidatos.length} de ${todos.length}`}
               </>
             ) : (
               "sin término de búsqueda"

@@ -4,7 +4,7 @@ import { VitrinaFranja } from "@/components/vitrina-franja";
 import {
   claveVitrina,
   CERCANAS_ACTIVAS,
-  consultarUniqloEnCategoria,
+  consultarVitrina,
   elegirCercana,
   familiaDePieza,
   elegirPrendas,
@@ -74,7 +74,7 @@ export async function VitrinaHueco({
   };
 
   const [consultas, tasas] = await Promise.all([
-    Promise.all(mercados.map((m) => consultarUniqloEnCategoria(m, q, { onError }))),
+    Promise.all(mercados.map((m) => consultarVitrina(m, q, { onError }))),
     pesos ? tasasAMxn() : Promise.resolve(null),
   ]);
   const hueco = { segmento, colorFamilia, termino: q, nombre, visual, temporada, viajeFrio };
@@ -83,11 +83,11 @@ export async function VitrinaHueco({
   // ningún país tiene exacta. El orden entre países es el del viaje.
   let prendas: PrendaVitrina[] = [];
   for (let i = 0; i < mercados.length && prendas.length === 0; i++) {
-    prendas = elegirPrendas(consultas[i].items, hueco, mercados[i], consultas[i].vistoEl);
+    prendas = elegirPrendas(consultas[i].items, { ...hueco, consulta: consultas[i].q }, mercados[i], consultas[i].vistoEl);
   }
   if (prendas.length === 0 && CERCANAS_ACTIVAS) {
     for (let i = 0; i < mercados.length && prendas.length === 0; i++) {
-      prendas = elegirCercana(consultas[i].items, hueco, mercados[i], consultas[i].vistoEl);
+      prendas = elegirCercana(consultas[i].items, { ...hueco, consulta: consultas[i].q }, mercados[i], consultas[i].vistoEl);
     }
   }
   if (prendas.length === 0) return null;

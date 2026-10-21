@@ -10,6 +10,7 @@ import {
   estampadoNoPedido,
   fotoSegura,
   funcionCompatible,
+  respetaModificadores,
   mangaCompatible,
   mangaDe,
   materialCompatible,
@@ -94,6 +95,7 @@ export type MotivoDescarte =
   | "genero"
   | "ropa-interior"
   | "nombre-no-coincide"
+  | "modificador"
   | "manga"
   | "estampado"
   | "cuello"
@@ -115,6 +117,8 @@ export type HuecoParaElegir = {
   visual?: string | null;
   temporada?: string | null;
   viajeFrio?: boolean | null;
+  /** La palabra con que se buscó en este país; si se bajó de escalón, lo perdido filtra. */
+  consulta?: string | null;
 };
 
 export type CandidatoMedicion = {
@@ -151,6 +155,7 @@ export function motivoDescarte(it: UniqloItem, hueco: HuecoParaElegir): Exclude<
   const termino = hueco.termino ?? "";
   if (esRopaInterior(it.name ?? "", termino)) return "ropa-interior";
   if (termino && !nombreCoincide(it.name ?? "", termino)) return "nombre-no-coincide";
+  if (termino && !respetaModificadores(it.name ?? "", termino, hueco.consulta)) return "modificador";
   // Desde v0.2.402.3: manga, liso/estampado, cuello, función (lluvia), temporada y piel.
   const nombre = it.name ?? "";
   const pieza = textoDePieza(hueco); // nombre + descripción visual, como producción

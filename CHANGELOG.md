@@ -2,6 +2,30 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.409.0] - 2026-10-21 — Japón y Corea dejan de quedarse en blanco: la búsqueda baja de escalón sólo cuando no hay nada
+
+- **Escalones de búsqueda** (`consultasPara`, `consultarVitrina` en
+  `lib/vitrina-uniqlo.ts`). 56 de 135 consultas devolvían cero, casi todas en
+  Japón y Corea, porque sus buscadores no entienden el modificador en inglés
+  ("leather ankle boots", "wool blazer"). Ahora el término completo va primero
+  (en EE. UU. afina) y SÓLO si devuelve cero se baja: la prenda sin
+  modificadores, la palabra base y, en JP/KR, el nombre local donde se midió
+  que recupera (ベルト, スウェット, スニーカー, 블레이저, 조거팬츠, 비니, 머플러).
+  Si la API falla no se baja de escalón. Quedan en cero sólo las boinas.
+- **Lo que se perdió al bajar, filtra** (`respetaModificadores`). Medido sobre
+  las 61 prendas que entraron con los escalones solos: "abrigo largo" recibía
+  abrigos cortos, "jeans rectos" skinny y barrel, "chamarra de mezclilla" una
+  Harrington, "botines" botas altas. Ahora mezclilla, capucha, cierre, cargo,
+  botín, bandolera y "de vestir" tienen que decirse en la ficha (en los tres
+  idiomas); recto y largo sólo no pueden contradecirse ("EZY Jeans" es recta y
+  no lo dice).
+- **Tres arreglos que los escalones destaparon**: una sudadera ya no acepta
+  pantalones de sudadera (スウェットパンツ, 스웨트팬츠); "rompevientos" no baja a
+  "jacket" (es otra prenda); y la regla de manga ya aplica en japonés y
+  coreano (半袖, 반팔), que antes estaban exentos.
+- La medición guarda con qué palabra se buscó cada candidato (migración 0186)
+  y explica el descarte nuevo ("le falta lo que pide").
+
 ## [0.2.408.0] - 2026-10-21 — "la más cercana": cuando no hay la pieza exacta, una que cede sólo el tono, y lo dice
 
 - **La más cercana** (`elegirCercana`, `VECINOS`, `NOMBRE_TONO` en
