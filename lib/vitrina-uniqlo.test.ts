@@ -14,6 +14,9 @@ import {
   VITRINA_HASTA,
   claveVitrina,
   coloresDe,
+  colorQueEmpata,
+  familiaDePieza,
+  tonosDe,
   consultarUniqlo,
   elegirPrendas,
   cuelloCompatible,
@@ -113,6 +116,60 @@ describe("coloresDe: familias de la cápsula → nombres de Uniqlo", () => {
     expect(coloresDe("neutro claro")).toContain("OFF WHITE");
     expect(coloresDe("plata")).toEqual([]);
     expect(coloresDe(null)).toEqual([]);
+  });
+});
+
+describe("tono por código de Uniqlo: 'GREEN' es la familia, el código es el tono", () => {
+  it("el nombre de la pieza asciende la familia al tono que pide, sin saltar de familia", () => {
+    expect(familiaDePieza("verde", "Camiseta esmeralda")).toBe("esmeralda");
+    expect(familiaDePieza("azul", "Suéter azul rey de punto fino")).toBe("azul rey");
+    expect(familiaDePieza("negro", "Jeans negros rectos")).toBe("negro");
+    // "rojo" dentro de una pieza negra no cambia nada: no cabe en la familia de nombres.
+    expect(familiaDePieza("negro", "Bufanda negra con rojo")).toBe("negro");
+    expect(familiaDePieza("vino", null)).toBe("vino");
+  });
+
+  it("las familias con tono exigen el código; las demás van sólo por nombre", () => {
+    expect(tonosDe("esmeralda")).toEqual(["55"]);
+    expect(tonosDe("azul rey")).toEqual(["67"]);
+    expect(tonosDe("negro")).toBeNull();
+    expect(tonosDe("vino")).toBeNull();
+  });
+
+  it("un verde pálido (51) no cubre 'esmeralda' aunque Uniqlo lo llame GREEN; el 55 sí", () => {
+    const colors = [
+      { name: "GREEN", displayCode: "51" },
+      { name: "GREEN", displayCode: "55" },
+      { name: "BLACK", displayCode: "09" },
+    ];
+    expect(colorQueEmpata(colors, { colorFamilia: "verde", nombre: "Camiseta esmeralda" })).toEqual({
+      color: { name: "GREEN", displayCode: "55" },
+      porNombre: true,
+    });
+    expect(colorQueEmpata([colors[0]], { colorFamilia: "verde", nombre: "Camiseta esmeralda" })).toEqual({ color: null, porNombre: true });
+    // Sin tono pedido, el primer GREEN vale, como antes.
+    expect(colorQueEmpata(colors, { colorFamilia: "verde", nombre: "Playera verde" })?.color?.displayCode).toBe("55");
+    expect(colorQueEmpata(colors, { colorFamilia: "negro" }).color?.displayCode).toBe("09");
+  });
+
+  it("'azul claro' ya alcanza los celestes que Uniqlo llama BLUE (61-63); 'azul rey' sólo el 67", () => {
+    const colors = [
+      { name: "BLUE", displayCode: "62" },
+      { name: "BLUE", displayCode: "67" },
+      { name: "NAVY", displayCode: "69" },
+    ];
+    expect(colorQueEmpata(colors, { colorFamilia: "azul claro" }).color?.displayCode).toBe("62");
+    expect(colorQueEmpata(colors, { colorFamilia: "azul rey" }).color?.displayCode).toBe("67");
+    expect(colorQueEmpata(colors, { colorFamilia: "azul" }).color?.displayCode).toBe("67");
+    expect(colorQueEmpata(colors, { colorFamilia: "marino" }).color?.displayCode).toBe("69");
+  });
+
+  it("en elegirPrendas: 'rubí' ya no acepta el coral (14)", () => {
+    const base = items.find((i) => i.genderCategory === "WOMEN" && i.colors?.some((c) => c.name === "RED"))!;
+    const coral = { ...base, productId: "CORAL", colors: [{ name: "RED", displayCode: "14" }], images: { main: { "14": { image: "https://image.uniqlo.com/UQ/x.jpg" } } } };
+    const rubi = { ...base, productId: "RUBI", colors: [{ name: "RED", displayCode: "17" }], images: { main: { "17": { image: "https://image.uniqlo.com/UQ/y.jpg" } } } };
+    const out = elegirPrendas([coral, rubi], { segmento: "mujer", colorFamilia: "rubí" }, "us");
+    expect(out.map((p) => p.id)).toEqual(["us:RUBI:17"]);
   });
 });
 

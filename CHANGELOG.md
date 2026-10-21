@@ -2,6 +2,25 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.406.0] - 2026-10-21 — la vitrina distingue el tono: un verde pálido ya no cubre "esmeralda"
+
+- **El color de la vitrina ahora empata por tono, no sólo por nombre**
+  (`lib/vitrina-uniqlo.ts`, `TONOS`, `familiaDePieza`, `colorQueEmpata`).
+  Roberto, votando: "acepta las t-shirts que sean verdes independientemente
+  del tono… no es verde esmeralda". El nombre de color de Uniqlo ("GREEN") es
+  la familia; el código numérico es el tono y es el mismo en los tres países.
+  Medido mirando hasta tres prendas por código de las corridas guardadas:
+  51-53 verdes pálidos, 55 esmeralda/botella (el 54 es mixto y no entra),
+  58-59 petróleo y oliva oscuro; 13-15 rojo vivo y coral, 17-19 rubí y vino; 60-63 celestes (aunque
+  61-63 se llamen BLUE), 67 azul rey, 69 marino. Sólo esas familias llevan
+  tono; las demás siguen por nombre.
+- **El tono fino se lee del nombre de la pieza**, igual que el tipo lee ahí sus
+  modificadores: la cápsula guarda `verde` y el nombre dice "Camiseta
+  esmeralda"; lo que se busca es esmeralda. "Azul claro" ya alcanza los
+  celestes que Uniqlo llama BLUE; "rubí" ya no acepta el coral.
+- La medición (`/admin/vitrina-medicion`) explica el descarte nuevo como
+  "el color sí, el tono no" (motivo `tono`), distinto de "fuera del color".
+
 ## [0.2.405.0] - 2026-10-21 — la medición de la vitrina cabe en una pantalla y el juez ve la foto
 
 - **Corrida chica** (`scripts/vitrina-medicion.ts --huecos 4`): Roberto, al abrir
