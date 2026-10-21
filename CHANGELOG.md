@@ -23,6 +23,10 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
   ahí sale "la más cercana", como antes).
 - **El lino, si se pierde al bajar, se exige** (リネン, 麻, 린넨): un short de
   lino no se cubre con shorts de sudadera.
+- **Juez jv4: el cuello se juzga con la misma regla que la vitrina.** jv3
+  aprobó un "Cashmere Quarter-Zip Sweater" como cuello de tortuga; Roberto:
+  "un quarter zip sweater no sustituye al cuello de tortuga". La muestra para
+  votar se volvió a juzgar con jv4 (`--rejuzgar`, que no toca los votos).
 
 ## [0.2.409.0] - 2026-10-21 — Japón y Corea dejan de quedarse en blanco: la búsqueda baja de escalón sólo cuando no hay nada
 

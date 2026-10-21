@@ -5,6 +5,9 @@
 //   npx tsx scripts/vitrina-medicion.ts --huecos 4      corrida CHICA: 4 huecos distintos (lo que Roberto vota)
 //   npx tsx scripts/vitrina-medicion.ts --sin-juez      sólo consulta y guarda
 //   npx tsx scripts/vitrina-medicion.ts --juzgar <id>   (re)anuda el juez de una corrida
+//   npx tsx scripts/vitrina-medicion.ts --rejuzgar <id> borra los veredictos del juez y los vuelve a
+//                                                       pedir con la versión vigente (los votos de
+//                                                       Roberto NO se tocan)
 //
 // Qué hace: lee de la base los huecos reales ("falta" en capsule_match de los
 // viajes vivos, deleted_at null), pide a la API de Uniqlo los 20 candidatos
@@ -237,8 +240,37 @@ async function juzgar(corridaId: string) {
   console.log(`juez listo: ${hechos} juzgados, ${fallos} fallos, $${costo.toFixed(3)}`);
 }
 
+/**
+ * Volver a juzgar una corrida con la versión vigente del juez. Para cuando el
+ * juez cambia (jv4: el medio cierre no es cuello de tortuga) y la corrida está
+ * a medio votar: los votos de Roberto se quedan; sólo cambia contra qué juez se
+ * mide el acuerdo, y la corrida dice con cuál.
+ */
+async function rejuzgar(corridaId: string) {
+  await withDb(async (c) => {
+    await c.query(
+      `update public.vitrina_medicion_candidatos k set juez = null, juez_linea = null, juez_costo_usd = null, juez_ms = null, juez_error = null
+         from public.vitrina_medicion_huecos h where h.id = k.hueco_id and h.corrida_id = $1`,
+      [corridaId]
+    );
+    await c.query(`update public.vitrina_medicion_corridas set version_juez = $2, modelo_juez = $3 where id = $1`, [
+      corridaId,
+      JUEZ_VITRINA_VERSION,
+      MODELO_JUEZ_VITRINA.id,
+    ]);
+  });
+  await juzgar(corridaId);
+}
+
 async function main() {
   const args = process.argv.slice(2);
+  const rj = args.indexOf("--rejuzgar");
+  if (rj >= 0) {
+    const id = args[rj + 1];
+    if (!id) throw new Error("--rejuzgar necesita el id de la corrida");
+    await rejuzgar(id);
+    return;
+  }
   const i = args.indexOf("--juzgar");
   if (i >= 0) {
     const id = args[i + 1];
