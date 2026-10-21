@@ -2,6 +2,17 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.411.1] - 2026-10-21 — una pieza de calor ya no recibe ropa térmica
+
+- **El filtro de temporada ahora funciona en los dos sentidos**
+  (`temporadaCompatible`). Ya existía "pieza de frío no recibe lino ni
+  AIRism"; faltaba el espejo. A "Camiseta esmeralda" (temporada calor) la
+  vitrina le enseñaba una "HEATTECH Cashmere Blend T-Shirt | Extra Warm |
+  Turtleneck". Ahora una pieza de calor no recibe HEATTECH, forro polar,
+  borrego ni plumas, en inglés, japonés y coreano. Medido sobre la corrida más
+  reciente: afecta a esa sola prenda (que el juez ya rechazaba) en 9 huecos de
+  calor; no le quita nada bueno a ningún hueco.
+
 ## [0.2.411.0] - 2026-10-21 — la vitrina ordena por parecido con la pieza, no por estrellas
 
 - **Las estrellas no dicen si la prenda cubre el hueco.** Medido sobre tres

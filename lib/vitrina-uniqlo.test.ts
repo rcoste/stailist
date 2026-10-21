@@ -266,6 +266,24 @@ describe("escalones de búsqueda: bajar sólo cuando hay cero, nunca cuando fall
   });
 });
 
+describe("temporada en los dos sentidos: de frío no recibe verano, de calor no recibe térmico", () => {
+  it("una pieza de calor no recibe HEATTECH, forro polar, borrego ni plumas, en los tres idiomas", () => {
+    const calor = { nombre: "Camiseta esmeralda", temporada: "calor" };
+    expect(temporadaCompatible("HEATTECH Cashmere Blend T-Shirt | Extra Warm | Turtleneck", calor)).toBe(false);
+    expect(temporadaCompatible("極暖ヒートテックカシミヤブレンドリブハイネックT", calor)).toBe(false);
+    expect(temporadaCompatible("히트텍캐시미어블렌드터틀넥T(긴팔)엑스트라웜", calor)).toBe(false);
+    expect(temporadaCompatible("Fleece Full-Zip Jacket", calor)).toBe(false);
+    expect(temporadaCompatible("Supima Cotton Crew Neck T-Shirt", calor)).toBe(true);
+    expect(temporadaCompatible("AIRism Cotton T-Shirt", calor)).toBe(true);
+  });
+
+  it("la regla de frío sigue igual, y 'todo el año' sin viaje frío no filtra nada", () => {
+    expect(temporadaCompatible("Linen Blend Dress", { nombre: "Vestido midi rubí", temporada: "frio" })).toBe(false);
+    expect(temporadaCompatible("HEATTECH Ribbed Beanie", { nombre: "Gorro de punto negro", temporada: "frio" })).toBe(true);
+    expect(temporadaCompatible("HEATTECH Ribbed Beanie", { nombre: "Gorro negro", temporada: "todo-el-año" })).toBe(true);
+  });
+});
+
 describe("el orden: parecido con la pieza en los tres idiomas; las estrellas sólo desempatan", () => {
   const p = (nombreFicha: string, pieza: Parameters<typeof puntosDeParecido>[1]) => puntosDeParecido(nombreFicha, pieza);
   it("suma lo que la pieza pide y la ficha dice, en japonés y coreano también", () => {
