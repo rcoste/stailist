@@ -2,6 +2,26 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.411.0] - 2026-10-21 — la vitrina ordena por parecido con la pieza, no por estrellas
+
+- **Las estrellas no dicen si la prenda cubre el hueco.** Medido sobre tres
+  corridas guardadas: entre las prendas que pasan todos los filtros, el juez
+  aprueba ~50% en cualquier rango de calificación (< 4.3: 53%; ≥ 4.6: 50%; sin
+  reseñas: 56%). Y el orden de antes (adjetivos del término en inglés, luego
+  estrellas) en Japón y Corea era puro estrellas.
+- **Orden nuevo** (`puntosDeParecido` en `lib/vitrina-uniqlo.ts`): suma los
+  rasgos que la pieza pide y la ficha dice, en inglés, japonés y coreano (lino,
+  lana, merino, cachemira, punto, popelina, mezclilla, piel, largo, recto,
+  cuello de tortuga, de vestir…) y resta lo que la contradice (forrado para
+  una pieza ligera; sudadera o borrego para una de vestir o de punto; algodón
+  cepillado para popelina; plumas para un abrigo de lana). Las estrellas sólo
+  desempatan, y "sin reseñas" cuenta como la mediana (4.7), no como cero: el
+  Double Face Long Coat, nuevo y sin reseñas, perdía contra un trench de
+  algodón de 4.9 para un abrigo largo de lana.
+- **Medido pareado** (misma corrida, mismos candidatos, mismo juez jv4):
+  88 → 91 prendas buenas de 152 enseñadas; ningún hueco pierde la única buena
+  que enseñaba. La vitrina recibe ahora la formalidad de la pieza.
+
 ## [0.2.410.1] - 2026-10-21 — la medición abre en lo que hay que votar
 
 - **`/admin/vitrina-medicion` abre en la muestra más reciente**, no en la

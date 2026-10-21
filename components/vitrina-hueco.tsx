@@ -27,6 +27,7 @@ export async function VitrinaHueco({
   nombre,
   visual,
   temporada,
+  formalidad,
   viajeFrio,
   colorFamilia,
   segmento,
@@ -43,6 +44,8 @@ export async function VitrinaHueco({
   visual?: string | null;
   /** "frio" | "calor" | "todo-el-año": una pieza de frío no recibe lino. */
   temporada?: string | null;
+  /** "casual" | "formal-casual" | "formal": ordena las prendas (lo de sudadera resta en una pieza de vestir). */
+  formalidad?: string | null;
   /** Ninguna parada pasa de 20 °C: tampoco entra lino ni AIRism. */
   viajeFrio?: boolean | null;
   colorFamilia: string;
@@ -73,7 +76,7 @@ export async function VitrinaHueco({
     }
   };
 
-  const hueco = { segmento, colorFamilia, termino: q, nombre, visual, temporada, viajeFrio };
+  const hueco = { segmento, colorFamilia, termino: q, nombre, visual, temporada, formalidad, viajeFrio };
   const [consultas, tasas] = await Promise.all([
     // Se baja de escalón mientras nada de lo que vino pase los filtros de ESTA pieza.
     Promise.all(
