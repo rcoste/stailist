@@ -16,6 +16,7 @@ import {
   precioTexto,
   temporadaCompatible,
   terminoDe,
+  textoDePieza,
   urlDeFicha,
   type Mercado,
   type Segmento,
@@ -110,6 +111,7 @@ export type HuecoParaElegir = {
   colorFamilia: string;
   termino?: string | null;
   nombre?: string | null;
+  visual?: string | null;
   temporada?: string | null;
   viajeFrio?: boolean | null;
 };
@@ -147,12 +149,13 @@ export function motivoDescarte(it: UniqloItem, hueco: HuecoParaElegir): Exclude<
   if (termino && !nombreCoincide(it.name ?? "", termino)) return "nombre-no-coincide";
   // Desde v0.2.402.3: manga, liso/estampado, cuello, función (lluvia), temporada y piel.
   const nombre = it.name ?? "";
-  if (!mangaCompatible(nombre, mangaDe(hueco.nombre), termino)) return "manga";
-  if (estampadoNoPedido(nombre, hueco.nombre)) return "estampado";
-  if (!cuelloCompatible(nombre, hueco.nombre)) return "cuello";
-  if (!funcionCompatible(nombre, hueco.nombre)) return "funcion";
-  if (!temporadaCompatible(nombre, hueco)) return "temporada";
-  if (!materialCompatible(nombre, hueco.nombre)) return "material";
+  const pieza = textoDePieza(hueco); // nombre + descripción visual, como producción
+  if (!mangaCompatible(nombre, mangaDe(pieza), termino)) return "manga";
+  if (estampadoNoPedido(nombre, pieza)) return "estampado";
+  if (!cuelloCompatible(nombre, pieza)) return "cuello";
+  if (!funcionCompatible(nombre, pieza)) return "funcion";
+  if (!temporadaCompatible(nombre, { ...hueco, nombre: pieza })) return "temporada";
+  if (!materialCompatible(nombre, pieza)) return "material";
   if (typeof it.prices?.base?.value !== "number") return "sin-precio";
   // Misma puerta que producción: familia por nombre y, si la hay, tono por código.
   const { color, porNombre } = colorQueEmpata(it.colors, hueco);

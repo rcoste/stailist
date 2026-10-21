@@ -13,8 +13,12 @@ import fixture from "./__fixtures__/uniqlo-us-sweater.json";
 import {
   VITRINA_HASTA,
   claveVitrina,
+  cabezaDeTermino,
+  categoriasQueEmpatan,
   coloresDe,
   colorQueEmpata,
+  consultarUniqloEnCategoria,
+  textoDePieza,
   familiaDePieza,
   tonosDe,
   consultarUniqlo,
@@ -116,6 +120,87 @@ describe("coloresDe: familias de la cápsula → nombres de Uniqlo", () => {
     expect(coloresDe("neutro claro")).toContain("OFF WHITE");
     expect(coloresDe("plata")).toEqual([]);
     expect(coloresDe(null)).toEqual([]);
+  });
+});
+
+describe("categoría de Uniqlo: filtrar en origen lo que la búsqueda de texto trae de más", () => {
+  it("la cabeza del término es la última palabra, o las dos últimas si son una prenda", () => {
+    expect(cabezaDeTermino("linen shorts")).toBe("shorts");
+    expect(cabezaDeTermino("short sleeve polo shirt")).toBe("polo shirt");
+    expect(cabezaDeTermino("rain trench coat")).toBe("trench coat");
+    expect(cabezaDeTermino("t-shirt")).toBe("t-shirt");
+  });
+
+  it("elige por NOMBRE las categorías que nombran la prenda, en los tres idiomas, y deja fuera las mezclas", () => {
+    const arbolUs = [
+      { id: 23386, name: "T-Shirts" },
+      { id: 23335, name: "T-Shirts and Tank Tops" },
+      { id: 151199, name: "T-Shirts, Sweats & Fleece" },
+      { id: 23385, name: "Sweatshirts & Hoodies" },
+      { id: 24782, name: "UT: Graphic Tees" },
+    ];
+    expect(categoriasQueEmpatan(arbolUs, "t-shirt")).toEqual(["23386", "23335"]);
+    expect(categoriasQueEmpatan(arbolUs, "sweatshirt")).toEqual(["23385"]);
+    expect(categoriasQueEmpatan([{ id: 57995, name: "티셔츠 (긴팔 & 반팔)" }, { id: 150429, name: "팬츠" }], "t-shirt")).toEqual(["57995"]);
+    expect(categoriasQueEmpatan([{ id: 1568, name: "Tシャツ・カットソー" }], "long t-shirt")).toEqual(["1568"]);
+    // Sin entrada en el diccionario (top) o sin árbol: no se filtra.
+    expect(categoriasQueEmpatan(arbolUs, "top")).toEqual([]);
+    expect(categoriasQueEmpatan(null, "t-shirt")).toEqual([]);
+  });
+
+  it("consultarUniqloEnCategoria: dos pasos, y si el filtro deja vacío se queda la primera", async () => {
+    const con = (items: UniqloItem[], categories: { id: number; name: string }[]) =>
+      ({
+        ok: true,
+        status: 200,
+        headers: { get: () => null },
+        json: async () => ({ status: "ok", result: { items, aggregations: { tree: { categories } } } }),
+      }) as unknown as Response;
+    const arbol = [{ id: 95665, name: "Sweaters" }, { id: 23385, name: "Sweatshirts & Hoodies" }];
+    const llamadas: string[] = [];
+    const fetchImpl = vi.fn(async (url: string | URL | Request) => {
+      llamadas.push(String(url));
+      return String(url).includes("categoryId=95665") ? con(items.slice(0, 2), arbol) : con(items, arbol);
+    });
+    const out = await consultarUniqloEnCategoria("us", "sweater", { fetchImpl: fetchImpl as unknown as typeof fetch });
+    expect(llamadas).toHaveLength(2);
+    expect(llamadas[1]).toContain("q=sweater");
+    expect(llamadas[1]).toContain("categoryId=95665");
+    expect(out.items).toHaveLength(2);
+    expect(out.filtradaPorCategoria).toBe(true);
+
+    const fetchVacia = vi.fn(async (url: string | URL | Request) =>
+      String(url).includes("categoryId=") ? con([], arbol) : con(items, arbol)
+    );
+    const sinFiltro = await consultarUniqloEnCategoria("us", "sweater", { fetchImpl: fetchVacia as unknown as typeof fetch });
+    expect(sinFiltro.items).toHaveLength(items.length);
+    expect(sinFiltro.filtradaPorCategoria).toBeUndefined();
+
+    // Sin categoría que nombre la prenda, UNA sola llamada (como hasta hoy).
+    const fetchUna = vi.fn(async () => con(items, [{ id: 1, name: "Bottoms" }]));
+    await consultarUniqloEnCategoria("us", "sweater", { fetchImpl: fetchUna as unknown as typeof fetch });
+    expect(fetchUna).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("la descripción visual también manda: cuello, manga y material que el nombre calla", () => {
+  it("textoDePieza junta nombre y visual; sin visual, el nombre", () => {
+    expect(textoDePieza({ nombre: "Suéter de punto vino", visual: "punto medio, cuello alto suelto" })).toBe("Suéter de punto vino. punto medio, cuello alto suelto");
+    expect(textoDePieza({ nombre: "Jeans negros", visual: null })).toBe("Jeans negros");
+  });
+
+  it("en elegirPrendas: 'cuello alto' en la descripción descarta el suéter de cuello redondo", () => {
+    const base = items.find((i) => i.genderCategory === "WOMEN" && i.colors?.some((c) => c.name === "WINE"))!;
+    const redondo = { ...base, productId: "CREW", name: "Cashmere Crew Neck Sweater" };
+    const alto = { ...base, productId: "TURTLE", name: "Cashmere Turtleneck Sweater" };
+    const sinVisual = elegirPrendas([redondo, alto], { segmento: "mujer", colorFamilia: "vino", termino: "sweater", nombre: "Suéter de punto vino" }, "us");
+    expect(sinVisual.map((p) => p.id.split(":")[1]).sort()).toEqual(["CREW", "TURTLE"]);
+    const conVisual = elegirPrendas(
+      [redondo, alto],
+      { segmento: "mujer", colorFamilia: "vino", termino: "sweater", nombre: "Suéter de punto vino", visual: "punto medio, cuello alto suelto, manga globo discreta" },
+      "us"
+    );
+    expect(conVisual.map((p) => p.id.split(":")[1])).toEqual(["TURTLE"]);
   });
 });
 

@@ -24,7 +24,15 @@ import type { CandidatoMedicion, HuecoMedicion } from "./vitrina-medicion";
  * esmeralda". Con sólo la palabra "GREEN" ni la vitrina ni el juez pueden ver
  * el tono; la foto sí lo enseña, y de paso la manga y el largo.
  */
-export const JUEZ_VITRINA_VERSION = "jv2";
+/**
+ * jv3 (2026-10-21): tres reglas que jv2 no tenía y que lo volvían más severo
+ * que la propia vitrina —"la pieza pide mujer y la prenda es unisex" (la
+ * vitrina admite UNISEX a propósito), castigar detalles que la pieza no pide
+ * ("botones metálicos") y tratar cada palabra de la descripción visual como
+ * requisito. Si con esto el acuerdo con Roberto sube, el juez queda calibrado;
+ * si no, lo que sobra es el juez, no la vitrina.
+ */
+export const JUEZ_VITRINA_VERSION = "jv3";
 
 export const SYSTEM_JUEZ_VITRINA = `Eres un stylist profesional revisando una tienda en línea para una clienta o cliente.
 La maleta de un viaje le pide una PIEZA concreta que no tiene. Te enseñan UNA prenda de Uniqlo y contestas si esa prenda ES la pieza que pide la maleta: la compraría para cubrir ese hueco, tal cual.
@@ -35,6 +43,12 @@ Criterios, en este orden:
 3. Temporada y materia: coherente con la temporada del hueco (lino de verano no sirve para "frio"; lana gruesa no sirve para "calor").
 4. Formalidad: coherente con la del hueco (una sudadera no cubre un hueco formal).
 5. Corte, manga y largo: lo que la foto enseña manda sobre lo que el nombre calla (una "camiseta" sin más es de manga corta; una camisa sin más, de manga larga). Los detalles chicos se perdonan; el carácter de la pieza no.
+
+Reglas de calibración:
+- La sección UNISEX de Uniqlo cuenta para hombre y para mujer: no la castigues.
+- No castigues lo que la pieza no pide. Si la pieza no dice cuello, manga, largo o detalle, cualquiera razonable vale.
+- De la descripción visual exige sólo lo que cambia el carácter de la prenda (cuello alto contra redondo, manga corta contra larga, punto grueso contra fino, largo midi contra corto). Los detalles menores (botones, puños, un bolsillo) no descalifican.
+- Contesta "es la pieza" si una stylist la compraría para cubrir ESE hueco sin tener que explicarle a la clienta por qué no es lo que pidió.
 
 El precio es dato de contexto, NO criterio. El nombre de la prenda puede venir en inglés, japonés o coreano. Si no hay foto, juzga sólo con el texto y dilo en la línea.
 Contesta en español, en el JSON pedido: es_la_pieza (true/false) y una línea de máximo 20 palabras con el motivo principal.`;

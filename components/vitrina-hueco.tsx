@@ -3,7 +3,7 @@ import { registrarError } from "@/lib/errores";
 import { VitrinaFranja } from "@/components/vitrina-franja";
 import {
   claveVitrina,
-  consultarUniqlo,
+  consultarUniqloEnCategoria,
   elegirPrendas,
   tasasAMxn,
   terminoDe,
@@ -22,6 +22,7 @@ import {
 export async function VitrinaHueco({
   tipo,
   nombre,
+  visual,
   temporada,
   viajeFrio,
   colorFamilia,
@@ -35,6 +36,8 @@ export async function VitrinaHueco({
   tipo: string;
   /** El nombre de la pieza ("Short de lino negro"): de ahí salen los modificadores de la búsqueda. */
   nombre?: string | null;
+  /** La descripción visual de la cápsula: cuello, manga y material que el nombre calla. */
+  visual?: string | null;
   /** "frio" | "calor" | "todo-el-año": una pieza de frío no recibe lino. */
   temporada?: string | null;
   /** Ninguna parada pasa de 20 °C: tampoco entra lino ni AIRism. */
@@ -68,12 +71,12 @@ export async function VitrinaHueco({
   };
 
   const [consultas, tasas] = await Promise.all([
-    Promise.all(mercados.map((m) => consultarUniqlo(m, q, { onError }))),
+    Promise.all(mercados.map((m) => consultarUniqloEnCategoria(m, q, { onError }))),
     pesos ? tasasAMxn() : Promise.resolve(null),
   ]);
   let prendas: PrendaVitrina[] = [];
   for (let i = 0; i < mercados.length && prendas.length === 0; i++) {
-    prendas = elegirPrendas(consultas[i].items, { segmento, colorFamilia, termino: q, nombre, temporada, viajeFrio }, mercados[i], consultas[i].vistoEl);
+    prendas = elegirPrendas(consultas[i].items, { segmento, colorFamilia, termino: q, nombre, visual, temporada, viajeFrio }, mercados[i], consultas[i].vistoEl);
   }
   if (prendas.length === 0) return null;
 

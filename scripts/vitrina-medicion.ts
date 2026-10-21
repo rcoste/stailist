@@ -21,7 +21,7 @@ import { readFileSync } from "node:fs";
 
 import { withDb } from "../lib/db";
 import type { CapsuleMatch, CapsuleOverrides, CapsuleTarget } from "../lib/capsule";
-import { consultarUniqlo, LIMITE_RESPUESTA, viajeEsFrio, type Consulta, type Mercado, type Segmento } from "../lib/vitrina-uniqlo";
+import { consultarUniqloEnCategoria, LIMITE_RESPUESTA, viajeEsFrio, type Consulta, type Mercado, type Segmento } from "../lib/vitrina-uniqlo";
 import { armarCandidatos, huecosDeViaje, muestraDeHuecos, type CandidatoMedicion, type HuecoMedicion } from "../lib/evales/vitrina-medicion";
 import { JUEZ_VITRINA_VERSION, juzgarCandidato } from "../lib/evales/juez-vitrina";
 import { MODELO_JUEZ_VITRINA } from "../lib/models";
@@ -100,14 +100,14 @@ async function nuevaCorrida(limiteHuecos: number | null): Promise<string> {
   const claves = [...new Set(conTermino.map((h) => h.termino!))];
   for (const m of MERCADOS) {
     for (const q of claves) {
-      const r = await consultarUniqlo(m, q, {
+      const r = await consultarUniqloEnCategoria(m, q, {
         fetchImpl: fetchPlano,
         onError: (mercado, msg) => {
           errores.push(`${mercado} ${q}: ${msg}`);
         },
       });
       consultas.set(`${m}|${q}`, r);
-      process.stdout.write(`  ${m} ${q}: ${r.items.length}\n`);
+      process.stdout.write(`  ${m} ${q}: ${r.items.length}${r.filtradaPorCategoria ? " (por categoría)" : ""}\n`);
     }
   }
   if (errores.length) console.log(`consultas con error (${errores.length}): ${errores.join(" · ")}`);
