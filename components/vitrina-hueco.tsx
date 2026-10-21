@@ -55,7 +55,7 @@ export async function VitrinaHueco({
   /** ¿Enseñar el precio aproximado en pesos? (México o país sin dato) */
   pesos?: boolean;
 }) {
-  const q = terminoDe(tipo, nombre);
+  const q = terminoDe(tipo, nombre, visual);
   if (!q || mercados.length === 0) return null;
 
   const onError = async (mercado: Mercado, mensaje: string) => {
@@ -73,11 +73,16 @@ export async function VitrinaHueco({
     }
   };
 
+  const hueco = { segmento, colorFamilia, termino: q, nombre, visual, temporada, viajeFrio };
   const [consultas, tasas] = await Promise.all([
-    Promise.all(mercados.map((m) => consultarVitrina(m, q, { onError }))),
+    // Se baja de escalón mientras nada de lo que vino pase los filtros de ESTA pieza.
+    Promise.all(
+      mercados.map((m) =>
+        consultarVitrina(m, q, { onError, sirve: (items, usada) => elegirPrendas(items, { ...hueco, consulta: usada }, m).length > 0 })
+      )
+    ),
     pesos ? tasasAMxn() : Promise.resolve(null),
   ]);
-  const hueco = { segmento, colorFamilia, termino: q, nombre, visual, temporada, viajeFrio };
   // Dos pasadas: una exacta en CUALQUIER país le gana a cualquier cercana, y
   // la cercana (una sola, que cede sólo el tono) aparece únicamente cuando
   // ningún país tiene exacta. El orden entre países es el del viaje.

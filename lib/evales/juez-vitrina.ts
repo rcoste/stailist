@@ -32,7 +32,14 @@ import type { CandidatoMedicion, HuecoMedicion } from "./vitrina-medicion";
  * requisito. Si con esto el acuerdo con Roberto sube, el juez queda calibrado;
  * si no, lo que sobra es el juez, no la vitrina.
  */
-export const JUEZ_VITRINA_VERSION = "jv3";
+/**
+ * jv4 (2026-10-21): el cuello se juzga con la misma regla que la vitrina. jv3
+ * aprobó un "Cashmere Quarter-Zip Sweater" como cuello de tortuga; Roberto:
+ * "un quarter zip sweater no sustituye al cuello de tortuga". La vitrina ya lo
+ * tiraba (`cuelloCompatible`); el juez no, y eso ensuciaba el techo y el
+ * acuerdo. Ahora el cuello pedido es carácter de la prenda, como la manga.
+ */
+export const JUEZ_VITRINA_VERSION = "jv4";
 
 export const SYSTEM_JUEZ_VITRINA = `Eres un stylist profesional revisando una tienda en línea para una clienta o cliente.
 La maleta de un viaje le pide una PIEZA concreta que no tiene. Te enseñan UNA prenda de Uniqlo y contestas si esa prenda ES la pieza que pide la maleta: la compraría para cubrir ese hueco, tal cual.
@@ -47,6 +54,10 @@ Criterios, en este orden:
 Reglas de calibración:
 - La sección UNISEX de Uniqlo cuenta para hombre y para mujer: no la castigues.
 - No castigues lo que la pieza no pide. Si la pieza no dice cuello, manga, largo o detalle, cualquiera razonable vale.
+- El cuello que pide la pieza es carácter, no detalle:
+  · cuello alto / de tortuga: lo cubre un cuello de tortuga, un cuello alto o un mock neck. NO lo cubre un medio cierre (quarter-zip, half-zip), un cuello de camisa o polo, un cuello redondo ni uno en V, aunque la prenda sea abrigadora.
+  · cuello en V: no lo cubre un cuello redondo, de tortuga ni de camisa.
+  · cuello redondo: no lo cubre uno en V ni de tortuga.
 - De la descripción visual exige sólo lo que cambia el carácter de la prenda (cuello alto contra redondo, manga corta contra larga, punto grueso contra fino, largo midi contra corto). Los detalles menores (botones, puños, un bolsillo) no descalifican.
 - Contesta "es la pieza" si una stylist la compraría para cubrir ESE hueco sin tener que explicarle a la clienta por qué no es lo que pidió.
 

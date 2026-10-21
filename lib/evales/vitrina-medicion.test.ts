@@ -8,7 +8,7 @@ import fixture from "../__fixtures__/uniqlo-us-sweater.json";
 import type { CapsuleMatch, CapsuleTarget } from "@/lib/capsule";
 import { elegirPrendas, type UniqloItem } from "@/lib/vitrina-uniqlo";
 import { armarCandidatos, corridaPorDefecto, huecosDeViaje, motivoDescarte, muestraDeHuecos, pct, resumenMedicion, type VotoFila } from "./vitrina-medicion";
-import { textoJuezVitrina } from "./juez-vitrina";
+import { JUEZ_VITRINA_VERSION, SYSTEM_JUEZ_VITRINA, textoJuezVitrina } from "./juez-vitrina";
 
 const items = fixture.result.items as unknown as UniqloItem[];
 
@@ -255,6 +255,14 @@ describe("resumenMedicion: los tres números", () => {
   it("pct no divide entre cero", () => {
     expect(pct(1, 4)).toBe(25);
     expect(pct(0, 0)).toBeNull();
+  });
+});
+
+describe("el juez juzga el cuello con la misma regla que la vitrina (jv4)", () => {
+  it("el prompt dice que un medio cierre no cubre un cuello de tortuga", () => {
+    expect(JUEZ_VITRINA_VERSION).toBe("jv4");
+    expect(SYSTEM_JUEZ_VITRINA).toMatch(/quarter-zip/);
+    expect(SYSTEM_JUEZ_VITRINA).toMatch(/cuello alto \/ de tortuga/);
   });
 });
 
