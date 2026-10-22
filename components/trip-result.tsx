@@ -186,6 +186,7 @@ function DueloCard({
   onSugerida,
   onNinguna,
   onElegirOtra,
+  yaVaPara = null,
   busy = false,
 }: {
   row: TripRow;
@@ -198,6 +199,8 @@ function DueloCard({
   onNinguna?: () => void;
   /** "elegir otra de mi clóset" (2026-10-21): la lista de lo suyo que sirve para la pieza, sin IA. */
   onElegirOtra?: () => void;
+  /** La pieza que "la tuya" ya cubre en esta maleta, si cubre otra (aviso, no bloqueo). */
+  yaVaPara?: string | null;
   busy?: boolean;
 }) {
   const render = useIdealRender(row.renderArgs, row.idealImage);
@@ -229,6 +232,11 @@ function DueloCard({
           </span>
           <p className="display text-[16px] italic leading-5 text-ink2">{row.porque}</p>
         </div>
+        {yaVaPara ? (
+          <p className="mt-1.5 text-[12px] leading-snug text-muted">
+            Tu {tuya.nombre.toLowerCase()} ya va en tu maleta por «{yaVaPara.toLowerCase()}». Si la eliges aquí, cubre las dos piezas y te quedan menos combinaciones.
+          </p>
+        ) : null}
       </div>
 
       {/* EL TÍTULO EN MEDIO (insistencia de Roberto, y tenía razón dos veces):
@@ -629,6 +637,21 @@ export function TripResult({
     if (d === "accept") return "tienes";
     if (d === "reject") return "falta";
     return eff(r);
+  };
+  // QUÉ PRENDA TUYA YA CUBRE QUÉ PIEZA (2026-10-21). Un duelo le ofrecía su
+  // "Camisa de franela gris" para otra pieza cuando ya la había elegido para
+  // una: elegirla otra vez es válido, pero cubre dos piezas con una prenda y
+  // le quedan menos combinaciones. No se prohíbe; se avisa en la tarjeta.
+  const yaCubre = new Map<string, { index: number; pieza: string }>();
+  for (const r of rows) {
+    const by = ov(r).by;
+    if (!by) continue;
+    const cubre = effLocal(r) === "tienes" || r.base === "falta" || ganados.has(r.index) || !!localSub[r.index];
+    if (cubre && !yaCubre.has(by)) yaCubre.set(by, { index: r.index, pieza: r.nombre });
+  }
+  const yaVaPara = (nombre: string, index: number) => {
+    const u = yaCubre.get(nombre);
+    return u && u.index !== index ? u.pieza : null;
   };
 
   // LOS GRUPOS DE LA FASE DE PLAN, partidos por SIGNIFICADO (segunda ronda de
@@ -1089,6 +1112,7 @@ export function TripResult({
                       setDuelAbierto(null);
                       void elegirDeMiCloset(r);
                     }}
+                    yaVaPara={yaVaPara(tuya.nombre, r.index)}
                     onMia={() => {
                       setDuelAbierto(null);
                       if (tipo === "falta") {
@@ -1476,6 +1500,20 @@ export function TripResult({
                 className="flex min-h-12 w-full items-center justify-center gap-2 rounded-sm border border-line bg-surface text-sm font-semibold text-ink transition-colors duration-200 hover:border-ink"
               >
                 <Icon name="repetir" size={15} /> no me convence — cámbiala
+              </button>
+              {/* "Elegir otra de mi clóset" también aquí (2026-10-21): en una prenda
+                  que ya va en la maleta, la única salida era pedirle otra a la IA.
+                  Misma lista sin IA que en el duelo. */}
+              <button
+                type="button"
+                onClick={() => {
+                  const r = rows.find((x) => x.index === zoom.index);
+                  setZoom(null);
+                  if (r) void elegirDeMiCloset(r);
+                }}
+                className="flex min-h-11 w-full items-center justify-center text-[13px] font-semibold text-muted transition-colors hover:text-ink"
+              >
+                o elige tú otra de tu clóset
               </button>
             </div>
           ) : null
