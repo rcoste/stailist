@@ -2,6 +2,32 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.417.0] - 2026-10-21 — la maleta flexible: quita y pon lo que quieras, y una revisión de stylist antes de los looks
+
+"Tener más flexibilidad: quitar y poner, o decirte 'esto es lo que empaqué',
+dame un assessment, y arma los looks a partir de esto." Se decidió no cambiar
+el inicio (la app propone y tú corriges: elegir 22 prendas una por una es la
+fricción que mató al alfa) y sí volver libre la corrección:
+
+- **Quitar cualquier prenda**: "no la llevo en este viaje" en la ficha de
+  cualquier prenda que ya va (antes sólo en las piezas que faltaban). Pide el
+  motivo como siempre.
+- **Poner algo de tu clóset**: "agregar algo de mi clóset", bajo "Lo que
+  llevas", abre tu clóset agrupado (sin lo que ya va) y la prenda entra como
+  una pieza más del viaje, ya cubierta — así la cuentan el resumen, el
+  empacado, el juez y los looks sin código aparte (`agregarAlViaje`, el mismo
+  truco de las anclas al crear el viaje).
+- **Revisión de tu maleta** (pestaña "empacar", antes de los looks): la
+  stylist lee lo que de verdad llevas y dice qué va bien, qué te sobra (con el
+  nombre exacto de la prenda), qué te falta y cuántos looks salen. Una llamada
+  al juez (Sonnet) con el freno de gasto; se guarda con la firma de la maleta y
+  avisa "cambiaste tu maleta desde esta revisión" cuando ya no aplica
+  (`revisarMiMaleta`, `lib/trip-revision-maleta.ts`).
+- Los looks ya se arman sólo con lo que llevas (más a lo mucho una pieza que
+  falte por look): eso no cambia.
+- Migración `0188_maleta_flexible.sql` (trips.revision y eventos
+  `trip_item_added` / `trip_revision`), ya aplicada.
+
 ## [0.2.416.0] - 2026-10-21 — la maleta contada y agrupada: cuántas de cada cosa, contra lo que pide el viaje
 
 "Ver un resumen de lo que estás empacando: cuántas camisas, cuántos

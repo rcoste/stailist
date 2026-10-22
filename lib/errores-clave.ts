@@ -62,6 +62,7 @@ const TAREA: Record<string, string> = {
   "viaje-outfits": "armar los looks del viaje",
   "viaje-sustitutos": "buscar sustitutos para la maleta",
   "viaje-juez": "revisar los looks del viaje",
+  "viaje-revision": "revisar su maleta",
   "destino-imagen": "la foto del destino",
   "destino-motivo": "el motivo del destino",
   arquetipo: "dibujar una prenda del catálogo",
