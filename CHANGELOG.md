@@ -2,6 +2,23 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.415.3] - 2026-10-21 — el título de un look describe las prendas que de verdad trae
+
+En una maleta real, el look "Camisa blanca y franela carbón" no traía camisa
+blanca: traía un suéter marino. El generador lo armó con la camisa y le
+escribió el texto; el juez lo "reparó" cambiando la camisa por el suéter, y el
+código cambiaba las prendas pero dejaba el título, el porqué y el tip del look
+viejo.
+
+- **El juez reescribe el texto del look que repara** (`titulo`, `porque`,
+  `tip` en su respuesta, sólo para "reparado"). Si no lo escribe y la reparación
+  quitó una prenda, el porqué y el tip viejos se descartan para no nombrarla
+  (`conTextoDelArreglo`). Si sólo sumó una capa, el texto se queda.
+- Prompt de looks de viaje `viaje-v4`.
+
+Medido en seco con IA, dos corridas sobre esa maleta (16 looks cada una): el
+juez reparó 4 y 5; los 9 traen título y porqué que nombran sólo prendas del look.
+
 ## [0.2.415.2] - 2026-10-21 — una prenda que cubre dos piezas se ve también después de elegir
 
 El aviso de 0.2.415.1 sólo salía en el duelo abierto, antes de elegir. En una
