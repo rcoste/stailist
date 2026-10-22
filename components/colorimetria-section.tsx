@@ -138,6 +138,25 @@ export function ColorimetriaSection({
             {seasonDisplayLabel(current, curFlow)}
           </span>
           {palette.mejores.length > 0 ? <Swatches items={palette.mejores} /> : null}
+          {/* LOS COLORES QUE TOMAS DE LA OTRA ESTACIÓN (2026-10-21). El nombre
+              ("Invierno profundo") ya los incluía, pero aquí sólo se veían los
+              de la base y nadie entendía qué quería decir "profundo": Roberto
+              buscó su guiño de otoño en el perfil y no lo encontró. Los usan
+              todos los motores (seasonPalette → "prestados"). */}
+          {curFlow && palette.prestados.length > 0 ? (
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs leading-snug text-muted">
+                Tu base es {DISPLAY[current].toLowerCase()}, y también te van colores de{" "}
+                {DISPLAY[curFlow].toLowerCase()}:{" "}
+                {palette.prestados
+                  .slice(0, 4)
+                  .map((c) => c.nombre.toLowerCase())
+                  .join(", ")}
+                {palette.prestados.length > 4 ? "…" : "."}
+              </span>
+              <Swatches items={palette.prestados} />
+            </div>
+          ) : null}
           <Link
             href="/cartera"
             className="flex min-h-10 items-center justify-center gap-2 rounded-sm border border-line bg-surface text-sm font-semibold text-ink transition-colors hover:border-ink"
