@@ -2,6 +2,16 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.415.1] - 2026-10-21 — elegir de tu clóset también en lo que ya llevas, y aviso si una prenda cubre dos piezas
+
+- **"o elige tú otra de tu clóset"** en la ficha de una prenda que ya va en la
+  maleta, debajo de "no me convence — cámbiala" (que le pregunta a la IA). Es
+  la misma lista sin IA del duelo.
+- **El duelo avisa si tu prenda ya cubre otra pieza:** "Tu camisa de franela
+  gris ya va en tu maleta por «camisa de franela gris oscuro». Si la eliges
+  aquí, cubre las dos piezas y te quedan menos combinaciones." No se prohíbe
+  (puede ser lo que quieres); se dice antes de que lo elijas.
+
 ## [0.2.415.0] - 2026-10-21 — en el duelo puedes elegir otra prenda de tu clóset
 
 "¿Te sirve la tuya?" enfrentaba la sugerida contra una prenda tuya, y la única

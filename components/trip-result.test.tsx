@@ -197,3 +197,29 @@ describe("TripResult — elegir otra de mi clóset desde el duelo", () => {
     expect(vi.mocked(listTripClosetOptions)).toHaveBeenCalledWith("t1", 4);
   });
 });
+
+// UNA PRENDA PARA DOS PIEZAS SE AVISA (2026-10-21). Su "Camisa de franela gris"
+// ya cubría una pieza y el duelo de otra se la ofrecía otra vez. Elegirla es
+// válido; lo que se blinda es que la tarjeta lo diga.
+describe("TripResult — el duelo avisa si tu prenda ya va por otra pieza", () => {
+  it("nombra la pieza que ya cubre", () => {
+    const cubierta = fila(0, "Camisa de franela gris oscuro", "camisa", "gris", "tienes", "Camisa de franela gris");
+    const duelo: TripRow = { ...fila(1, "Camisa gris oscuro de twill", "camisa", "gris", "parecido", "Camisa de franela gris"), difiere: "estampado rayas en vez de liso" };
+    render(
+      <TripPackedProvider initial={{}}>
+        <TripResult tripId="t1" userId="u1" rows={[cubierta, duelo]} />
+      </TripPackedProvider>
+    );
+    expect(screen.getByText(/ya va en tu maleta por «camisa de franela gris oscuro»/)).toBeTruthy();
+  });
+
+  it("si no cubre otra pieza, no avisa", () => {
+    const duelo: TripRow = { ...fila(1, "Camisa gris oscuro de twill", "camisa", "gris", "parecido", "Camisa de franela gris"), difiere: "estampado rayas en vez de liso" };
+    render(
+      <TripPackedProvider initial={{}}>
+        <TripResult tripId="t1" userId="u1" rows={[duelo]} />
+      </TripPackedProvider>
+    );
+    expect(screen.queryByText(/ya va en tu maleta por/)).toBeNull();
+  });
+});
