@@ -2,6 +2,23 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.416.0] - 2026-10-21 — la maleta contada y agrupada: cuántas de cada cosa, contra lo que pide el viaje
+
+"Ver un resumen de lo que estás empacando: cuántas camisas, cuántos
+pantalones, abrigos… agrupado en vez de todo revuelto; es más fácil
+identificar si hay mucho o poco de algo, o si falta." La cuadrícula mezclaba
+playeras, botines y abrigos en el orden de la cápsula, y el piso del viaje
+(cuántas pide) sólo se veía en el aviso cuando faltaba.
+
+- **"Lo que llevas"** (arriba de las prendas, en "prendas" y en "empacar"):
+  un chip por grupo —camisas, playeras y blusas · suéteres y capas ·
+  pantalones y faldas · vestidos · abrigos y sacos · zapatos · accesorios— con
+  "3 de 5" donde el viaje pide un mínimo (`capsuleFloor`). El grupo que no
+  llega va en tinta.
+- **Las prendas agrupadas** bajo esos títulos en "ya lo tienes" y en "empaca
+  esto" (celular). La lista de escritorio de "empacar" sigue como estaba.
+- `lib/trip-grupos.ts`: grupos, agrupado y resumen, puros y con pruebas.
+
 ## [0.2.415.3] - 2026-10-21 — el título de un look describe las prendas que de verdad trae
 
 En una maleta real, el look "Camisa blanca y franela carbón" no traía camisa
