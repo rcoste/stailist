@@ -16,6 +16,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { listTripClosetOptions } from "@/lib/trip-actions";
+import { opcionesParaAgregar } from "@/lib/trip-flexible-actions";
 import { TripResult, type TripRow } from "@/components/trip-result";
 import { TripPackedProvider } from "@/components/trip-packed-context";
 
@@ -50,6 +51,11 @@ vi.mock("@/lib/trip-actions", () => ({
   listTripClosetOptions: vi.fn(async (_tripId: string, _index: number) => []),
   recalcularMaletaViaje: vi.fn(async () => ({ ok: true })),
   posiblesYaLoTengo: vi.fn(async () => []),
+}));
+vi.mock("@/lib/trip-flexible-actions", () => ({
+  opcionesParaAgregar: vi.fn(async (_tripId: string) => []),
+  agregarAlViaje: vi.fn(async (_tripId: string, _itemId: string) => ({ ok: true })),
+  revisarMiMaleta: vi.fn(async (_tripId: string) => ({ ok: false })),
 }));
 vi.mock("@/lib/wishlist-actions", () => ({
   toggleWishlistFromCapsule: vi.fn(async () => ({ ok: true })),
@@ -256,5 +262,19 @@ describe("TripResult — resumen por grupo", () => {
     expect(screen.getByText("pantalones y faldas · 1 de 3")).toBeTruthy();
     expect(screen.getByText("zapatos · 0 de 2")).toBeTruthy();
     expect(screen.getByText("camisas, playeras y blusas · 1")).toBeTruthy();
+  });
+});
+
+// LA MALETA FLEXIBLE (2026-10-21): "agregar algo de mi clóset" abre la lista de
+// su clóset para ESE viaje.
+describe("TripResult — agregar algo de mi clóset", () => {
+  it("abre la lista de su clóset para el viaje", () => {
+    render(
+      <TripPackedProvider initial={{}}>
+        <TripResult tripId="t1" userId="u1" rows={[fila(0, "Camisa blanca", "camisa", "blanco", "tienes", "Camisa blanca")]} />
+      </TripPackedProvider>
+    );
+    fireEvent.click(screen.getByRole("button", { name: /agregar algo de mi clóset/i }));
+    expect(vi.mocked(opcionesParaAgregar)).toHaveBeenCalledWith("t1");
   });
 });

@@ -29,7 +29,9 @@ import {
 import { MotivoSheet } from "@/components/motivo-sheet";
 import { MasOpcionesSheet, ParecidoSheet, type OpcionPieza } from "@/components/trip-pieza-opciones";
 import type { AvisoMaleta } from "@/lib/trip-avisos";
-import { agruparPiezas, resumenDeMaleta, type PisoMaleta } from "@/lib/trip-grupos";
+import { agruparPiezas, GRUPOS, resumenDeMaleta, type PisoMaleta } from "@/lib/trip-grupos";
+import { agregarAlViaje, opcionesParaAgregar, revisarMiMaleta, type OpcionAgregar } from "@/lib/trip-flexible-actions";
+import type { RevisionMaleta } from "@/lib/trip-revision-maleta";
 import { MatchRecalc } from "@/components/match-recalc";
 import { ImportCarreteFlow, type AddFlowHandle } from "@/components/import-carrete-flow";
 import { MOTIVOS_VIAJE, textoDeDiferencia, type VetoReason } from "@/lib/capsule";
@@ -434,6 +436,8 @@ export function TripResult({
   ganadosIniciales = [],
   avisos = [],
   piso = null,
+  revision = null,
+  firmaActual = "",
   closetCambio = false,
   vitrina,
 }: {
@@ -452,6 +456,9 @@ export function TripResult({
   avisos?: AvisoMaleta[];
   /** Lo que pide el viaje (lib/trip.ts capsuleFloor) para el resumen por grupo. */
   piso?: PisoMaleta | null;
+  /** La revisión de stylist guardada (trips.revision) y la firma de lo que lleva hoy. */
+  revision?: RevisionMaleta | null;
+  firmaActual?: string;
   /** Vitrina de tienda por índice de fila (prueba Uniqlo 2026-10/11): la página
    *  la arma como nodos en Suspense; aquí sólo se cuelga bajo la card de la
    *  pieza que falta. Vacío = nada cambia. */
@@ -792,6 +799,12 @@ export function TripResult({
     duelo?: "falta" | "parecido";
     motivo: VetoReason | null;
   } | null>(null);
+  // LA MALETA FLEXIBLE (2026-10-21): agregar de su clóset y la revisión de stylist.
+  const [agregar, setAgregar] = useState<{ status: "loading" | "done" | "error"; opciones: OpcionAgregar[] } | null>(null);
+  const [agregando, setAgregando] = useState<string | null>(null);
+  const [revisionLocal, setRevisionLocal] = useState<RevisionMaleta | null>(revision);
+  const [revisando, setRevisando] = useState(false);
+  const [revisionError, setRevisionError] = useState<string | null>(null);
   const [cambiando, setCambiando] = useState<Set<number>>(new Set());
   const [dueloBusy, setDueloBusy] = useState<Set<number>>(new Set());
   const carreteRef = useRef<AddFlowHandle>(null);
@@ -825,6 +838,37 @@ export function TripResult({
       return n;
     });
     conjunto(setDescartados, index, false);
+  }
+
+  async function abrirAgregar() {
+    setAgregar({ status: "loading", opciones: [] });
+    try {
+      setAgregar({ status: "done", opciones: await opcionesParaAgregar(tripId) });
+    } catch {
+      setAgregar({ status: "error", opciones: [] });
+    }
+  }
+
+  async function agregarPrenda(o: OpcionAgregar) {
+    setAgregando(o.id);
+    const res = await agregarAlViaje(tripId, o.id).catch(() => ({ ok: false }));
+    setAgregando(null);
+    if (res.ok) {
+      setAgregar(null);
+      avisar(`Agregué ${o.nombre.toLowerCase()} a tu maleta`);
+      router.refresh();
+    } else {
+      avisar("No pude agregarla — inténtalo otra vez.");
+    }
+  }
+
+  async function pedirRevision() {
+    setRevisando(true);
+    setRevisionError(null);
+    const res = await revisarMiMaleta(tripId).catch(() => ({ ok: false as const }));
+    setRevisando(false);
+    if (res.ok) setRevisionLocal(res.revision);
+    else setRevisionError(("mensaje" in res && res.mensaje) || "No pude revisarla ahorita — inténtalo en un momento.");
   }
 
   async function elegirDeMiCloset(r: TripRow) {
@@ -1004,6 +1048,90 @@ export function TripResult({
               );
             })}
           </div>
+          {/* "Quitar y poner" (2026-10-21): poner algo de su clóset que no
+              estaba en el plan. Quitar vive en la ficha de cada prenda. */}
+          <button
+            type="button"
+            onClick={() => void abrirAgregar()}
+            className="flex items-center gap-1.5 self-start text-[12.5px] font-semibold text-muted transition-colors hover:text-ink"
+          >
+            <Icon name="mas" size={14} /> agregar algo de mi clóset
+          </button>
+        </div>
+      ) : null}
+
+      {/* LA REVISIÓN DE STYLIST (2026-10-21): después de escoger las prendas y
+          antes de los looks. Lee lo que de verdad llevas; si cambias la
+          maleta, avisa que la revisión quedó vieja. */}
+      {fase === "empacar" && empaca.length > 0 ? (
+        <div className="flex flex-col gap-2.5 rounded-lg border border-line bg-surface p-3.5">
+          <div className="flex items-baseline justify-between gap-3">
+            <span className="text-[10.5px] font-bold uppercase tracking-[0.09em] text-muted">Revisión de tu maleta</span>
+            {revisionLocal && revisionLocal.looks > 0 ? (
+              <span className="tabular text-[11.5px] text-muted">salen ~{revisionLocal.looks} looks</span>
+            ) : null}
+          </div>
+          {revisionLocal ? (
+            <>
+              <p className="display text-[16px] italic leading-5 text-ink2">{revisionLocal.veredicto}</p>
+              {revisionLocal.bien.length > 0 ? (
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.09em] text-faint">va bien</span>
+                  {revisionLocal.bien.map((b) => (
+                    <p key={b} className="text-[13px] leading-snug text-ink">{b}</p>
+                  ))}
+                </div>
+              ) : null}
+              {revisionLocal.sobra.length > 0 ? (
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.09em] text-faint">te sobra</span>
+                  {revisionLocal.sobra.map((x) => (
+                    <p key={x.prenda} className="text-[13px] leading-snug text-ink">
+                      <b className="font-semibold">{x.prenda}</b>
+                      <span className="text-muted"> — {x.porque}</span>
+                    </p>
+                  ))}
+                </div>
+              ) : null}
+              {revisionLocal.falta.length > 0 ? (
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.09em] text-faint">te falta</span>
+                  {revisionLocal.falta.map((x) => (
+                    <p key={x.que} className="text-[13px] leading-snug text-ink">
+                      <b className="font-semibold">{x.que}</b>
+                      <span className="text-muted"> — {x.porque}</span>
+                    </p>
+                  ))}
+                </div>
+              ) : null}
+              {revisionLocal.firma !== firmaActual ? (
+                <p className="text-[12px] leading-snug text-muted">Cambiaste tu maleta desde esta revisión.</p>
+              ) : null}
+            </>
+          ) : (
+            <p className="text-[13px] leading-snug text-muted">
+              Antes de armar tus looks, te digo qué está bien, qué te sobra y qué te falta de lo que llevas.
+            </p>
+          )}
+          {revisionError ? <p className="text-[12px] text-error">{revisionError}</p> : null}
+          {!revisionLocal || revisionLocal.firma !== firmaActual ? (
+            <button
+              type="button"
+              onClick={() => void pedirRevision()}
+              disabled={revisando}
+              className="flex min-h-10 items-center justify-center gap-2 rounded-sm border border-line bg-surface text-sm font-semibold text-ink transition-colors hover:border-ink disabled:opacity-60"
+            >
+              {revisando ? (
+                <>
+                  <Spinner className="h-3.5 w-3.5" /> revisando tu maleta…
+                </>
+              ) : (
+                <>
+                  <Icon name="destello" size={15} /> {revisionLocal ? "revísala otra vez" : "revisa mi maleta"}
+                </>
+              )}
+            </button>
+          ) : null}
         </div>
       ) : null}
 
@@ -1581,6 +1709,18 @@ export function TripResult({
               >
                 o elige tú otra de tu clóset
               </button>
+              {/* Quitar cualquier prenda (2026-10-21): antes sólo las que faltaban. */}
+              <button
+                type="button"
+                onClick={() => {
+                  const r = rows.find((x) => x.index === zoom.index);
+                  setZoom(null);
+                  if (r) setMotivoFlow({ r, tipo: "fuera", motivo: null });
+                }}
+                className="flex min-h-11 w-full items-center justify-center text-[13px] font-semibold text-muted transition-colors hover:text-ink"
+              >
+                no la llevo en este viaje
+              </button>
             </div>
           ) : null
         }
@@ -1652,6 +1792,85 @@ export function TripResult({
             },
           }}
         />
+      ) : null}
+
+      {agregar ? (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center lg:items-center bg-ink/50"
+          onClick={() => setAgregar(null)}
+        >
+          <div
+            className="flex max-h-[85dvh] w-full max-w-[430px] flex-col gap-3 overflow-y-auto rounded-t-[18px] lg:rounded-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3"
+            style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <span className="h-1 w-9 rounded-full bg-line" aria-hidden />
+              <button
+                type="button"
+                onClick={() => setAgregar(null)}
+                aria-label="Cerrar"
+                className="-mr-1 flex h-9 w-9 items-center justify-center text-muted hover:text-ink"
+              >
+                <Icon name="equis" size={20} />
+              </button>
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[11px] font-bold uppercase tracking-[0.07em] text-muted">De tu clóset</span>
+              <span className="editorial text-h3 leading-tight text-ink">¿Qué más llevas?</span>
+            </div>
+            {agregar.status === "loading" ? (
+              <div className="flex flex-col items-center gap-3 py-10 text-center">
+                <Spinner className="h-7 w-7 text-accent" />
+                <p className="text-base font-medium text-ink">abriendo tu clóset…</p>
+              </div>
+            ) : agregar.status === "error" ? (
+              <p className="text-sm text-error">No pude abrir tu clóset — inténtalo otra vez.</p>
+            ) : agregar.opciones.length === 0 ? (
+              <p className="rounded-md border border-line bg-bg px-4 py-6 text-center text-sm text-muted">
+                Todo tu clóset ya va en la maleta.
+              </p>
+            ) : (
+              GRUPOS.filter((g) => agregar.opciones.some((o) => o.grupo === g.id)).map((g) => (
+                <div key={g.id} className="flex flex-col gap-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-[0.09em] text-faint">{g.label}</span>
+                  <ul className="grid grid-cols-4 gap-2">
+                    {agregar.opciones
+                      .filter((o) => o.grupo === g.id)
+                      .map((o) => (
+                        <li key={o.id}>
+                          <button
+                            type="button"
+                            onClick={() => void agregarPrenda(o)}
+                            disabled={!!agregando}
+                            title={o.nombre}
+                            aria-label={`Agregar ${o.nombre}`}
+                            className="block w-full disabled:opacity-60"
+                          >
+                            <span className="relative block aspect-[3/4] overflow-hidden rounded-md border border-line bg-bg">
+                              {o.image ? (
+                                <Image src={o.image} alt={o.nombre} fill sizes="25vw" className="object-cover" />
+                              ) : (
+                                <span className="flex h-full w-full items-center justify-center text-muted">
+                                  <Icon name="gancho" size={18} />
+                                </span>
+                              )}
+                              {agregando === o.id ? (
+                                <span className="absolute inset-0 flex items-center justify-center bg-surface/70">
+                                  <Spinner className="h-5 w-5 text-accent" />
+                                </span>
+                              ) : null}
+                            </span>
+                            <span className="mt-1 block truncate text-[11px] text-muted">{o.nombre}</span>
+                          </button>
+                        </li>
+                      ))}
+                  </ul>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       ) : null}
 
       {subFlow ? (

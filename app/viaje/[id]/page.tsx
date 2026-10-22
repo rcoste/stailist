@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { sustitutoDe } from "@/lib/trip-maleta";
+import { empacablesDelViaje, sustitutoDe } from "@/lib/trip-maleta";
 import { notFound } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { Icon } from "@/components/icon";
@@ -25,6 +25,7 @@ import {
   type TripOutfit,
   type Occasion, textoDeClima } from "@/lib/trip";
 import { fotosDeViajes } from "@/lib/destino-imagen-cache";
+import { firmaDeMaleta, revisionGuardada } from "@/lib/trip-revision-maleta";
 import { candidatasDeOverrides } from "@/lib/trip-candidatas";
 import { TripResult, type TripRow } from "@/components/trip-result";
 import { TripOutfits, type ResolvedOutfit } from "@/components/trip-outfits";
@@ -50,7 +51,7 @@ export default async function ViajeDetallePage({
   const { data: trip } = await supabase
     .from("trips")
     .select(
-      "id, lugar, paradas, fecha_inicio, fecha_fin, ocasiones, maleta, bolsas, weather, capsule_target, capsule_match, overrides, empacado, outfits, outfits_stale, contexto, lavado"
+      "id, lugar, paradas, fecha_inicio, fecha_fin, ocasiones, maleta, bolsas, weather, capsule_target, capsule_match, overrides, empacado, outfits, outfits_stale, contexto, lavado, revision"
     )
     .eq("id", id)
     .eq("user_id", profile.id)
@@ -448,6 +449,8 @@ export default async function ViajeDetallePage({
               ganadosIniciales={ganados}
               avisos={avisos}
               piso={{ base: piso.base, bottoms: piso.bottoms, calzado: piso.calzado }}
+              revision={revisionGuardada(trip.revision)}
+              firmaActual={firmaDeMaleta(empacablesDelViaje(target, match, overrides).map((p) => p.nombre))}
               closetCambio={closetCambio}
               vitrina={vitrina}
             />
