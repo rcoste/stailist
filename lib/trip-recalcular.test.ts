@@ -49,6 +49,26 @@ describe("fusionarCruce", () => {
     expect(r.empacado["1"]).toBeUndefined();
   });
 
+  // Su maleta de Mineápolis (2026-10-21): había elegido sus "Tenis blancos" para
+  // los "Sneakers de piel blancos" (rechazó el parecido con otros tenis). Al
+  // recalcular, la IA propuso justo esos "Tenis blancos" y se le reabrió el duelo.
+  it("si la prenda nueva es la que ya eligió a mano, no le vuelve a preguntar", () => {
+    const tenis = [pieza("Sneakers de piel blancos", "calzado", "blanco")];
+    const suyos = [mia("Tenis blancos urbanos", "calzado", "blanco"), mia("Tenis blancos", "calzado", "blanco")];
+    const r = fusionarCruce({
+      items: tenis,
+      antes: [e("parecido", "Tenis blancos urbanos")],
+      nuevo: [e("parecido", "Tenis blancos")],
+      closet: suyos,
+      overrides: { "0": "reject", "sub:0": "Tenis blancos" } as never,
+      empacado: { "0": true },
+    });
+    expect(r.entries[0]).toMatchObject({ status: "parecido", by: "Tenis blancos" });
+    expect(r.cambiaron).toEqual([]);
+    expect((r.overrides as Record<string, unknown>)["0"]).toBe("accept");
+    expect(r.empacado["0"]).toBe(true);
+  });
+
   it("si borró la prenda que cubría una pieza, esa pieza se recalcula", () => {
     const r = fusionarCruce({
       items,

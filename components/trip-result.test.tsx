@@ -165,3 +165,18 @@ describe("TripResult — un duelo que ganó la sugerida y luego se cubrió", () 
     expect(screen.queryByRole("button", { name: /ya lo tengo/i })).toBeNull();
   });
 });
+
+// EL DUELO DICE QUÉ CAMBIA (2026-10-21). "Sneakers de piel blancos" contra sus
+// "Tenis blancos" (sintéticos): dos fotos casi idénticas y ninguna razón a la
+// vista, así que parecía que la app preguntaba por la misma prenda.
+describe("TripResult — el duelo de un parecido dice qué cambia", () => {
+  it("el rótulo nombra la diferencia del match", () => {
+    const parecido: TripRow = { ...fila(0, "Sneakers de piel blancos", "sneakers", "blanco", "parecido", "Tenis blancos"), difiere: "sintético en vez de piel" };
+    render(
+      <TripPackedProvider initial={{}}>
+        <TripResult tripId="t1" userId="u1" rows={[parecido]} />
+      </TripPackedProvider>
+    );
+    expect(screen.getByText(/cambia: sintético en vez de piel/)).toBeTruthy();
+  });
+});

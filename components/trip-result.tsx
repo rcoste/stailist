@@ -51,6 +51,8 @@ export type TripRow = {
   base: "tienes" | "parecido" | "falta" | "pendiente"; // lo que dijo el match
   decision: "accept" | "reject" | null; // decisión guardada (solo en "parecido")
   by: string | null; // prenda del clóset que la cubre / se le parece
+  /** Sólo en "parecido": en qué difiere la tuya ("sintético en vez de piel"). */
+  difiere?: string | null;
   byImage: string | null;
   // Para las faltantes: generar/ver la prenda sugerida y mandarla a wishlist.
   faltaKey: string; // dedup de wishlist (tipo|color)
@@ -213,6 +215,10 @@ function DueloCard({
       <div className="flex flex-col gap-1 p-3.5 pb-3">
         <span className="text-[9.5px] font-bold uppercase tracking-[0.13em] text-faint">
           ¿te sirve la tuya?
+          {/* Sin esto el duelo enseñaba dos fotos casi idénticas sin decir por
+              qué preguntaba (unos tenis sintéticos contra unos de piel, 2026-10-21).
+              La cápsula del clóset ya lo decía ("cambia: …"). */}
+          {row.base === "parecido" && row.difiere && tuya.nombre === row.by ? ` · cambia: ${row.difiere}` : ""}
         </span>
         <div className="mt-0.5 flex items-start gap-[9px]">
           <span aria-hidden className="display shrink-0 pt-1 text-[14px] leading-none text-ink">

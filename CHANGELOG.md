@@ -2,6 +2,18 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.413.2] - 2026-10-21 — el duelo dice qué cambia, y recalcular no te vuelve a preguntar lo que ya elegiste
+
+- **"¿Te sirve la tuya? · cambia: sintético en vez de piel".** El duelo de un
+  "parecido" enseñaba la sugerida y la tuya, con fotos casi idénticas, sin
+  decir por qué preguntaba: "Sneakers de piel blancos" contra unos "Tenis
+  blancos" sintéticos parecían la misma prenda. El match ya guardaba la
+  diferencia (`difiere`) y la cápsula del clóset ya la enseñaba; la maleta no.
+- **Recalcular respeta lo que elegiste a mano** (`fusionarCruce`). Si la prenda
+  nueva de una pieza es justo la que ya habías elegido (`sub:`), no se limpia
+  tu decisión ni la palomita de empacado: queda aceptada. Le había reabierto el
+  duelo de esos tenis.
+
 ## [0.2.413.1] - 2026-10-21 — una camisa de lino ya no cubre una de franela
 
 En una maleta real para mañanas de 8 °C, la pieza "Camisa blanca de franela

@@ -63,6 +63,13 @@ export function fusionarCruce(args: {
   const cambiaron: number[] = [];
   entries.forEach((e, i) => {
     if (mismo(e, antes[i])) return;
+    // Si la prenda nueva es justo la que ya eligió a mano para esta pieza, no
+    // hay nada que volver a preguntar: le reabría el duelo de unos tenis que ya
+    // había elegido (2026-10-21).
+    if (e.by && ov[`sub:${i}`] === e.by && e.status !== "falta") {
+      if (e.status === "parecido") ov[String(i)] = "accept";
+      return;
+    }
     cambiaron.push(i);
     delete ov[String(i)];
     delete ov[`cand:${i}`];
