@@ -141,6 +141,7 @@ export default async function ViajeDetallePage({
       base: r.base,
       decision: r.decision,
       by,
+      difiere: r.difiere,
       byImage: by ? imageMap[by] ?? null : null,
       faltaKey: fk,
       idealImage: catalogImages[r.index] ?? null,
