@@ -13,7 +13,7 @@ import { esAbrigoDeInvierno, esParaLluvia, esPrendaBase, vaEncima } from "@/lib/
  * outfits.prompt_version. v2 (2026-10-14): un solo color joya protagonista por
  * look y nunca esmeralda con vino/burdeos. Vivía escrita a mano en dos lugares.
  */
-export const PROMPT_VIAJE = "viaje-v3"; // v3 (2026-10-21): lo de encima va con base debajo; con frío, abrigo en código
+export const PROMPT_VIAJE = "viaje-v4"; // v3 (2026-10-21): base bajo lo de encima; abrigo en código. v4: el juez reescribe el texto del look que repara
 
 // Una prenda empacable, numerada para el prompt. El LLM referencia prendas por
 // `n` (nunca inventa nombres ni IDs); el motor mapea de vuelta a `nombre`.
@@ -504,6 +504,26 @@ export function conAbrigoParaElFrio(
 // típico es sumar una capa para el frío) / rechazado (descartar). UNA llamada
 // para todos (barato, ve el set completo). Si falla, devuelve los looks tal cual
 // — nunca rompe la generación.
+/**
+ * EL TEXTO DEL LOOK ARREGLADO (2026-10-21). El juez cambiaba prendas y el
+ * título se quedaba describiendo el look viejo: "Camisa blanca y franela
+ * carbón" con un suéter marino en lugar de la camisa blanca. Ahora el juez
+ * escribe título, porqué y tip del look arreglado; si no lo hace y la
+ * reparación QUITÓ una prenda, el porqué y el tip viejos se descartan (pueden
+ * nombrarla) y el título se queda como único texto. Exportada para test.
+ */
+export function conTextoDelArreglo(
+  original: TripOutfit,
+  prendas: string[],
+  rev: { titulo?: string; porque?: string; tip?: string }
+): TripOutfit {
+  const quito = original.prendas.some((n) => !prendas.includes(n));
+  const titulo = rev.titulo?.trim() || original.titulo;
+  const porque = rev.porque?.trim() || (quito ? "" : original.porque);
+  const tip = rev.tip?.trim() || (quito || rev.titulo?.trim() ? null : original.tip ?? null);
+  return { ...original, prendas, titulo, porque, tip };
+}
+
 export type TripReviewResult = {
   outfits: TripOutfit[];
   repaired: number;
@@ -570,7 +590,8 @@ REGLAS:
 - "extra"/capas/accesorios válidos para sumar: capas ${capasTxt}; accesorios ${accTxt}.
 ${inputs.vetoes?.length ? `- VETOS (regla absoluta, por encima de todo): la persona NUNCA quiere ${inputs.vetoes.join(", ")}. Si un look incluye algo vetado, repáralo cambiando esa prenda; si no hay arreglo, recházalo y marca "veto": true en esa revisión.\n` : ""}- En cada revisión, "veto" es true SOLO si el rechazo es por un veto de la persona; en cualquier otro caso (incluidos "ok" y "reparado"), false.
 - Prefiere REPARAR sobre rechazar. Rechaza solo si de verdad no hay arreglo.
-- En "prendas" de cada revisión, devuelve SIEMPRE la lista de números del look final (para "ok" repite la original; para "reparado" la nueva; para "rechazado" puede ir vacía).`;
+- En "prendas" de cada revisión, devuelve SIEMPRE la lista de números del look final (para "ok" repite la original; para "reparado" la nueva; para "rechazado" puede ir vacía).
+- Si REPARAS, el título y el porqué viejos hablan de OTRO look: escribe "titulo" (corto y evocador, tuteo), "porque" (una línea) y "tip" (un toque de styling, o "") para el look ARREGLADO, nombrando sólo prendas que quedaron en él. Para "ok" y "rechazado" van vacíos.`;
 
   const userMsg = `CLIMA: ${climaTxt}.${paletaTxt}
 
@@ -615,8 +636,12 @@ Revisa cada look (por su L#) y devuelve un veredicto por cada uno.`;
                     // la restauración de cobertura no dependa de parsear prosa.
                     veto: { type: "boolean" },
                     prendas: { type: "array", items: { type: "integer" } },
+                    // Sólo en "reparado": el texto del look ARREGLADO (2026-10-21).
+                    titulo: { type: "string" },
+                    porque: { type: "string" },
+                    tip: { type: "string" },
                   },
-                  required: ["index", "veredicto", "razon", "veto", "prendas"],
+                  required: ["index", "veredicto", "razon", "veto", "prendas", "titulo", "porque", "tip"],
                   additionalProperties: false,
                 },
               },
@@ -638,6 +663,9 @@ Revisa cada look (por su L#) y devuelve un veredicto por cada uno.`;
         razon?: string;
         veto?: boolean;
         prendas?: number[];
+        titulo?: string;
+        porque?: string;
+        tip?: string;
       }[];
     };
     const byIndex = new Map(
@@ -669,7 +697,7 @@ Revisa cada look (por su L#) y devuelve un veredicto por cada uno.`;
       // Una reparación que suma una segunda pieza que te falta no se aplica:
       // se queda el look como estaba (cabeConLoQueTiene).
       if (nombres.length >= 2 && cabeConLoQueTiene(nombres, faltanDelJuez)) {
-        result.push({ ...original, prendas: nombres });
+        result.push(conTextoDelArreglo(original, nombres, rev));
         repaired++;
       } else {
         // Reparación inválida (devolvió basura): conserva el original, no lo pierdas.

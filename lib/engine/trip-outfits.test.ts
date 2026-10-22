@@ -3,6 +3,7 @@ import {
   cabeConLoQueTiene,
   buildTripGrid,
   conAbrigoParaElFrio,
+  conTextoDelArreglo,
   climaText,
   keepOccasionCoverage,
   packableDesc,
@@ -376,5 +377,35 @@ describe("conAbrigoParaElFrio", () => {
   it("sin abrigo en la maleta no inventa uno", () => {
     const looks = [look(["Camisa de franela gris", "Pantalón deportivo negro"])];
     expect(conAbrigoParaElFrio(looks, packable.slice(0, 2), frio)).toEqual(looks);
+  });
+});
+
+// EL TEXTO SIGUE A LAS PRENDAS (2026-10-21): "Camisa blanca y franela carbón"
+// salió con un suéter marino en lugar de la camisa blanca — el juez la cambió y
+// el título se quedó.
+describe("conTextoDelArreglo", () => {
+  const original = {
+    ocasion: "noche",
+    titulo: "Camisa blanca y franela carbón",
+    porque: "Blanco puro al rostro con franela carbón.",
+    tip: "Camisa bien fajada.",
+    prendas: ["Camisa blanca", "Pantalón de vestir de franela carbón", "Botines Chelsea negros"],
+  } as TripOutfit;
+  const arreglado = ["Suéter marino", "Pantalón de vestir de franela carbón", "Botines Chelsea negros"];
+
+  it("si el juez escribe el texto del look arreglado, se usa", () => {
+    const r = conTextoDelArreglo(original, arreglado, { titulo: "Marino y carbón de noche", porque: "El suéter marino suaviza la franela.", tip: "" });
+    expect(r).toMatchObject({ titulo: "Marino y carbón de noche", porque: "El suéter marino suaviza la franela.", tip: null, prendas: arreglado });
+  });
+
+  it("si quitó una prenda y no escribió texto, no deja un porqué que la nombre", () => {
+    const r = conTextoDelArreglo(original, arreglado, { titulo: "", porque: "", tip: "" });
+    expect(r.porque).toBe("");
+    expect(r.tip).toBeNull();
+  });
+
+  it("si sólo sumó una capa, el texto se queda", () => {
+    const r = conTextoDelArreglo(original, [...original.prendas, "Abrigo charcoal"], { titulo: "", porque: "", tip: "" });
+    expect(r).toMatchObject({ titulo: original.titulo, porque: original.porque, tip: original.tip });
   });
 });
