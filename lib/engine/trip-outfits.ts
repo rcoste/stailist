@@ -6,13 +6,14 @@ import { JUDGE_MODEL } from "@/lib/engine/critic";
 import { tasteSignalLines } from "@/lib/engine/prompt";
 import { hasTasteSignal, type TasteSignal } from "@/lib/engine/taste-signal";
 import { medirAnthropic, type QuienMide } from "@/lib/recibos";
+import { esAbrigoDeInvierno, esParaLluvia, esPrendaBase, vaEncima } from "@/lib/engine/piezas-tipo";
 
 /**
  * La versión del prompt de los looks del viaje, la que se guarda en
  * outfits.prompt_version. v2 (2026-10-14): un solo color joya protagonista por
  * look y nunca esmeralda con vino/burdeos. Vivía escrita a mano en dos lugares.
  */
-export const PROMPT_VIAJE = "viaje-v2";
+export const PROMPT_VIAJE = "viaje-v3"; // v3 (2026-10-21): lo de encima va con base debajo; con frío, abrigo en código
 
 // Una prenda empacable, numerada para el prompt. El LLM referencia prendas por
 // `n` (nunca inventa nombres ni IDs); el motor mapea de vuelta a `nombre`.
@@ -145,7 +146,12 @@ export type TripGridCell = { base: number[]; kind: "sep" | "vestido" };
 // producto completo, en orden de prioridad, hasta el tope MAX_CELLS.
 export function buildTripGrid(packable: PackableItem[]): TripGridCell[] {
   const bySlot = (cat: string) => packable.filter((p) => p.category === cat);
-  const tops = bySlot("top");
+  // Lo que va ENCIMA (cárdigan, sobrecamisa, chaleco) no es el top de un look:
+  // entra a la rejilla con una prenda base debajo (2026-10-21; un "Cárdigan
+  // marino + pantalón + botines" salía sin nada debajo).
+  const encima = bySlot("top").filter((p) => vaEncima(p));
+  const bases = bySlot("top").filter((p) => !vaEncima(p) && esPrendaBase(p));
+  const tops = bySlot("top").filter((p) => !vaEncima(p));
   const bottoms = bySlot("bottom");
   const calzado = bySlot("calzado");
   const vestidos = bySlot("vestido");
@@ -175,6 +181,16 @@ export function buildTripGrid(packable: PackableItem[]): TripGridCell[] {
       const b = bottoms[i % bottoms.length];
       const s = Shoes[i % Shoes.length];
       pushCell([t.n, b.n, ...(s ? [s.n] : [])], "sep");
+    }
+    // Lo de encima, sobre una base: cobertura (cada una ≥1 celda) rotando bases,
+    // bottoms y calzado. Sin ninguna base no se arma (no va sola sobre la piel).
+    if (bases.length) {
+      for (let i = 0; i < encima.length && cells.length < sepBudget; i++) {
+        const t = bases[i % bases.length];
+        const b = bottoms[i % bottoms.length];
+        const s = Shoes[i % Shoes.length];
+        pushCell([t.n, encima[i].n, b.n, ...(s ? [s.n] : [])], "sep");
+      }
     }
     // Pasada 2 — relleno: producto completo por prioridad hasta el presupuesto.
     outer: for (const t of tops)
@@ -317,7 +333,7 @@ export async function generateTripOutfits(
     // presupuesto de salida (ver capsule-match.ts — ahí dejó la pantalla de
     // esenciales muerta). Estas tareas tienen sus reglas en el system.
     thinking: { type: "disabled" },
-    system: `Eres la stylist de stailist. La MALETA ya está hecha. Te doy la REJILLA de combinaciones posibles de lo que la persona empaca (cada celda es un top+bottom+calzado, o un vestido+calzado, ya enumerados). Tu trabajo es VALIDAR cada celda y quedarte con los looks que de verdad funcionan.
+    system: `Eres la stylist de stailist. La MALETA ya está hecha. Te doy la REJILLA de combinaciones posibles de lo que la persona empaca (cada celda es un top+bottom+calzado, un top base con una capa encima —cárdigan, sobrecamisa— +bottom+calzado, o un vestido+calzado, ya enumerados). Tu trabajo es VALIDAR cada celda y quedarte con los looks que de verdad funcionan.
 
 REGLA INNEGOCIABLE: trabajas SOLO con las celdas y prendas dadas, por número. Jamás inventes una prenda ni una combinación fuera de la rejilla. En "extra" SOLO puedes poner números de capas (${capasTxt}) o accesorios (${accTxt}); nada más. ${generoTxt}${vetoSystemTxt}
 
@@ -430,6 +446,55 @@ Para las celdas que SÍ funcionan:
     if (out.length >= MAX_LOOKS) break;
   }
   return out;
+}
+
+/**
+ * CON FRÍO, CADA LOOK SALE CON ABRIGO (2026-10-21). El prompt y el juez ya lo
+ * piden ("si el clima es FRÍO (≤12°C), cada look debe llevar abrigo o capa de
+ * verdad") y aun así salieron "Camisa de franela + pantalón + botines + gorro"
+ * y "Cárdigan + pantalón + botines" para mañanas de 8°C, sin abrigo, con dos
+ * en la maleta. Regla en código, después del juez: si la mínima es ≤12°C y el
+ * look no trae una pieza de abrigo, se le pone la que más usan los demás looks
+ * (bajo 5°C, una de invierno de verdad). Sin abrigo en la maleta no hay qué
+ * poner, y el look se queda como está (el aviso de la maleta ya lo dice).
+ */
+export function conAbrigoParaElFrio(
+  outfits: TripOutfit[],
+  packable: PackableItem[],
+  weather: TripWeatherInput | null
+): TripOutfit[] {
+  const minima = weather ? weather.temp_min ?? weather.temp_c : null;
+  if (minima === null || minima > 12) return outfits;
+  const abrigos = packable.filter((p) => p.category === "abrigo");
+  if (!abrigos.length) return outfits;
+  const deInvierno = abrigos.filter((a) => esAbrigoDeInvierno(a));
+  const sirven = minima <= 5 && deInvierno.length ? deInvierno : abrigos;
+  const usos = (n: string) => outfits.filter((o) => o.prendas.includes(n)).length;
+  const llueve = /lluv|torment|chubasc/i.test(weather?.condition ?? "");
+  const porNombre = new Map(packable.map((p) => [p.nombre, p]));
+  const esAbrigo = new Set(abrigos.map((a) => a.nombre));
+  const conAbrigo = outfits.map((o) => {
+    if (o.prendas.some((n) => esAbrigo.has(n))) return o;
+    if (o.prendas.length === 1) return o; // un vestido solo: no se le cuelga nada a ciegas
+    // El abrigo que va con ESE look: un abrigo de vestir sobre unos pants no
+    // (la primera versión le puso el abrigo charcoal a "franela + pantalón
+    // deportivo + tenis"). Pesa la formalidad del look; con lluvia, el que la
+    // aguanta; y a empate, el que más usan los demás looks.
+    const formalidades = o.prendas.map((n) => porNombre.get(n)?.formalidad).filter(Boolean);
+    const puntos = (a: PackableItem) =>
+      formalidades.filter((f) => f === a.formalidad).length * 2 + (llueve && esParaLluvia(a) ? 1 : 0);
+    const elegido = [...sirven].sort((a, b) => puntos(b) - puntos(a) || usos(b.nombre) - usos(a.nombre))[0];
+    return { ...o, prendas: [...o.prendas, elegido.nombre] };
+  });
+  // Con el abrigo puesto, dos looks pueden quedar con las mismas prendas (a uno
+  // se lo puso el juez, al otro esta regla): se queda el primero.
+  const vistos = new Set<string>();
+  return conAbrigo.filter((o) => {
+    const k = [...o.prendas].sort().join("|");
+    if (vistos.has(k)) return false;
+    vistos.add(k);
+    return true;
+  });
 }
 
 // JUEZ DE VIAJE (2ª pasada, en lote): el generador valida la rejilla dentro de su
