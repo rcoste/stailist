@@ -2,6 +2,23 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.414.2] - 2026-10-21 — recalcular respeta lo que rechazaste, y la lluvia la cubre algo que la aguante
+
+- **Lo que rechazaste para una pieza no vuelve** (`fusionarCruce`). "Ninguna
+  de las dos me va" guarda la prenda en `candRech:i`, y recalcular no lo leía:
+  a una persona le devolvió como "tienes" unos derby que acababa de rechazar
+  para esa pieza. Si lo nuevo es una prenda rechazada ahí (o la del "no" de un
+  parecido), se queda lo de antes, con su decisión. Y la búsqueda automática
+  de "¿te sirve la tuya?" tampoco te la vuelve a ofrecer.
+- **Regla 1g del cruce: la función manda.** Una pieza para la lluvia
+  (gabardina, impermeable, trench) sólo la cubre algo que la aguante. El cruce
+  propuso un abrigo de lana para una gabardina impermeable. La búsqueda de
+  sustitutos ya lo exigía (`lib/funcion-prenda.ts`); el cruce no.
+
+Medido en seco, reglas de producción contra las nuevas sobre los 33 cruces
+guardados (894 piezas): cambian 2, las 2 a bien (ese abrigo de lana, y unos
+tacones de vestir que cubrían un "botín impermeable negro").
+
 ## [0.2.414.1] - 2026-10-21 — una playera ya no es "parecido" de un suéter
 
 En una maleta real, el duelo enfrentó "Suéter de cuello redondo gris oscuro"

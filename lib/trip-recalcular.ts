@@ -58,7 +58,17 @@ export function fusionarCruce(args: {
       !!a?.by && enCloset.has(a.by) && (a.status === "tienes" || a.status === "parecido") && decision !== "reject";
     return resuelto ? a : nuevo[i] ?? { status: "falta" as const, by: null, difiere: null };
   });
-  const entries = aplicarReglasDelCruce(items, fusion, closet).entries;
+  const reglas = aplicarReglasDelCruce(items, fusion, closet).entries;
+  // LO QUE RECHAZÓ NO VUELVE (2026-10-21). "Ninguna de las dos me va" guarda la
+  // prenda en `candRech:i` (y "no" en un parecido, `i: reject`). Recalcular no
+  // lo leía: le devolvió como "tienes" unos derby que acababa de rechazar para
+  // esa pieza. Si lo nuevo es una prenda que rechazó ahí, se queda lo de antes
+  // con su decisión.
+  const entries = reglas.map((e, i) => {
+    const rech = new Set<string>(Array.isArray(ov[`candRech:${i}`]) ? (ov[`candRech:${i}`] as string[]) : []);
+    if (ov[String(i)] === "reject" && antes[i]?.by) rech.add(antes[i].by!);
+    return e.by && rech.has(e.by) && antes[i] ? antes[i] : e;
+  });
 
   const cambiaron: number[] = [];
   entries.forEach((e, i) => {

@@ -160,6 +160,14 @@ describe("regla 1 · el color", () => {
     expect(r.entries[0]).toMatchObject({ status: "parecido", by: "Suéter half-zip gris", difiere: "¿es la misma?" });
   });
 
+  it("un abrigo de lana no cubre una gabardina impermeable; un impermeable sí", () => {
+    const gabardina = ideal("Gabardina impermeable negra", "negro", "abrigo", "gabardina");
+    const lana = aplicarReglasDelCruce([gabardina], [e("parecido", "Abrigo de lana negro largo")], [mia("Abrigo de lana negro largo", "abrigo", "negro")]);
+    expect(lana.entries[0].status).toBe("falta");
+    const imp = aplicarReglasDelCruce([gabardina], [e("parecido", "Chaqueta impermeable negra")], [mia("Chaqueta impermeable negra", "abrigo", "negro")]);
+    expect(imp.entries[0].status).toBe("parecido");
+  });
+
   it("su gorra no cubre el gorro de punto, tampoco cuando el cruce viene guardado", () => {
     const r = aplicarReglasDelCruce(
       [ideal("Gorro de punto negro", "negro", "accesorio", "gorro")],

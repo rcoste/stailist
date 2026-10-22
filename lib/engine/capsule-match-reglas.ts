@@ -42,6 +42,7 @@ import type { CapsuleItem, ClosetItemLite, MatchEntry } from "@/lib/capsule";
 import { coloresCercanos } from "@/lib/paleta-colores";
 import { palabras } from "@/lib/ya-la-tienes";
 import { esPrendaBase, vaEncima } from "@/lib/engine/piezas-tipo";
+import { funcionDe } from "@/lib/funcion-prenda";
 
 const sinTildes = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
@@ -327,6 +328,18 @@ export function aplicarReglasDelCruce(
     if (!e || e.status === "falta" || it.category !== "top") return;
     const real = prendaDe(e.by);
     if (real && real.category === "top" && esPrendaBase(it) !== esPrendaBase(real)) cambiar(i, 1, { status: "falta", by: null, difiere: null });
+  });
+
+  // 1g · la función manda: lo que pide aguantar la lluvia sólo lo cubre algo
+  // que la aguante. Para una "Gabardina impermeable negra" el cruce propuso un
+  // "Abrigo de lana negro largo" (2026-10-21). La búsqueda de sustitutos ya lo
+  // exigía (lib/funcion-prenda.ts); el cruce no.
+  items.forEach((it, i) => {
+    const e = out[i];
+    if (!e || e.status === "falta") return;
+    const real = prendaDe(e.by);
+    if (real && funcionDe(`${it.tipo ?? ""} ${it.nombre}`) === "lluvia" && funcionDe(real.nombre) !== "lluvia")
+      cambiar(i, 1, { status: "falta", by: null, difiere: null });
   });
 
   // 2a · ni dos "tienes": la pieza que va primero (la de más prioridad) se la queda
