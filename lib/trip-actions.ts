@@ -189,7 +189,9 @@ export async function proposeTripSubstitutes(
   const resultados = await Promise.all(
     huecos.map(async (i) => {
       try {
-        const matches = await matchSubstitutes(target.items[i], closet, gender, null, { supabase, userId: user.id });
+        // Lo que ya rechazó para esta pieza ("ninguna de las dos me va") no se le vuelve a ofrecer.
+        const rech = Array.isArray(overrides[`candRech:${i}`]) ? (overrides[`candRech:${i}`] as string[]) : [];
+        const matches = await matchSubstitutes(target.items[i], closet.filter((c) => !rech.includes(c.nombre)), gender, null, { supabase, userId: user.id });
         return { i, matches };
       } catch {
         // Un hueco que falla no guarda nada: el próximo abrir lo reintenta.

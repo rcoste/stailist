@@ -69,6 +69,26 @@ describe("fusionarCruce", () => {
     expect(r.empacado["0"]).toBe(true);
   });
 
+  // Su maleta (2026-10-21): rechazó sus "Zapato derby de piel chocolate" para
+  // los "Zapatos derby chocolate" ("ninguna de las dos me va") y el recálculo se
+  // los devolvió como "tienes".
+  it("lo que rechazó para una pieza no vuelve al recalcular", () => {
+    const derby = [pieza("Zapatos derby chocolate", "calzado", "chocolate")];
+    const suyos = [mia("Zapato derby de piel chocolate", "calzado", "chocolate")];
+    const r = fusionarCruce({
+      items: derby,
+      antes: [e("parecido", "Zapato derby de piel chocolate")],
+      nuevo: [e("tienes", "Zapato derby de piel chocolate")],
+      closet: suyos,
+      overrides: { "0": "reject", "candRech:0": ["Zapato derby de piel chocolate"], "candNo:0": true } as never,
+      empacado: {},
+    });
+    expect(r.entries[0]).toMatchObject({ status: "parecido", by: "Zapato derby de piel chocolate" });
+    expect(r.cambiaron).toEqual([]);
+    expect((r.overrides as Record<string, unknown>)["0"]).toBe("reject");
+    expect((r.overrides as Record<string, unknown>)["candNo:0"]).toBe(true);
+  });
+
   it("si borró la prenda que cubría una pieza, esa pieza se recalcula", () => {
     const r = fusionarCruce({
       items,
