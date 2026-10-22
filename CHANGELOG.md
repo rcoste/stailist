@@ -2,6 +2,16 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.415.2] - 2026-10-21 — una prenda que cubre dos piezas se ve también después de elegir
+
+El aviso de 0.2.415.1 sólo salía en el duelo abierto, antes de elegir. En una
+maleta real la misma "Camisa de franela gris" quedó cubriendo dos piezas (una
+ganó su duelo, la otra se aceptó como parecida) y, ya resueltas, nada lo decía.
+
+- **"Te quedas con la tuya"** agrega "también va por «…»" cuando esa prenda
+  cubre otra pieza.
+- **"Ya lo tienes"**: la miniatura marca "×2" (o las que sean) en la esquina.
+
 ## [0.2.415.1] - 2026-10-21 — elegir de tu clóset también en lo que ya llevas, y aviso si una prenda cubre dos piezas
 
 - **"o elige tú otra de tu clóset"** en la ficha de una prenda que ya va en la

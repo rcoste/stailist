@@ -223,3 +223,19 @@ describe("TripResult — el duelo avisa si tu prenda ya va por otra pieza", () =
     expect(screen.queryByText(/ya va en tu maleta por/)).toBeNull();
   });
 });
+
+// Y DESPUÉS DE ELEGIR TAMBIÉN (2026-10-21): su franela quedó cubriendo dos
+// piezas y la tarjeta resuelta no lo decía.
+describe("TripResult — una prenda que cubre dos piezas se ve también ya resuelta", () => {
+  it("la tarjeta resuelta dice qué otra pieza cubre y la cuadrícula marca ×2", () => {
+    const tienes = fila(0, "Camisa azul marino de franela", "camisa", "marino", "tienes", "Camisa de franela gris");
+    const aceptada: TripRow = { ...fila(1, "Camisa gris oscuro de twill", "camisa", "gris", "parecido", "Camisa de franela gris"), decision: "accept" };
+    render(
+      <TripPackedProvider initial={{}}>
+        <TripResult tripId="t1" userId="u1" rows={[tienes, aceptada]} />
+      </TripPackedProvider>
+    );
+    expect(screen.getByText(/también va por «camisa azul marino de franela»/)).toBeTruthy();
+    expect(screen.getByLabelText("cubre 2 piezas")).toBeTruthy();
+  });
+});
