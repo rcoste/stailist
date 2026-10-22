@@ -8,6 +8,7 @@ import {
 import {
   generateTripOutfits,
   reviewTripOutfits,
+  conAbrigoParaElFrio,
   type PackableItem,
   type TripOutfitInputs,
   type TripWeatherInput,
@@ -178,6 +179,8 @@ export async function POST(
     // 2ª pasada (juez): repara los looks sub-abrigados para el frío y descarta
     // los que no combinan. Best-effort: si el juez falla, deja los looks tal cual.
     outfits = (await reviewTripOutfits(genInputs, outfits, { supabase, userId: user.id })).outfits;
+    // Con frío, cada look sale con abrigo (regla en código, después del juez).
+    outfits = conAbrigoParaElFrio(outfits, genInputs.packable, genInputs.weather);
   } catch {
     return NextResponse.json({ error: "generacion" }, { status: 500 });
   }

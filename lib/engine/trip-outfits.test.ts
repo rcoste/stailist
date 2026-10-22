@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   cabeConLoQueTiene,
   buildTripGrid,
+  conAbrigoParaElFrio,
   climaText,
   keepOccasionCoverage,
   packableDesc,
@@ -303,5 +304,77 @@ describe("cabeConLoQueTiene", () => {
   });
   it("todo suyo, siempre", () => {
     expect(cabeConLoQueTiene(["Suéter negro", "Jeans"], faltan)).toBe(true);
+  });
+});
+
+// SU MALETA DE MINEÁPOLIS (2026-10-21): "Cárdigan marino + pantalón deportivo +
+// botines + gorro" sin nada debajo, y "Camisa de franela gris + pantalón +
+// botines + gorro" sin abrigo, para mañanas de 8°C con dos abrigos en la maleta.
+describe("lo que va encima lleva algo debajo", () => {
+  it("el cárdigan nunca es el único top de una celda: va con una prenda base", () => {
+    reset();
+    const playera = p("top", { nombre: "Playera blanca" });
+    const cardigan = p("top", { nombre: "Cárdigan marino" });
+    const pantalon = p("bottom", { nombre: "Pantalón deportivo negro" });
+    const botines = p("calzado", { nombre: "Botines Chelsea negros" });
+    const grid = buildTripGrid([playera, cardigan, pantalon, botines]);
+    const conCardigan = grid.filter((c) => c.base.includes(cardigan.n));
+    expect(conCardigan.length).toBeGreaterThan(0);
+    for (const c of conCardigan) expect(c.base).toContain(playera.n);
+  });
+
+  it("sin ninguna prenda base, el cárdigan no se arma solo", () => {
+    reset();
+    const sueter = p("top", { nombre: "Suéter de cuello alto negro" });
+    const cardigan = p("top", { nombre: "Cárdigan marino" });
+    const grid = buildTripGrid([sueter, cardigan, p("bottom"), p("calzado")]);
+    expect(grid.some((c) => c.base.includes(cardigan.n))).toBe(false);
+    expect(grid.some((c) => c.base.includes(sueter.n))).toBe(true);
+  });
+});
+
+describe("conAbrigoParaElFrio", () => {
+  const look = (prendas: string[]): TripOutfit => ({ ocasion: "ciudad", titulo: "x", porque: "", tip: null, prendas }) as TripOutfit;
+  const packable: PackableItem[] = [
+    { n: 1, nombre: "Camisa de franela gris", category: "top", color: "gris", formalidad: "casual" },
+    { n: 2, nombre: "Pantalón deportivo negro", category: "bottom", color: "negro", formalidad: "casual" },
+    { n: 3, nombre: "Abrigo charcoal", category: "abrigo", color: "gris", formalidad: "formal-casual" },
+    { n: 4, nombre: "Chaqueta impermeable negra", category: "abrigo", color: "negro", formalidad: "casual" },
+  ];
+  const frio = { temp_c: 11, temp_min: 8, temp_max: 15, condition: "nublado" };
+
+  it("a 8°C, el look sin abrigo sale con uno; a los que ya traen, no se les duplica", () => {
+    const r = conAbrigoParaElFrio(
+      [look(["Camisa de franela gris", "Pantalón deportivo negro"]), look(["Camisa", "Jeans", "Abrigo charcoal"]), look(["Camisa", "Chinos", "Abrigo charcoal"])],
+      packable,
+      frio
+    );
+    expect(r[0].prendas.some((n) => n === "Abrigo charcoal" || n === "Chaqueta impermeable negra")).toBe(true);
+    expect(r[1].prendas.filter((n) => n === "Abrigo charcoal")).toHaveLength(1);
+  });
+
+  it("a unos pants no les pone el abrigo de vestir: elige por lo arreglado del look", () => {
+    const pants = look(["Camisa de franela gris", "Pantalón deportivo negro"]);
+    const r = conAbrigoParaElFrio([pants, look(["Camisa", "Jeans", "Abrigo charcoal"]), look(["Camisa", "Chinos", "Abrigo charcoal"])], packable, frio);
+    expect(r[0].prendas).toContain("Chaqueta impermeable negra");
+  });
+
+  it("si al ponerle abrigo queda igual a otro look, no se repite", () => {
+    const r = conAbrigoParaElFrio(
+      [look(["Camisa de franela gris", "Pantalón deportivo negro", "Chaqueta impermeable negra"]), look(["Camisa de franela gris", "Pantalón deportivo negro"])],
+      packable,
+      frio
+    );
+    expect(r).toHaveLength(1);
+  });
+
+  it("con calor no toca nada", () => {
+    const looks = [look(["Camisa de franela gris", "Pantalón deportivo negro"])];
+    expect(conAbrigoParaElFrio(looks, packable, { temp_c: 24, temp_min: 18, temp_max: 28, condition: "soleado" })).toEqual(looks);
+  });
+
+  it("sin abrigo en la maleta no inventa uno", () => {
+    const looks = [look(["Camisa de franela gris", "Pantalón deportivo negro"])];
+    expect(conAbrigoParaElFrio(looks, packable.slice(0, 2), frio)).toEqual(looks);
   });
 });

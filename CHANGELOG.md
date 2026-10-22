@@ -2,6 +2,33 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.414.0] - 2026-10-21 — un cárdigan ya no sale sin nada debajo, y con frío cada look trae abrigo
+
+En los looks de una maleta real (mínimas de 8 °C, lluvia, con dos abrigos
+empacados): "Cárdigan marino + pantalón deportivo + botines + gorro", sin nada
+debajo y sin abrigo, y "Camisa de franela gris + pantalón + botines + gorro"
+sin abrigo. La foto se inventaba una playera bajo el cárdigan.
+
+- **Lo de encima lleva base** (`buildTripGrid`, `vaEncima` en
+  `lib/engine/piezas-tipo.ts`). La rejilla enumeraba top + bottom + calzado y
+  el cárdigan contaba como el top; la IA sólo puede sumar capas o accesorios,
+  así que nada le ponía una playera debajo. Ahora cárdigan, sobrecamisa y
+  chaleco entran a la rejilla sobre una prenda base; sin ninguna base no se
+  arman. Aplica también a los looks de la cápsula del clóset (mismo motor).
+- **Con frío, abrigo en código** (`conAbrigoParaElFrio`, después del juez).
+  El prompt y el juez ya lo pedían y la IA dejó 1 a 3 looks sin abrigo por
+  corrida. Si la mínima es ≤ 12 °C y el look no trae abrigo, se le pone el que
+  va con ese look: por formalidad (no un abrigo de vestir sobre unos pants),
+  con lluvia el que la aguanta, y a empate el que más usan los demás looks.
+  Bajo 5 °C, sólo uno de invierno de verdad. Los looks que quedan iguales se
+  quitan. Sólo en viajes: los looks de diario de la cápsula no se tocan.
+- Prompt de looks de viaje `viaje-v3` (la rejilla describe la celda con capa).
+
+Medido en seco con IA, dos corridas sobre esa maleta (16 looks cada una):
+cárdigan o sobrecamisa sin base, hoy 1 → 0 y 0; looks sin abrigo con frío, hoy
+2 → 0 y 0 (la IA dejó 3 y 1; los arregló la regla). La franela con pants salió
+con la chaqueta impermeable, no con el abrigo de vestir.
+
 ## [0.2.413.2] - 2026-10-21 — el duelo dice qué cambia, y recalcular no te vuelve a preguntar lo que ya elegiste
 
 - **"¿Te sirve la tuya? · cambia: sintético en vez de piel".** El duelo de un
