@@ -2,6 +2,19 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.414.3] - 2026-10-21 — tu perfil dice qué colores tomas de la otra estación
+
+Una persona "invierno con guiño de otoño" buscó en su perfil la parte de otoño
+y no la encontró. El bloque de Colorimetría enseñaba el nombre ("Invierno
+profundo") y los colores de invierno; nada decía que "profundo" quiere decir
+"también te van colores de otoño". Los motores sí los usan (`seasonPalette` →
+`prestados`, en el look de hoy, la maleta, los looks de viaje y la cápsula).
+
+- Debajo de tus colores, cuando hay guiño: "Tu base es invierno, y también te
+  van colores de otoño: vino, chocolate." con sus muestras. Son los mismos que
+  reciben los motores (el oliva no aparece en invierno + otoño porque invierno
+  lo evita: `seasonPalette` lo saca de las dos listas).
+
 ## [0.2.414.2] - 2026-10-21 — recalcular respeta lo que rechazaste, y la lluvia la cubre algo que la aguante
 
 - **Lo que rechazaste para una pieza no vuelve** (`fusionarCruce`). "Ninguna
