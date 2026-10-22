@@ -29,6 +29,7 @@ import {
 import { MotivoSheet } from "@/components/motivo-sheet";
 import { MasOpcionesSheet, ParecidoSheet, type OpcionPieza } from "@/components/trip-pieza-opciones";
 import type { AvisoMaleta } from "@/lib/trip-avisos";
+import { agruparPiezas, resumenDeMaleta, type PisoMaleta } from "@/lib/trip-grupos";
 import { MatchRecalc } from "@/components/match-recalc";
 import { ImportCarreteFlow, type AddFlowHandle } from "@/components/import-carrete-flow";
 import { MOTIVOS_VIAJE, textoDeDiferencia, type VetoReason } from "@/lib/capsule";
@@ -432,6 +433,7 @@ export function TripResult({
   descartadosIniciales = [],
   ganadosIniciales = [],
   avisos = [],
+  piso = null,
   closetCambio = false,
   vitrina,
 }: {
@@ -448,6 +450,8 @@ export function TripResult({
   ganadosIniciales?: number[];
   /** Lo que el juez encuentra en lo que DE VERDAD llevas (lib/trip-avisos.ts). */
   avisos?: AvisoMaleta[];
+  /** Lo que pide el viaje (lib/trip.ts capsuleFloor) para el resumen por grupo. */
+  piso?: PisoMaleta | null;
   /** Vitrina de tienda por índice de fila (prueba Uniqlo 2026-10/11): la página
    *  la arma como nodos en Suspense; aquí sólo se cuelga bajo la card de la
    *  pieza que falta. Vacío = nada cambia. */
@@ -652,6 +656,8 @@ export function TripResult({
   /** La OTRA pieza que esa prenda ya cubre (null si sólo cubre ésta o ninguna). */
   const yaVaPara = (nombre: string, index: number) =>
     (yaCubre.get(nombre) ?? []).find((u) => u.index !== index)?.pieza ?? null;
+  /** La pieza ideal de una fila, para agruparla (camisas, capas, pantalones…). */
+  const piezaDe = (r: TripRow) => ({ category: r.renderArgs.categoria, nombre: r.nombre, tipo: r.renderArgs.tipo });
   /** Cuántas piezas cubre una prenda (para el indicador de repetida). */
   const piezasQueCubre = (nombre: string | null) => (nombre ? (yaCubre.get(nombre) ?? []).length : 0);
 
@@ -977,6 +983,30 @@ export function TripResult({
         </div>
       ) : null}
 
+      {/* LO QUE LLEVAS, CONTADO (2026-10-21, pedido de Roberto): cuántas de
+          cada grupo y, donde el viaje pide un mínimo, contra eso ("2 de 10").
+          El grupo que no llega se marca en tinta. */}
+      {empaca.length > 0 ? (
+        <div className="flex flex-col gap-1.5">
+          <span className="text-[10.5px] font-bold uppercase tracking-[0.09em] text-muted">Lo que llevas</span>
+          <div className="flex flex-wrap gap-1.5">
+            {resumenDeMaleta(empaca, piezaDe, piso).map((g) => {
+              const corto = g.pide !== null && g.n < g.pide;
+              return (
+                <span
+                  key={g.id}
+                  className={`tabular rounded-sm border px-2.5 py-1 text-xs ${
+                    corto ? "border-ink bg-surface font-semibold text-ink" : "border-line bg-surface text-muted"
+                  }`}
+                >
+                  {g.label} · {g.pide !== null ? `${g.n} de ${g.pide}` : g.n}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      ) : null}
+
       {/* ══ FASE 1: PRENDAS (la revisión) — el orden del handoff: lo que pide
           decisión arriba, lo resuelto abajo. REACOMODO 2026-08-13 (segunda
           ronda de Roberto): las secciones se parten por SIGNIFICADO, no por
@@ -1172,8 +1202,14 @@ export function TripResult({
               </p>
               {/* SIN cheques y a plena opacidad: aquí no se empaca, se revisa.
                   Los cheques llegan con la fase de maleta, tras confirmar. */}
+              <div className="flex flex-col gap-3">
+              {agruparPiezas(planTienes, piezaDe).map((g) => (
+              <div key={g.id} className="flex flex-col gap-1.5">
+              <span className="tabular text-[10px] font-bold uppercase tracking-[0.09em] text-faint">
+                {g.label} · {g.items.length}
+              </span>
               <ul className="grid grid-cols-4 gap-2">
-                {planTienes.map((r) => {
+                {g.items.map((r) => {
                   const { by, byImage } = ov(r);
                   return (
                     <li key={r.index}>
@@ -1220,6 +1256,9 @@ export function TripResult({
                   );
                 })}
               </ul>
+              </div>
+              ))}
+              </div>
             </div>
           ) : null}
         </>
@@ -1335,8 +1374,14 @@ export function TripResult({
             })}
           </ul>
 
-          <ul className="grid grid-cols-4 gap-2 lg:hidden">
-            {empaca.map((r) => {
+          <div className="flex flex-col gap-3 lg:hidden">
+          {agruparPiezas(empaca, piezaDe).map((g) => (
+          <div key={g.id} className="flex flex-col gap-1.5">
+          <span className="tabular text-[10px] font-bold uppercase tracking-[0.09em] text-faint">
+            {g.label} · {g.items.length}
+          </span>
+          <ul className="grid grid-cols-4 gap-2">
+            {g.items.map((r) => {
               const on = isPacked(r.index);
               const { by, byImage } = ov(r);
               return (
@@ -1394,6 +1439,9 @@ export function TripResult({
               );
             })}
           </ul>
+          </div>
+          ))}
+          </div>
         </div>
       ) : null}
 

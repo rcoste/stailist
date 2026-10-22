@@ -212,12 +212,13 @@ export default async function ViajeDetallePage({
 
   // Cuántas prendas base pide el viaje, con lo que contestó (2026-10-21): el
   // aviso "llevas 5 para 8 días" sale sobre lo que de verdad lleva.
-  const pisoBase = capsuleFloor(
+  const piso = capsuleFloor(
     days,
     (trip.ocasiones as Occasion[] | null) ?? [],
     luggageCapacity(trip.bolsas as Bolsas | null, trip.maleta as Luggage | null),
     { cambio: profile.cambio_ropa ?? null, lavar: (trip.lavado as boolean | null) ?? null }
-  ).base;
+  );
+  const pisoBase = piso.base;
   const avisos = avisosDeLoQueLlevas(target, match, overrides, {
     paradas: climaParadas,
     ocasiones: (trip.ocasiones as string[] | null) ?? [],
@@ -446,6 +447,7 @@ export default async function ViajeDetallePage({
               descartadosIniciales={descartados}
               ganadosIniciales={ganados}
               avisos={avisos}
+              piso={{ base: piso.base, bottoms: piso.bottoms, calzado: piso.calzado }}
               closetCambio={closetCambio}
               vitrina={vitrina}
             />

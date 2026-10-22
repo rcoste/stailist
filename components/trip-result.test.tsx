@@ -239,3 +239,22 @@ describe("TripResult — una prenda que cubre dos piezas se ve también ya resue
     expect(screen.getByLabelText("cubre 2 piezas")).toBeTruthy();
   });
 });
+
+// LO QUE LLEVAS, CONTADO Y AGRUPADO (2026-10-21, pedido de Roberto).
+describe("TripResult — resumen por grupo", () => {
+  it("cuenta por grupo contra lo que pide el viaje y agrupa lo que ya tienes", () => {
+    const rows: TripRow[] = [
+      fila(0, "Camisa blanca", "camisa", "blanco", "tienes", "Camisa blanca"),
+      { ...fila(1, "Jeans negros", "jeans", "negro", "tienes", "Jeans negros"), renderArgs: { ...fila(1, "Jeans negros", "jeans", "negro", "tienes").renderArgs, categoria: "bottom" } },
+    ];
+    render(
+      <TripPackedProvider initial={{}}>
+        <TripResult tripId="t1" userId="u1" rows={rows} piso={{ base: 5, bottoms: 3, calzado: 2 }} />
+      </TripPackedProvider>
+    );
+    expect(screen.getByText("camisas, playeras y blusas · 1 de 5")).toBeTruthy();
+    expect(screen.getByText("pantalones y faldas · 1 de 3")).toBeTruthy();
+    expect(screen.getByText("zapatos · 0 de 2")).toBeTruthy();
+    expect(screen.getByText("camisas, playeras y blusas · 1")).toBeTruthy();
+  });
+});
