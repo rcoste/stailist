@@ -642,17 +642,18 @@ export function TripResult({
   // "Camisa de franela gris" para otra pieza cuando ya la había elegido para
   // una: elegirla otra vez es válido, pero cubre dos piezas con una prenda y
   // le quedan menos combinaciones. No se prohíbe; se avisa en la tarjeta.
-  const yaCubre = new Map<string, { index: number; pieza: string }>();
+  const yaCubre = new Map<string, { index: number; pieza: string }[]>();
   for (const r of rows) {
     const by = ov(r).by;
     if (!by) continue;
     const cubre = effLocal(r) === "tienes" || r.base === "falta" || ganados.has(r.index) || !!localSub[r.index];
-    if (cubre && !yaCubre.has(by)) yaCubre.set(by, { index: r.index, pieza: r.nombre });
+    if (cubre) yaCubre.set(by, [...(yaCubre.get(by) ?? []), { index: r.index, pieza: r.nombre }]);
   }
-  const yaVaPara = (nombre: string, index: number) => {
-    const u = yaCubre.get(nombre);
-    return u && u.index !== index ? u.pieza : null;
-  };
+  /** La OTRA pieza que esa prenda ya cubre (null si sólo cubre ésta o ninguna). */
+  const yaVaPara = (nombre: string, index: number) =>
+    (yaCubre.get(nombre) ?? []).find((u) => u.index !== index)?.pieza ?? null;
+  /** Cuántas piezas cubre una prenda (para el indicador de repetida). */
+  const piezasQueCubre = (nombre: string | null) => (nombre ? (yaCubre.get(nombre) ?? []).length : 0);
 
   // LOS GRUPOS DE LA FASE DE PLAN, partidos por SIGNIFICADO (segunda ronda de
   // Roberto): si hay comparación sugerida-vs-tuya, es duelo — venga del match
@@ -1052,6 +1053,14 @@ export function TripResult({
                         <b className="truncate text-[13.5px] font-semibold text-ink">
                           {tuya.nombre}
                         </b>
+                        {/* La misma prenda cubriendo otra pieza se queda dicha
+                            también después de elegir (2026-10-21: su franela
+                            iba por dos piezas y nada lo decía). */}
+                        {yaVaPara(tuya.nombre, r.index) ? (
+                          <span className="truncate text-[11.5px] text-muted">
+                            también va por «{yaVaPara(tuya.nombre, r.index)!.toLowerCase()}»
+                          </span>
+                        ) : null}
                       </span>
                       <button
                         type="button"
@@ -1196,6 +1205,15 @@ export function TripResult({
                               <Icon name="gancho" size={20} />
                             </span>
                           )}
+                          {/* La misma prenda en dos piezas: "×2" en la esquina. */}
+                          {piezasQueCubre(by) > 1 ? (
+                            <span
+                              className="tabular absolute right-1 top-1 rounded-sm bg-surface px-1.5 py-0.5 text-[10.5px] font-bold text-ink"
+                              aria-label={`cubre ${piezasQueCubre(by)} piezas`}
+                            >
+                              ×{piezasQueCubre(by)}
+                            </span>
+                          ) : null}
                         </span>
                       </button>
                     </li>
