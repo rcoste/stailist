@@ -41,6 +41,7 @@
 import type { CapsuleItem, ClosetItemLite, MatchEntry } from "@/lib/capsule";
 import { coloresCercanos } from "@/lib/paleta-colores";
 import { palabras } from "@/lib/ya-la-tienes";
+import { esPrendaBase, vaEncima } from "@/lib/engine/piezas-tipo";
 
 const sinTildes = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "").trim();
 
@@ -169,8 +170,15 @@ const MATERIALES = new Set(["piel", "lino", "lana", "algodon", "punto", "seda", 
 // clase (sin esto, su pantalón ancho negro no compartía ni una palabra).
 export const singular = (w: string) =>
   /(on|in)es$/.test(w) ? w.slice(0, -2) : /[^s]s$/.test(w) && w.length > 4 ? w.slice(0, -1) : w;
-/** Las palabras que dicen QUÉ es una prenda: sin colores, sin materiales, en singular. */
-export const deClase = (s: string) => new Set([...palabras(s)].filter((w) => !MATERIALES.has(w)).map(singular));
+// Detalles que comparten prendas distintas: el cuello, la manga, el cierre. Un
+// "Suéter de cuello redondo gris oscuro" y una "Playera cuello redondo gris"
+// tenían "cuello" y "redondo" en común y el rescate ofreció la playera como el
+// suéter (2026-10-21). Dicen cómo es, no qué es.
+// ("largo" no entra: en "abrigo largo" sí dice qué prenda es.)
+const DETALLES = new Set(["cuello", "redondo", "redonda", "manga", "boton", "botone", "cierre", "capucha", "ligero", "ligera", "basico", "basica", "clasico", "clasica"]);
+/** Las palabras que dicen QUÉ es una prenda: sin colores, sin materiales, sin detalles, en singular. */
+export const deClase = (s: string) =>
+  new Set([...palabras(s)].filter((w) => !MATERIALES.has(w)).map(singular).filter((w) => !DETALLES.has(w)));
 // El corte que la visión le leyó a la prenda, como las palabras con que una
 // pieza ideal lo nombra. Sólo en bottoms: es donde el nombre de la pieza lo
 // trae ("wide leg", "pierna recta") y el de la prenda real casi nunca.
@@ -190,6 +198,15 @@ const esJeans = (s: string) => /\bjeans?\b|mezclilla|denim/.test(norm(s));
 
 const zona = (cat: string) => (cat === "top" || cat === "abrigo" ? "torso" : cat);
 const norm = sinTildes;
+
+/** Lo que dice el rescate: no sabe en qué difiere, sólo que puede ser la misma. */
+export const ES_LA_MISMA = "¿es la misma?";
+
+// Entre tops, el rescate sólo empareja la misma capa: una playera (base) no es
+// un suéter (capa media) ni un cárdigan (va encima), por más palabras que
+// compartan.
+const mismaCapa = (a: { category: string; nombre: string; tipo?: string | null }, b: { category: string; nombre: string }) =>
+  a.category !== "top" || (esPrendaBase(a) === esPrendaBase(b) && vaEncima(a) === vaEncima(b));
 
 export type CambioDeRegla = { index: number; regla: 1 | 2 | 3; antes: MatchEntry; despues: MatchEntry };
 
@@ -302,6 +319,16 @@ export function aplicarReglasDelCruce(
     if (real && !temporadaCompatible(it, real)) cambiar(i, 1, { status: "falta", by: null, difiere: null });
   });
 
+  // 1f · una playera no es un suéter: entre tops, la prenda base (lo pegado a
+  // la piel) y la capa media no se cubren entre sí. El rescate le ofreció su
+  // "Playera cuello redondo gris" por un "Suéter de cuello redondo gris oscuro".
+  items.forEach((it, i) => {
+    const e = out[i];
+    if (!e || e.status === "falta" || it.category !== "top") return;
+    const real = prendaDe(e.by);
+    if (real && real.category === "top" && esPrendaBase(it) !== esPrendaBase(real)) cambiar(i, 1, { status: "falta", by: null, difiere: null });
+  });
+
   // 2a · ni dos "tienes": la pieza que va primero (la de más prioridad) se la queda
   const yaTiene = new Set<string>();
   out.forEach((e, i) => {
@@ -333,11 +360,12 @@ export function aplicarReglasDelCruce(
         c.category === it.category &&
         familiaDePrenda(c) === famIdeal &&
         temporadaCompatible(it, c) &&
+        mismaCapa(it, c) &&
         [...deClaseReal(c)].filter((w) => clase.has(w)).length >= 2
     );
     if (!libre) return;
     usadas.add(norm(libre.nombre));
-    cambiar(i, 3, { status: "parecido", by: libre.nombre, difiere: "confirma si es la misma" });
+    cambiar(i, 3, { status: "parecido", by: libre.nombre, difiere: ES_LA_MISMA });
   });
 
   return { entries: out, cambios };

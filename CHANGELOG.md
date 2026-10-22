@@ -2,6 +2,30 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.414.1] - 2026-10-21 — una playera ya no es "parecido" de un suéter
+
+En una maleta real, el duelo enfrentó "Suéter de cuello redondo gris oscuro"
+contra su "Playera cuello redondo gris", con el rótulo "cambia: confirma si es
+la misma". Venía del rescate del cruce (regla 3), que ofrece una prenda libre
+con dos palabras de clase en común: compartían "cuello" y "redondo".
+
+- **Las palabras del detalle no dicen qué prenda es** (`deClase`): cuello,
+  redondo, manga, botón, cierre, capucha… ya no cuentan como clase. "Largo" sí,
+  porque en "abrigo largo" lo dice.
+- **El rescate empareja la misma capa** entre tops: base con base, capa media
+  con capa media, lo de encima con lo de encima.
+- **Regla 1f del cruce**: entre tops, una prenda base (playera, camisa) no
+  cubre una capa media (suéter) ni al revés. Corre también sobre los cruces
+  guardados al recalcular, donde el rescate de antes se conservaba.
+- **"¿es la misma?" en vez de "cambia: confirma si es la misma"**
+  (`textoDeDiferencia`, en la maleta y en la cápsula; también para los cruces
+  guardados con el texto viejo).
+
+Medido en seco, reglas de producción contra las nuevas sobre los 33 cruces
+guardados (894 piezas): cambian 3, las 3 a bien (esa playera por el suéter,
+una camiseta oliva que cubría un top de bikini, una playera crema que cubría un
+suéter oversize).
+
 ## [0.2.414.0] - 2026-10-21 — un cárdigan ya no sale sin nada debajo, y con frío cada look trae abrigo
 
 En los looks de una maleta real (mínimas de 8 °C, lluvia, con dos abrigos

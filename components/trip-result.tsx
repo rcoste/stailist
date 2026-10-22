@@ -31,7 +31,7 @@ import { MasOpcionesSheet, ParecidoSheet, type OpcionPieza } from "@/components/
 import type { AvisoMaleta } from "@/lib/trip-avisos";
 import { MatchRecalc } from "@/components/match-recalc";
 import { ImportCarreteFlow, type AddFlowHandle } from "@/components/import-carrete-flow";
-import { MOTIVOS_VIAJE, type VetoReason } from "@/lib/capsule";
+import { MOTIVOS_VIAJE, textoDeDiferencia, type VetoReason } from "@/lib/capsule";
 import { NOMBRE_FUNCION, funcionDe } from "@/lib/funcion-prenda";
 import type { Candidata } from "@/lib/trip-candidatas";
 import { toggleWishlistFromCapsule } from "@/lib/wishlist-actions";
@@ -218,7 +218,7 @@ function DueloCard({
           {/* Sin esto el duelo enseñaba dos fotos casi idénticas sin decir por
               qué preguntaba (unos tenis sintéticos contra unos de piel, 2026-10-21).
               La cápsula del clóset ya lo decía ("cambia: …"). */}
-          {row.base === "parecido" && row.difiere && tuya.nombre === row.by ? ` · cambia: ${row.difiere}` : ""}
+          {row.base === "parecido" && row.difiere && tuya.nombre === row.by ? ` · ${textoDeDiferencia(row.difiere)}` : ""}
         </span>
         <div className="mt-0.5 flex items-start gap-[9px]">
           <span aria-hidden className="display shrink-0 pt-1 text-[14px] leading-none text-ink">
