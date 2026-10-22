@@ -14,7 +14,8 @@
 // la de todos los demás.
 
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { listTripClosetOptions } from "@/lib/trip-actions";
 import { TripResult, type TripRow } from "@/components/trip-result";
 import { TripPackedProvider } from "@/components/trip-packed-context";
 
@@ -46,7 +47,7 @@ vi.mock("@/lib/trip-actions", () => ({
   excludeTripPiece: vi.fn(async () => ({ ok: true })),
   replaceTripPiece: vi.fn(async () => ({ ok: true })),
   rejectTripDuel: vi.fn(async () => ({ ok: true })),
-  listTripClosetOptions: vi.fn(async () => []),
+  listTripClosetOptions: vi.fn(async (_tripId: string, _index: number) => []),
   recalcularMaletaViaje: vi.fn(async () => ({ ok: true })),
   posiblesYaLoTengo: vi.fn(async () => []),
 }));
@@ -178,5 +179,21 @@ describe("TripResult — el duelo de un parecido dice qué cambia", () => {
       </TripPackedProvider>
     );
     expect(screen.getByText(/cambia: sintético en vez de piel/)).toBeTruthy();
+  });
+});
+
+// "ELEGIR OTRA DE MI CLÓSET" EN EL DUELO (2026-10-21). "Capaz digo: me gustaría
+// ésta en particular." Lo que viaja es la pieza: abre la lista de SU clóset
+// para ESE índice (listTripClosetOptions, sin IA).
+describe("TripResult — elegir otra de mi clóset desde el duelo", () => {
+  it("abre la lista de su clóset para esa pieza", async () => {
+    const parecido: TripRow = { ...fila(4, "Suéter de cuello redondo gris oscuro", "sueter", "gris", "parecido", "Playera cuello redondo gris"), difiere: "¿es la misma?" };
+    render(
+      <TripPackedProvider initial={{}}>
+        <TripResult tripId="t1" userId="u1" rows={[parecido]} />
+      </TripPackedProvider>
+    );
+    fireEvent.click(screen.getByRole("button", { name: /elegir otra de mi clóset/i }));
+    expect(vi.mocked(listTripClosetOptions)).toHaveBeenCalledWith("t1", 4);
   });
 });

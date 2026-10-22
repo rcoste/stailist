@@ -35,7 +35,8 @@ export function candidatasDeOverrides(
   candidatas: Record<number, Candidata>;
   /** "prefiero la sugerida" (candNo:i): el duelo se cerró a favor de la ideal. */
   descartados: number[];
-  /** "me quedo con la mía" (cand:i === sub:i): ganó tu prenda. */
+  /** Ganó tu prenda: "me quedo con la mía" (cand:i === sub:i) o una que
+   *  elegiste a mano de tu clóset (sub:i, 2026-10-21 "elegir otra de mi clóset"). */
   ganados: number[];
 } {
   const candidatas: Record<number, Candidata> = {};
@@ -52,6 +53,13 @@ export function candidatasDeOverrides(
     }
     const mNo = k.match(/^candNo:(\d+)$/);
     if (mNo && v === true) descartados.push(Number(mNo[1]));
+  }
+  // Una prenda elegida a mano (sub:i distinta de la candidata, o sin candidata)
+  // también cierra el duelo a favor de lo tuyo: sin esto, al recargar le volvía
+  // a preguntar por la pieza que ya resolvió.
+  for (const [k, v] of Object.entries(overrides ?? {})) {
+    const mSub = k.match(/^sub:(\d+)$/);
+    if (mSub && typeof v === "string" && v.trim() && !ganados.includes(Number(mSub[1]))) ganados.push(Number(mSub[1]));
   }
   return { candidatas, descartados, ganados };
 }
