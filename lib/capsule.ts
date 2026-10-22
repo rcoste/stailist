@@ -386,6 +386,18 @@ export type ClosetItemLite = {
   conjunto?: string | null;
 };
 
+/**
+ * La diferencia de un "parecido" dicha a la persona: "cambia: sintético en vez
+ * de piel". El rescate del cruce no sabe en qué difiere —sólo que puede ser la
+ * misma— y su texto ("confirma si es la misma", en los cruces guardados hasta
+ * el 2026-10-21) se leía "cambia: confirma si es la misma".
+ */
+export function textoDeDiferencia(difiere: string | null | undefined): string | null {
+  const d = difiere?.trim();
+  if (!d) return null;
+  return /confirma si es la misma|es la misma\?/i.test(d) ? "¿es la misma?" : `cambia: ${d}`;
+}
+
 // Resultado por prenda ideal (alineado por índice con target.items). Tres estados:
 //   "tienes"   — ya la tienes en forma usable (tipo + color compatible + uso).
 //   "parecido" — tienes la prenda correcta pero con un matiz (otro neutro, casi-

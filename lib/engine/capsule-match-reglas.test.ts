@@ -140,6 +140,26 @@ describe("regla 1 · el color", () => {
     expect(r.entries[0].status).toBe("parecido");
   });
 
+  // Su maleta (2026-10-21): el rescate ofreció su "Playera cuello redondo gris"
+  // como el "Suéter de cuello redondo gris oscuro" — compartían "cuello redondo".
+  it("el rescate no ofrece una playera por un suéter aunque compartan el cuello", () => {
+    const r = aplicarReglasDelCruce(
+      [ideal("Suéter de cuello redondo gris oscuro", "gris", "top", "sueter")],
+      [e("falta")],
+      [mia("Playera cuello redondo gris", "top", "gris")]
+    );
+    expect(r.entries[0].status).toBe("falta");
+  });
+
+  it("y sí ofrece un suéter suyo por un suéter", () => {
+    const r = aplicarReglasDelCruce(
+      [ideal("Suéter half-zip gris oscuro", "gris", "top", "sueter")],
+      [e("falta")],
+      [mia("Suéter half-zip gris", "top", "gris")]
+    );
+    expect(r.entries[0]).toMatchObject({ status: "parecido", by: "Suéter half-zip gris", difiere: "¿es la misma?" });
+  });
+
   it("su gorra no cubre el gorro de punto, tampoco cuando el cruce viene guardado", () => {
     const r = aplicarReglasDelCruce(
       [ideal("Gorro de punto negro", "negro", "accesorio", "gorro")],

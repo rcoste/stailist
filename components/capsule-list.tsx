@@ -40,6 +40,7 @@ import {
   type RenderArgs,
 } from "@/components/ideal-tile";
 import {
+  textoDeDiferencia,
   capsuleRows,
   type CapsuleDecision,
   type CapsuleMatch,
@@ -1412,7 +1413,7 @@ function DecideRow({
               {item.nombre}
             </span>
             <span className="truncate text-[11px] text-muted">
-              {row.difiere ? `cambia: ${row.difiere}` : "tuya o la sugerida"}
+              {textoDeDiferencia(row.difiere) ?? "tuya o la sugerida"}
             </span>
           </span>
           <Icon name="chevron" size={16} className="ml-auto shrink-0 text-faint" />
