@@ -46,14 +46,20 @@ describe("candidatasDeOverrides", () => {
     expect(ganados).toEqual([3]);
   });
 
-  it("un sustituto DISTINTO de la candidata no cuenta como duelo ganado", () => {
-    // Cambió la prenda por otra vía ("ver otras", swap): el duelo no lo ganó
-    // la candidata, así que no lleva su "deshacer".
+  // Hasta el 2026-10-21 un sustituto distinto de la candidata NO contaba como
+  // ganado, y el duelo volvía a pintarse pendiente al recargar aunque ya
+  // hubiera elegido una prenda suya. Con "elegir otra de mi clóset" en el
+  // duelo, elegir a mano ES resolverlo a favor de lo suyo (con su "deshacer").
+  it("un sustituto elegido a mano, distinto de la candidata, también cierra el duelo", () => {
     const { ganados } = candidatasDeOverrides(
       { [candKey(3)]: "Camisa negra", "sub:3": "Camisa azul" },
       img
     );
-    expect(ganados).toHaveLength(0);
+    expect(ganados).toEqual([3]);
+  });
+
+  it("un sustituto sin candidata (un parecido resuelto a mano) también", () => {
+    expect(candidatasDeOverrides({ "sub:5": "Suéter gris" }, img).ganados).toEqual([5]);
   });
 
   it("sin imagen resuelta, la candidata sobrevive (la imagen es cosmética)", () => {

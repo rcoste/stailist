@@ -185,6 +185,7 @@ function DueloCard({
   onMia,
   onSugerida,
   onNinguna,
+  onElegirOtra,
   busy = false,
 }: {
   row: TripRow;
@@ -195,6 +196,8 @@ function DueloCard({
   onSugerida: () => void;
   /** "ninguna de las dos me va" (2026-10-14): abre la hoja de motivo. */
   onNinguna?: () => void;
+  /** "elegir otra de mi clóset" (2026-10-21): la lista de lo suyo que sirve para la pieza, sin IA. */
+  onElegirOtra?: () => void;
   busy?: boolean;
 }) {
   const render = useIdealRender(row.renderArgs, row.idealImage);
@@ -306,14 +309,35 @@ function DueloCard({
         <div className="flex min-h-11 items-center justify-center gap-2 border-t border-line2 text-[12.5px] text-muted">
           <Spinner className="h-3.5 w-3.5" /> buscando otra en tu clóset…
         </div>
-      ) : onNinguna ? (
-        <button
-          type="button"
-          onClick={onNinguna}
-          className="flex min-h-11 w-full items-center justify-center border-t border-line2 text-[12.5px] font-semibold text-muted transition-colors hover:bg-tile hover:text-ink"
-        >
-          ninguna de las dos me va
-        </button>
+      ) : onNinguna || onElegirOtra ? (
+        // "ELEGIR OTRA DE MI CLÓSET" (2026-10-21, pedido de Roberto: "capaz
+        // digo: me gustaría ésta en particular"). En agosto se quitó un "ver
+        // otras" de aquí por dos razones: la tercera puerta decía que no
+        // confiábamos en lo propuesto, y pagaba una IA que devolvía la misma
+        // prenda. La segunda ya no aplica —esto es la lista sin IA de "lo
+        // elijo de mi clóset" (listTripClosetOptions)—, y la primera pierde
+        // contra el caso real: quería una prenda concreta y la única salida
+        // era volver a preguntarle a la IA. Va discreta, junto a "ninguna".
+        <div className="grid grid-cols-2 border-t border-line2">
+          {onElegirOtra ? (
+            <button
+              type="button"
+              onClick={onElegirOtra}
+              className="flex min-h-11 items-center justify-center px-2 text-center text-[12.5px] font-semibold text-muted transition-colors hover:bg-tile hover:text-ink"
+            >
+              elegir otra de mi clóset
+            </button>
+          ) : null}
+          {onNinguna ? (
+            <button
+              type="button"
+              onClick={onNinguna}
+              className={`flex min-h-11 items-center justify-center px-2 text-center text-[12.5px] font-semibold text-muted transition-colors hover:bg-tile hover:text-ink ${onElegirOtra ? "border-l border-line2" : "col-span-2"}`}
+            >
+              ninguna de las dos me va
+            </button>
+          ) : null}
+        </div>
       ) : null}
     </li>
   );
@@ -631,8 +655,16 @@ export function TripResult({
     // vuelve un duelo de FALTA contra la candidata nueva (cand:i).
     const parecidoRechazado =
       esParecido && (localDecide[r.index] ?? r.decision) === "reject" && !!cand && !descartados.has(r.index);
+    // Si eligió a mano otra prenda suya ("elegir otra de mi clóset"), "te
+    // quedas con la tuya" nombra ÉSA, no la candidata del duelo.
+    const elegidaAMano = (c: Candidata): Candidata =>
+      localSub[r.index]
+        ? { nombre: localSub[r.index].by ?? c.nombre, image: localSub[r.index].byImage }
+        : r.by && r.by !== c.nombre && r.base !== "parecido"
+          ? { nombre: r.by, image: r.byImage }
+          : c;
     if (parecidoRechazado) {
-      duelos.push({ r, tuya: cand!, tipo: "falta", ganado: ganados.has(r.index) || !!localSub[r.index] });
+      duelos.push({ r, tuya: elegidaAMano(cand!), tipo: "falta", ganado: ganados.has(r.index) || !!localSub[r.index] });
       continue;
     }
     if (!esParecido && !cand) {
@@ -648,7 +680,7 @@ export function TripResult({
     // Es (o fue) un duelo. ¿En qué quedó?
     const tuya: Candidata = esParecido
       ? { nombre: ov(r).by ?? r.nombre, image: ov(r).byImage }
-      : cand!;
+      : elegidaAMano(cand!);
     const tipo = esParecido ? ("parecido" as const) : ("falta" as const);
     const decision = localDecide[r.index] ?? (esParecido ? r.decision : null);
     const gano =
@@ -1053,6 +1085,10 @@ export function TripResult({
                     tuya={tuya}
                     busy={dueloBusy.has(r.index)}
                     onNinguna={() => setMotivoFlow({ r, tipo: "duelo", duelo: tipo, motivo: null })}
+                    onElegirOtra={() => {
+                      setDuelAbierto(null);
+                      void elegirDeMiCloset(r);
+                    }}
                     onMia={() => {
                       setDuelAbierto(null);
                       if (tipo === "falta") {

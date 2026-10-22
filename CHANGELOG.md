@@ -2,6 +2,22 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.415.0] - 2026-10-21 — en el duelo puedes elegir otra prenda de tu clóset
+
+"¿Te sirve la tuya?" enfrentaba la sugerida contra una prenda tuya, y la única
+otra salida era "ninguna de las dos me va", que vuelve a preguntarle a la IA.
+"Capaz digo: no, me gustaría ésta en particular."
+
+- **"elegir otra de mi clóset"**, junto a "ninguna de las dos me va": abre la
+  lista de tus prendas que sirven para esa pieza (la misma de "lo elijo de mi
+  clóset" del menú ···, sin IA) y la que elijas se va a tu maleta. En agosto se
+  quitó de aquí un "ver otras" porque pagaba una IA que devolvía la misma
+  prenda; esta lista no tiene ese defecto.
+- **Elegir a mano cierra el duelo** (`candidatasDeOverrides`): antes sólo
+  contaba como resuelto si elegías justo la candidata, y una prenda elegida a
+  mano te volvía a preguntar al recargar. "Te quedas con la tuya" nombra la que
+  elegiste.
+
 ## [0.2.414.3] - 2026-10-21 — tu perfil dice qué colores tomas de la otra estación
 
 Una persona "invierno con guiño de otoño" buscó en su perfil la parte de otoño
