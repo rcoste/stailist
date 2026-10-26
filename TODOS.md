@@ -2,6 +2,98 @@
 
 Trabajo diferido con contexto. Cada ítem tiene su "por qué ahora no" y su trigger de reapertura.
 
+## Embarazo como dato del perfil (2026-10-26)
+
+- **Qué**: que la app sepa que alguien está embarazada y de cuántas semanas, y
+  que eso cambie el calzado, los cortes y la maleta.
+- **De dónde sale**: una usuaria embarazada que prepara un viaje largo de
+  otoño a Asia. La app no lo sabe: sus looks de cápsula traen tacones, y el
+  motor se los seguiría proponiendo. Al escoger un mocasín en la tienda, lo
+  que decidió fue la suela (hule con textura contra piel lisa, con lluvia en
+  Kioto), y eso pesa el doble en un embarazo.
+- **Dónde vive**: en `profiles`, NO en `trips`. Afecta el look de hoy, los
+  esenciales y la maleta. El patrón ya existe: `profiles.cambio_ropa` (0187)
+  se pregunta UNA vez en la maleta y se guarda en el perfil. Igual aquí:
+  pregunta opcional en el wizard del viaje (`components/trip-wizard.tsx`),
+  sólo con `gender = 'mujer'`, editable y borrable desde el perfil.
+- **Guardar la fecha, no las semanas**: se PREGUNTA "¿cuántas semanas tienes?"
+  (es lo que la gente sabe) y se GUARDA la fecha probable de parto
+  (hoy + (40 − semanas) × 7 días). Las semanas cambian solas: un viaje de 4
+  semanas empieza en una y acaba en otra, y alguien de 26 semanas cruza al
+  tercer trimestre a media maleta. Cada día del viaje se calcula con su fecha.
+  Pasada la fecha + ~2 semanas, el dato caduca y se pregunta si ya nació
+  (el posparto es otro estado: lactancia, otra talla, otra vida).
+- **Que no quede "embarazada para siempre"** (Roberto): además de la
+  caducidad por fecha, un "ya no aplica" en el perfil, de un toque, que borra
+  el dato sin preguntar por qué ni mostrar nada después. Un embarazo puede
+  terminar antes de tiempo, sobre todo en las primeras 12 semanas, y lo peor
+  que puede hacer la app es seguirle armando looks "para tu embarazo" a quien
+  lo perdió. Por eso tampoco se manda nada proactivo sobre el tema (ni
+  correos ni avisos de "¡ya vas en la semana 20!").
+- **Piloto**: con una usuaria cercana que hoy lo necesita (Roberto sabe
+  quién; el repo es público, aquí no va ni nombre ni correo), con su
+  consentimiento. Ver si las reglas de calzado y cortes cambian algo que ella
+  note, antes de abrirlo a todas.
+- **Qué cambia por etapa** (criterio de stylist; validar con fuentes antes de
+  escribir reglas):
+  - ~1-13 semanas: por fuera casi nada. Cansancio, náusea, abdomen inflamado al
+    final, el busto crece pronto. Cinturas que no aprieten, telas suaves.
+    Muchas no lo cuentan hasta la semana 12: la pregunta tiene que ser
+    discreta y no festejarlo en pantalla.
+  - ~14-27: la panza se nota hacia la semana 16-20 y los pantalones de cintura
+    fija dejan de cerrar. Las articulaciones se aflojan y cambia el
+    equilibrio. Punto con elástico, vestidos, capas abiertas.
+    Calzado de suela de hule, tacón bajo y ancho, sin agujetas.
+  - ~28+: los pies se hinchan y pueden crecer media talla. Agacharse cuesta:
+    calzado que se pone sin manos, botas con cierre completo o nada de botas
+    altas. Abrigos que ya no cierran → capas que se usan abiertas.
+- **Cómo entra al motor**: lo duro como regla dura y comprobable, no como texto
+  del prompt: sin tacón alto en ninguna etapa, sin calzado de suela lisa
+  cuando hay lluvia, sin cinturones marcados desde la semana ~20. El resto
+  como una línea de contexto. Esa línea toca el motor: se mide antes de salir
+  (`docs/improvement-loop-del-motor.md`).
+- **Ojo**: es un dato de salud. Opcional, nunca en un render compartido ni en
+  un correo, y se borra con la cuenta.
+- **Por qué ahora no**: pocas usuarias (base chica, y en cualquier momento sólo
+  una fracción de las mujeres de 25-34 están embarazadas), pero cada caso pesa
+  mucho: un cuerpo que cambia cada mes es la crisis de clóset que la app
+  promete resolver. Vale más que su frecuencia.
+- **Trigger**: la próxima vez que se toque el wizard del viaje o el perfil, o
+  el arranque del piloto.
+
+## "¿Me lo compro?" — opinión antes de comprar (2026-10-26)
+
+- **Qué**: subir 1 o 2 prendas que estás por comprar (foto en la tienda,
+  incluso de la suela) y recibir un veredicto contra TU clóset y, si quieres,
+  contra un viaje: cómpralo / ya tienes algo que lo cubre / no es para ti.
+  Si son dos, cuál y por qué.
+- **De dónde sale**: Roberto, desde una tienda, le pidió a Claude escoger
+  entre dos mocasines para el viaje de una usuaria. La respuesta salió de
+  cruzar datos que la app ya tiene: perfil (arquetipo, paleta, metal), clóset,
+  maleta del viaje (`capsule_target`/`capsule_match`) y clima por parada. La
+  app no supo hacerlo.
+- **Qué ya existe**: la sección de deseos (`app/wishlist/page.tsx`,
+  `lib/wishlist-actions.ts`) da el veredicto de color y el try-on con prendas
+  del clóset. Falta el juicio de CLÓSET: qué hueco de los esenciales o de la
+  maleta llena (`status: 'falta'`), con qué prenda tuya se pisa, cuántos looks
+  nuevos abre, y lo práctico del destino (lluvia → suela, templos en Japón →
+  que se quite sin manos, kilómetros al día → amortiguación).
+- **Dos contextos, un juicio**: "para mi clóset" (contra los esenciales) o
+  "para el viaje X" (contra su maleta y su clima). La misma pantalla con un
+  selector, no dos funciones.
+- **No es "compras sugeridas"** (que sigue fuera del MVP): no empuja productos,
+  juzga uno que la persona ya trae en la mano. Y puede decir "no lo compres",
+  algo que ninguna app de tienda dice.
+- **Riesgo**: lo práctico ("esta suela resbala", "en Kioto te descalzas") es
+  lo que más valor da y lo que más fácil se inventa el modelo. Medir con casos
+  reales a ciegas en `/admin/comparador` antes de prometerlo. Y si existe el
+  dato del embarazo (ítem de arriba), el juicio lo tiene que usar.
+- **Por qué ahora no**: la vitrina de Uniqlo (la otra apuesta de compras) está
+  a prueba hasta el 2026-11-30. Abrir una segunda puerta de compras antes de
+  leer esa no deja saber cuál movió la aguja.
+- **Trigger**: la lectura de la vitrina (7 y 24 de noviembre), o que otra
+  usuaria pida algo así sin que se lo sugiramos.
+
 ## Código de país en cada parada del viaje (2026-10-20)
 
 - **Qué**: que cada parada guarde el código de país (`us`, `jp`, `kr`…) al
