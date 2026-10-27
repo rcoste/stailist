@@ -2,6 +2,175 @@
 
 Trabajo diferido con contexto. Cada ítem tiene su "por qué ahora no" y su trigger de reapertura.
 
+## Embarazo como dato del perfil (2026-10-26)
+
+- **Qué**: que la app sepa que alguien está embarazada y de cuántas semanas, y
+  que eso cambie el calzado, los cortes y la maleta.
+- **De dónde sale**: una usuaria embarazada que prepara un viaje largo. La
+  app no lo sabe: sus looks de cápsula traen tacones, y el motor se los
+  seguiría proponiendo. Al escoger un mocasín en la tienda, lo que decidió fue
+  la suela (hule con textura contra piel lisa, con lluvia), y eso pesa más en
+  un embarazo.
+- **Dónde vive**: es del PERFIL, no del viaje (afecta el look de hoy, los
+  esenciales y la maleta), pero NO en la tabla `profiles`: esa tabla la leen
+  las cuentas admin (`admin reads profiles`, 0015) y el "ver como", y RLS no
+  esconde columnas. Un dato de salud va en su propia tabla con UNA política
+  (`auth.uid() = user_id`, sin lectura admin) y `on delete cascade`. Lo que sí
+  se copia de `profiles.cambio_ropa` (0187) es la UX: se pregunta una vez en
+  el wizard del viaje (`components/trip-wizard.tsx`, mismo componente
+  `Opciones` del paso 3), sólo si `gender = 'mujer'` y el dato es null, y se
+  edita o borra desde el perfil.
+- **Guardar la fecha, no las semanas**: se PREGUNTA "¿cuántas semanas tienes?"
+  (es lo que la gente sabe) y se GUARDA la fecha probable de parto
+  (hoy + (40 − semanas) × 7 días). Las semanas cambian solas: un viaje de 4
+  semanas empieza en una y acaba en otra, y alguien de 26 semanas cruza al
+  tercer trimestre a media maleta. Cada día del viaje se calcula con su fecha.
+  Pasada la fecha + ~2 semanas, el dato caduca y se pregunta si ya nació
+  (el posparto es otro estado: lactancia, otra talla, otra vida).
+- **Que no quede "embarazada para siempre"** (Roberto): además de la
+  caducidad por fecha, un "ya no aplica" en el perfil, de un toque, que borra
+  el dato sin preguntar por qué ni mostrar nada después. Un embarazo puede
+  terminar antes de tiempo, sobre todo en las primeras 12 semanas, y lo peor
+  que puede hacer la app es seguirle armando looks "para tu embarazo" a quien
+  lo perdió. Por eso tampoco se manda nada proactivo sobre el tema (ni
+  correos ni avisos de "¡ya vas en la semana 20!").
+- **Piloto**: con una usuaria cercana que hoy lo necesita (Roberto sabe
+  quién; el repo es público, aquí no va ni nombre ni correo), con su
+  consentimiento. Ver si las reglas de calzado y cortes cambian algo que ella
+  note, antes de abrirlo a todas. OJO con el calendario: el viaje que lo
+  originó ya está en curso y cae entero en el primer trimestre, donde casi
+  ninguna regla aplica. El piloto real es el resto del embarazo (looks
+  diarios, esenciales y los viajes que vengan): las reglas de calzado y
+  equilibrio empiezan a importar desde el segundo trimestre. Requisito previo:
+  que el 👍/👎 se guarde POR LOOK (hoy `events.data` va vacío en
+  `vote_up`/`vote_down`); sin eso no se puede leer qué looks le funcionaron.
+- **Qué cambia por etapa** (verificado con fuentes médicas el 2026-10-26; lo
+  que es criterio de stylist y no regla médica va marcado así):
+  - ~1-13 semanas: por fuera casi nada. Cansancio, náusea, abdomen inflamado al
+    final, y el busto cambia desde el primer trimestre (sensible, el brasier
+    aprieta pronto). Cinturas que no aprieten, telas suaves (stylist). ~10% de
+    los embarazos reconocidos se pierden y 80% de esas pérdidas son antes de
+    la semana 13 (ACOG, Practice Bulletin 200): por eso muchas no lo cuentan
+    hasta la 12, y la pregunta tiene que ser discreta y no festejarlo.
+  - ~14-27: el útero sale de la pelvis hacia la semana 12-14 y la panza se
+    nota entre la 16 y la 20; los pantalones de cintura fija dejan de cerrar.
+    El equilibrio empeora desde el SEGUNDO trimestre, no antes (Butler 2006,
+    n=12), y ~1 de cada 4 embarazadas se cae al menos una vez (27%, Dunning
+    2003, CDC; 40% de las caídas en el trabajo fueron en piso resbaloso). La
+    laxitud articular se atribuye a relaxina más estrógeno y progesterona, y
+    su causa no está probada en humanos: la regla se apoya en las caídas, no
+    en la hormona. Calzado: tacón bajo y ancho, no plano del todo, nada de
+    tacón alto (Mayo Clinic). Suela con agarre: lo respalda el dato de piso
+    resbaloso, no una guía explícita. Punto con elástico, vestidos, capas
+    abiertas (stylist).
+  - ~28+: los pies se HINCHAN, sobre todo en la tarde (temporal; frecuencia
+    publicada muy variable, ~26-80%). Además, aparte de la hinchazón, en
+    60-70% de las mujeres el pie se ALARGA 2-10 mm de forma permanente, sobre
+    todo en el primer embarazo (Segal 2013): no es "media talla en el tercer
+    trimestre", es un cambio que se queda. Se hinchan también las manos
+    (anillos), y el túnel carpiano es común (botones y cierres chicos
+    cuestan). Agacharse cuesta: calzado que se pone sin manos (stylist).
+    Abrigos que ya no cierran → capas que se usan abiertas (stylist).
+  - **Nunca como consejo de estilo**: una hinchazón SÚBITA de cara, manos o
+    pies es señal de alarma médica (preeclampsia, NHS). La app no la
+    "resuelve" con ropa.
+  - **Viajes**: lo recomendado es volar entre las semanas 14 y 28; después de
+    la 28 la aerolínea puede pedir carta del médico y suelen cortar en la
+    36-37 (RCOG). En vuelos de más de 4 h: ropa holgada, zapatos cómodos y
+    medias de compresión GRADUADAS y medidas, no "calcetines de vuelo"
+    (RCOG). Esto sí le toca a la maleta.
+  - Lo que NO tiene fuente médica y queda como criterio de stylist: cinturones
+    y pantalones de cintura fija en el día a día (las guías sólo piden ropa
+    holgada para volar), y que la panza se note antes en el segundo embarazo.
+- **Cómo entra al motor**: lo duro como regla dura y comprobable, no como texto
+  del prompt: sin tacón alto, sin calzado de suela lisa cuando hay lluvia,
+  sin cinturones marcados desde la semana ~20. El resto como una línea de
+  contexto. Esa línea toca el motor: se mide antes de salir
+  (`docs/improvement-loop-del-motor.md`). Lo que el código NO puede hoy
+  (revisado 2026-10-26):
+  - **Las reglas duras sólo corren en el motor diario.** Viven en
+    `lib/engine/reglas-ejecucion.ts` (`revisarEjecucion`, ~35 reglas) y las
+    usan `armarLooks`, el look de hoy y el juez. La maleta NO pasa por ahí:
+    su selección sale del prompt de `trip-capsule.ts` + el cruce, y sus looks
+    del juez de `trip-outfits.ts` con un solo guard en código
+    (`conAbrigoParaElFrio`). Para que la regla llegue a la maleta hace falta
+    un guard como ése en la selección y en los looks del viaje, y otro en los
+    esenciales (`capsule-target.ts`).
+  - **"Tacón alto" y "suela lisa" no son datos.** La visión
+    (`lib/vision-prenda.ts`) guarda tipo, material y `subtipo` libre, pero ni
+    altura de tacón ni suela. `tipoDePrenda` sólo sabe "tacon", así que hoy la
+    regla vetaría también un tacón bajo de bloque (que las guías sí aceptan).
+    Y la lluvia ya se juzga por FORMA: `FORMA_NO_AGUANTA` reprueba todo
+    mocasín con lluvia, también el de suela gruesa de hule que se eligió en la
+    tienda. Hacen falta dos atributos nuevos (`suela`, `tacon`) en la visión,
+    y eso es un cambio de visión que se mide en `/admin/comparador`.
+  - **Cinturón "marcado"** tampoco existe como dato: el motor ve "cinturón",
+    no dónde se usa. La regla viable es "sin cinturón desde la semana ~20".
+- **Ojo**: es un dato de salud. Opcional, nunca en un render compartido ni en
+  un correo, y se borra con la cuenta.
+- **Por qué ahora no**: pocas usuarias (base chica, y en cualquier momento sólo
+  una fracción de las mujeres de 25-34 están embarazadas), pero cada caso pesa
+  mucho: un cuerpo que cambia cada mes es la crisis de clóset que la app
+  promete resolver. Vale más que su frecuencia.
+- **Trigger**: la próxima vez que se toque el wizard del viaje o el perfil, o
+  el arranque del piloto.
+
+## "¿Me lo compro?" — opinión antes de comprar (2026-10-26)
+
+- **Qué**: subir 1 o 2 prendas que estás por comprar (foto en la tienda,
+  incluso de la suela) y recibir un veredicto contra TU clóset y, si quieres,
+  contra un viaje: cómpralo / ya tienes algo que lo cubre / no es para ti.
+  Si son dos, cuál y por qué.
+- **De dónde sale**: Roberto, desde una tienda, le pidió a Claude escoger
+  entre dos mocasines para el viaje de una usuaria. La respuesta salió de
+  cruzar datos que la app ya tiene: perfil (arquetipo, paleta, metal), clóset,
+  maleta del viaje (`capsule_target`/`capsule_match`) y clima por parada. La
+  app no supo hacerlo.
+- **Qué ya existe**: la sección de deseos (`app/wishlist/page.tsx`,
+  `lib/wishlist-actions.ts`) da el veredicto de color (`checkColor` contra su
+  paleta: va / no ideal / parecido), el try-on, y guarda los `attrs` de la
+  visión al subir la foto. Falta el juicio de CLÓSET: qué hueco de los
+  esenciales o de la maleta llena (`status: 'falta'`), con qué prenda tuya se
+  pisa, cuántos looks nuevos abre, y lo práctico del destino (lluvia → suela,
+  templos en Japón → que se quite sin manos, kilómetros al día →
+  amortiguación). Piezas que ya existen y se reúsan: `lib/ya-la-tienes.ts`
+  (¿ya tienes algo igual?), las reglas del cruce
+  (`lib/engine/capsule-match-reglas.ts`, ¿qué pieza de la maleta cubriría?) y
+  el clima por parada del viaje.
+- **Lo que hoy contestaría mal, con el caso real (2026-10-26)**: entre dos
+  mocasines negros de charol para un viaje con lluvia, la app (a) daría el
+  mismo veredicto de color a los dos; (b) reprobaría LOS DOS para la lluvia,
+  porque `FORMA_NO_AGUANTA` juzga la forma y no la suela; y (c) si el clóset
+  tiene un zapato negro formal, la regla `charol-solo-etiqueta` marcaría el
+  charol como error, porque esa regla nació del calzado de hombre (charol =
+  esmoquin) y no mira el género, cuando en mujer un mocasín de charol es de
+  diario. Y no sabría que el Chelsea que ya lleva también se pone sin manos.
+  O sea: hacen falta los atributos `suela` y `tacon` (ítem de arriba), que
+  `charol-solo-etiqueta` distinga género, y que el juicio pregunte "¿ya
+  tienes algo que cumple esa función?" antes de "¿cuál de los dos?".
+- **Dos contextos, un juicio**: "para mi clóset" (contra los esenciales) o
+  "para el viaje X" (contra su maleta y su clima). La misma pantalla con un
+  selector, no dos funciones.
+- **No es "compras sugeridas"** (que sigue fuera del MVP): no empuja productos,
+  juzga uno que la persona ya trae en la mano. Y puede decir "no lo compres",
+  algo que ninguna app de tienda dice.
+- **Riesgo**: lo práctico ("esta suela resbala", "en Kioto te descalzas") es
+  lo que más valor da y lo que más fácil se inventa el modelo. Medir con casos
+  reales a ciegas en `/admin/comparador` antes de prometerlo. Y si existe el
+  dato del embarazo (ítem de arriba), el juicio lo tiene que usar.
+- **Por qué ahora no**: la construcción de Stailist está congelada hasta la
+  decisión del 2026-11-05, y esto pide dos atributos nuevos de visión (que se
+  miden) antes de poder juzgar lo práctico. NO es por la vitrina de Uniqlo:
+  la vitrina mide clics y compras de SUS prendas con sus propios eventos
+  (`tienda_click`, `tienda_compra`), y "¿me lo compro?" juzga una prenda que
+  la persona ya trae en la mano, sin tienda de por medio; con su propio
+  evento, una no ensucia la lectura de la otra.
+- **Trigger**: la decisión del 2026-11-05, o que otra usuaria pida algo así
+  sin que se lo sugiramos. Antes de construir la pantalla, una prueba barata:
+  tomar 5-10 decisiones de compra reales y ver si el juicio sale bien con los
+  datos de hoy más los dos atributos nuevos, a ciegas contra lo que habría
+  dicho una persona.
+
 ## Código de país en cada parada del viaje (2026-10-20)
 
 - **Qué**: que cada parada guarde el código de país (`us`, `jp`, `kr`…) al
