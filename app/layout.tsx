@@ -6,6 +6,8 @@ import "./globals.css";
 import { PwaInstall } from "@/components/pwa-install";
 import { ViewAsBanner } from "@/components/view-as-banner";
 import { TagsPublicidad } from "@/components/tags-publicidad";
+import { AvisosPush } from "@/components/avisos-push";
+import { Clarity } from "@/components/clarity";
 
 // Dirección "Gen-Z monocromo" (rebrand v3): Arimo (sans variable, estilo Mango)
 // en TODO el UI + titulares; Instrument Serif solo de acento mínimo (itálica).
@@ -75,6 +77,11 @@ export default function RootLayout({
     <html lang="es" className="h-full">
       <body
         className={`${arimo.variable} ${instrument.variable} min-h-full antialiased`}
+        // Clarity (components/clarity.tsx) graba con TODO tapado: este atributo
+        // enmascara imágenes y textos del árbol entero del lado del navegador,
+        // antes de que salga nada. Inerte sin Clarity. Sólo la barra de pestañas
+        // se destapa (texto nuestro, fijo) para que la grabación se pueda leer.
+        data-clarity-mask="true"
       >
         <ViewAsBanner />
         {children}
@@ -89,6 +96,12 @@ export default function RootLayout({
             lo diga rutaMedible (lib/publicidad.ts). Va después de {children}
             a propósito: la marca de menor del onboarding corre antes. */}
         <TagsPublicidad />
+        {/* "¿Te aviso cuando esté tu look?" para quien tiene la app instalada
+            (components/avisos-push.tsx). Apagado sin NEXT_PUBLIC_AVISOS_PUSH=1. */}
+        <AvisosPush />
+        {/* Grabación anónima de uso (components/clarity.tsx). Apagada sin
+            NEXT_PUBLIC_CLARITY_ID; con todo tapado por el data-clarity-mask del body. */}
+        <Clarity />
       </body>
     </html>
   );

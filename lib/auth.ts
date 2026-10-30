@@ -31,6 +31,8 @@ export type Profile = {
   onboarding_variante?: VarianteOnboarding | null;
   /** 'semanal' | 'off' — opt-in del correo (B2). select("*") lo trae. */
   email_semanal: string | null;
+  // Avisos push de la cuenta (0189): 'on' al suscribirse, 'off' si los apaga en Perfil.
+  avisos_push: string | null;
   // Sello de que el menor DECLARÓ tener permiso (check del onboarding).
   minor_ack_at: string | null;
   // Consentimiento parental VERIFICADO: correo del tutor + token del link +
