@@ -164,6 +164,9 @@ function Pantalla({
   return (
     <Capa>
       <div
+        // El espejo opina de cómo se ve su cuerpo: Clarity no lee ni el texto
+        // (lib/clarity.ts). Va aquí porque esto se pinta por portal a body.
+        data-clarity-mask="true"
         className="fixed inset-0 z-50 flex flex-col bg-bg"
         style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}
       >
@@ -1514,7 +1517,7 @@ export function EspejoFlow({
     // trabajo dentro (recortar, mirar, confirmar prendas).
     return (
       <Capa>
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 lg:items-center" onClick={cerrar}>
+        <div data-clarity-mask="true" className="fixed inset-0 z-50 flex items-end justify-center bg-ink/40 lg:items-center" onClick={cerrar}>
           <div
             className="flex w-full max-w-[430px] flex-col gap-3 rounded-t-[18px] bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-5 text-center lg:rounded-[18px]"
             style={{ animation: "var(--dur-short) var(--ease-enter) sheet-up" }}

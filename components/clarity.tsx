@@ -2,15 +2,15 @@
 
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
-import { clarityId, rutaConClarity, URL_SCRIPT } from "@/lib/clarity";
+import { clarityId, conFotosTapadas, rutaConClarity, URL_SCRIPT } from "@/lib/clarity";
 import { permitidoEnEsteNavegador } from "@/lib/publicidad";
 import { estaInstalada } from "@/lib/push-navegador";
 
 // El único lugar que decide, en cada cambio de ruta, si Clarity vive. Las
 // reglas están en lib/clarity.ts; aquí sólo se aplican. No pinta nada.
 //
-// El tapado de imágenes y textos NO está aquí: es el data-clarity-mask del
-// <body> en app/layout.tsx, que actúa antes de que salga nada del navegador.
+// El tapado de las fotos pasa por esta cola: `conFotosTapadas` corrige el arranque
+// de Clarity antes de que su script exista (explicado en lib/clarity.ts).
 
 type ClarityFn = ((...args: unknown[]) => void) & { q?: unknown[][] };
 
@@ -38,7 +38,7 @@ export function Clarity() {
     const w = window as Window & { clarity?: ClarityFn };
     if (!w.clarity) {
       const cola: ClarityFn = (...args: unknown[]) => {
-        (cola.q = cola.q || []).push(args);
+        (cola.q = cola.q || []).push(conFotosTapadas(args));
       };
       w.clarity = cola;
     }

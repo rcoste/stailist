@@ -301,25 +301,29 @@ export default function PrivacidadPage() {
           no lo que podría pasar. */}
       {clarityId() && (
         <>
-          <H2>cómo se usa la app, grabado y tapado</H2>
+          <H2>cómo se usa la app, grabado</H2>
           <P>
-            Dentro de la app usamos Microsoft Clarity para ver, en conjunto, qué
-            pantallas se usan y cuáles no: dónde se toca, hasta dónde se baja, en
-            qué botón se atora la gente. Es mirar por encima del hombro, pero con
-            todo tapado:
+            Dentro de la app usamos Microsoft Clarity para ver qué pantallas se
+            usan y cuáles no: dónde se toca, hasta dónde se baja, en qué botón se
+            atora la gente. Es mirar por encima del hombro: vemos tu sesión como
+            una película de la pantalla, pero sin tus fotos.
           </P>
           <Ul>
             <Li>
               <b>Qué ve:</b> por qué pantallas pasas, dónde tocas y cuánto bajas,
-              datos técnicos de tu navegador y tu dispositivo (incluida tu
-              dirección IP) y si tienes la app en tu pantalla de inicio.
+              el texto que aparece en la pantalla (como tu nombre, los nombres de
+              tus prendas y tus looks o el destino de un viaje), datos técnicos de
+              tu navegador y tu dispositivo (incluida tu dirección IP) y si tienes
+              la app en tu pantalla de inicio. Microsoft recibe todo esto.
             </Li>
             <Li>
-              <b>Qué no ve:</b> ni una foto ni una palabra. Todas las imágenes y
-              todos los textos se tapan en tu navegador antes de salir de él: tu
-              ropa, tu avatar, tu cara en el probador y tu correo son bloques
-              grises en la grabación. Tampoco carga en la página de inicio, al
-              entrar, cuando nos dices tu edad ni en los looks que compartes.
+              <b>Qué no ve:</b> ni una foto. Tu ropa, tu avatar y tu cara en el
+              probador se tapan en tu navegador antes de salir de él. Tampoco ve
+              lo que escribes en una caja de texto, tu correo ni los números. Las
+              pantallas donde hablamos de tu cuerpo (tu silueta, tu avatar y el
+              espejo) van tapadas enteras, sin una palabra. Y no carga en la
+              página de inicio, al entrar, cuando nos dices tu edad ni en los
+              looks que compartes.
             </Li>
             <Li>
               <b>Si nos dices que tienes entre 13 y 17 años</b>, no carga.

@@ -77,11 +77,6 @@ export default function RootLayout({
     <html lang="es" className="h-full">
       <body
         className={`${arimo.variable} ${instrument.variable} min-h-full antialiased`}
-        // Clarity (components/clarity.tsx) graba con TODO tapado: este atributo
-        // enmascara imágenes y textos del árbol entero del lado del navegador,
-        // antes de que salga nada. Inerte sin Clarity. Sólo la barra de pestañas
-        // se destapa (texto nuestro, fijo) para que la grabación se pueda leer.
-        data-clarity-mask="true"
       >
         <ViewAsBanner />
         {children}
@@ -100,7 +95,7 @@ export default function RootLayout({
             (components/avisos-push.tsx). Apagado sin NEXT_PUBLIC_AVISOS_PUSH=1. */}
         <AvisosPush />
         {/* Grabación anónima de uso (components/clarity.tsx). Apagada sin
-            NEXT_PUBLIC_CLARITY_ID; con todo tapado por el data-clarity-mask del body. */}
+            NEXT_PUBLIC_CLARITY_ID; las fotos se tapan desde el código (lib/clarity.ts). */}
         <Clarity />
       </body>
     </html>
