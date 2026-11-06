@@ -2,6 +2,15 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.418.1] - 2026-11-06 — en computadora, el look de Inicio vuelve a enseñar sus prendas
+
+En pantallas anchas, el look recién generado salía sin fotos: sólo unas rayitas
+donde iban las prendas. El contenedor del look en Inicio tenía en escritorio un
+alto mínimo y no un alto fijo, y la retícula de prendas reparte "el alto que
+sobra" — con alto mínimo ese reparto da cero (medido: 2 px por prenda; con alto
+fijo, 275 px). Ahora lleva alto fijo también en escritorio. En el celular no
+cambia nada, y el primer look del onboarding ya tenía alto fijo.
+
 ## [0.2.418.0] - 2026-11-05 — Clarity prendido: ver qué hace la gente después del primer look
 
 El 62% no hace nada después de su primer look y no sabemos qué intenta antes de

@@ -989,12 +989,15 @@ function ReadyView({
       {/* Acotado al alto visible (entre el header y la tab bar fija) para que el
           detalle QUEPA sin scroll y la fila de acciones nunca quede escondida
           detrás de la barra. -mb-28 cancela el pb-28 del <main> (reserva de la
-          tab bar); en desktop (lg) se libera al layout normal.
+          tab bar). En desktop (lg) también lleva alto FIJO, no sólo mínimo:
+          la retícula de prendas reparte "el alto que sobra" (PrendasGrid), y
+          con un alto mínimo ese reparto da cero — las prendas salían como
+          rayitas de 2 px (2026-11-06).
           Vuelve a 7rem: la promesa del fit check dejó de ser una fila propia
           al pie (se fusionó con la de acciones), así que los ~40px que había
           que descontar por ella regresan a la foto. */}
       <div
-        className="mx-auto -mb-28 flex h-[calc(100dvh-7rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-[440px] flex-col lg:mb-0 lg:h-auto lg:min-h-[calc(100dvh-9rem)]"
+        className="mx-auto -mb-28 flex h-[calc(100dvh-7rem-env(safe-area-inset-top)-env(safe-area-inset-bottom))] w-full max-w-[440px] flex-col lg:mb-0 lg:h-[calc(100dvh-9rem)]"
         style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
       >
         {/* Las pestañas del trío. Van AQUÍ y no fuera: la raíz tiene el alto
