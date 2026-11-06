@@ -21,7 +21,8 @@ export default async function PerfilSiluetaPage({
   const returnTo = safeReturn(ret);
 
   return (
-    <div className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-bg px-4 py-4">
+    // Pantalla del cuerpo: Clarity no lee ni el texto (lib/clarity.ts).
+    <div data-clarity-mask="true" className="mx-auto flex min-h-dvh w-full max-w-[430px] flex-col bg-bg px-4 py-4">
       <Link href={returnTo} className="text-sm font-medium text-muted hover:text-ink">
         ← {returnLabel(returnTo)}
       </Link>

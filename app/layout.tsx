@@ -6,6 +6,7 @@ import "./globals.css";
 import { PwaInstall } from "@/components/pwa-install";
 import { ViewAsBanner } from "@/components/view-as-banner";
 import { TagsPublicidad } from "@/components/tags-publicidad";
+import { Clarity } from "@/components/clarity";
 
 // Dirección "Gen-Z monocromo" (rebrand v3): Arimo (sans variable, estilo Mango)
 // en TODO el UI + titulares; Instrument Serif solo de acento mínimo (itálica).
@@ -89,6 +90,9 @@ export default function RootLayout({
             lo diga rutaMedible (lib/publicidad.ts). Va después de {children}
             a propósito: la marca de menor del onboarding corre antes. */}
         <TagsPublicidad />
+        {/* Grabación anónima de uso (components/clarity.tsx). Apagada sin
+            NEXT_PUBLIC_CLARITY_ID; las fotos se tapan desde el código (lib/clarity.ts). */}
+        <Clarity />
       </body>
     </html>
   );

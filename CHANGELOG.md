@@ -2,6 +2,26 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.418.0] - 2026-11-05 — Clarity prendido: ver qué hace la gente después del primer look
+
+El 62% no hace nada después de su primer look y no sabemos qué intenta antes de
+irse. Microsoft Clarity graba la sesión como una película de la pantalla para
+verlo, sin una sola foto:
+
+- **Las fotos se tapan desde el código**, no desde el panel: `conFotosTapadas`
+  (`lib/clarity.ts`) agrega img/video/source a la máscara cuando Clarity
+  arranca. El texto sí se ve; lo que se teclea, correos y números no.
+- **Las pantallas del cuerpo van tapadas enteras** (silueta, avatar, espejo).
+- **No carga** en la landing, el login, los pasos de género y edad, lo legal,
+  el admin, los looks compartidos ni con menores, GPC o el interruptor de
+  /privacidad apagado.
+- Dos fugas de enlaces privados cerradas antes de prender: el mosaico del
+  historial pintaba fotos como fondo CSS y `priority` de next/image dejaba el
+  enlace en un preload; Clarity no limpia ninguno de los dos.
+- /privacidad explica qué ve y qué no, y sólo aparece con Clarity prendido.
+- El switch es `NEXT_PUBLIC_CLARITY_ID`. Los avisos push de la misma rama
+  siguen apagados y sin publicar.
+
 ## [0.2.417.0] - 2026-10-21 — la maleta flexible: quita y pon lo que quieras, y una revisión de stylist antes de los looks
 
 "Tener más flexibilidad: quitar y poner, o decirte 'esto es lo que empaqué',

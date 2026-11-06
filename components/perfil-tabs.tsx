@@ -332,7 +332,8 @@ function EstiloTab({
               <span className="mb-0.5 text-[11px] font-medium uppercase tracking-wide text-muted">
                 Silueta
               </span>
-              <span className="text-sm font-medium text-ink">
+              {/* Describe su cuerpo: Clarity no lo lee (lib/clarity.ts). */}
+              <span data-clarity-mask="true" className="text-sm font-medium text-ink">
                 {siluetaLabel ?? "cuéntame de tu cuerpo"}
               </span>
             </div>
