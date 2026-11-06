@@ -57,14 +57,17 @@ export default async function PerfilAvatarPage({
     returnTo.split(/[?#]/)[0] === "/onboarding/wow" ? "/hoy" : undefined;
 
   return (
-    <AvatarWizard
-      userId={profile.id}
-      gender={profile.gender}
-      returnTo={returnTo}
-      skipHref={skipHref}
-      // Morfología unificada: si ya definió su silueta, el wizard no re-pregunta
-      // la complexión — la recibe tal cual (misma taxonomía, sin traducción).
-      siluetaBuild={isBuild(profile.body_build) ? profile.body_build : null}
-    />
+    // Pantalla del cuerpo: Clarity no lee ni el texto (lib/clarity.ts).
+    <div data-clarity-mask="true" className="contents">
+      <AvatarWizard
+        userId={profile.id}
+        gender={profile.gender}
+        returnTo={returnTo}
+        skipHref={skipHref}
+        // Morfología unificada: si ya definió su silueta, el wizard no re-pregunta
+        // la complexión — la recibe tal cual (misma taxonomía, sin traducción).
+        siluetaBuild={isBuild(profile.body_build) ? profile.body_build : null}
+      />
+    </div>
   );
 }

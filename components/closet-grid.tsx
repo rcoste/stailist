@@ -228,7 +228,11 @@ function Tile({
             src={item.imagen}
             alt={item.nombre}
             fill
-            priority={priority}
+            // `priority` escribe el enlace en un <link rel="preload">, y Clarity no
+            // limpia esos enlaces: sólo el catálogo público puede usarlo. Las
+            // fotos privadas cargan igual de pronto, sin dejar ese rastro.
+            priority={priority && item.imagen.startsWith("/")}
+            loading={priority && !item.imagen.startsWith("/") ? "eager" : undefined}
             sizes="(max-width: 430px) 33vw, 130px"
             className="object-cover"
           />

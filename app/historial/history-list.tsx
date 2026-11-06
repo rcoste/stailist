@@ -125,15 +125,14 @@ function LookImage({ o }: { o: HistoryOutfit }) {
       {[0, 1, 2, 3].map((i) => {
         const p = o.prendas[i];
         return (
-          <span
-            key={i}
-            className="bg-surface bg-center bg-no-repeat"
-            style={
-              p?.imagen
-                ? { backgroundImage: `url(${p.imagen})`, backgroundSize: "78%" }
-                : undefined
-            }
-          />
+          <span key={i} className="flex items-center justify-center overflow-hidden bg-surface">
+            {/* <img> y no fondo CSS: Clarity no limpia los fondos, así que una foto
+                pintada como fondo le entregaría su enlace privado (lib/clarity.ts). */}
+            {p?.imagen ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={p.imagen} alt="" loading="lazy" className="h-auto" style={{ width: "78%" }} />
+            ) : null}
+          </span>
         );
       })}
     </div>
