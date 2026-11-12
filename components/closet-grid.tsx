@@ -1175,21 +1175,22 @@ export function ItemSheet({
               <ChipResumen activo={seccion === "formalidad"} onClick={() => abre("formalidad")}>
                 {enChip(FORMALIDADES.find((f) => f.v === formalidad)?.l ?? "Formalidad")}
               </ChipResumen>
-              {/* EL AVISO DEL CORTE SUPUESTO SUBE AL CHIP. Dentro de "+ más" el
-                  "esto es lo que supongo" quedaría escondido tras un tap — o
-                  sea, el único dato que la ficha pide revisar sería el único
-                  invisible. El borde de alerta es la invitación a abrirlo. */}
-              <ChipResumen
-                dashed
-                activo={seccion === "mas"}
-                alerta={
-                  EL_CORTE_IMPORTA.has(categoria) &&
-                  !!corte &&
-                  !item.corteConfirmado &&
-                  !corteTocado
-                }
-                onClick={() => abre("mas")}
-              >
+              {/* EL CORTE, CHIP PROPIO (2026-11-12). Vivía dentro de "+ más" con
+                  el aviso subido a ese chip, y un usuario con 128 prendas de
+                  foto —que no reciben la card de afinar— no lo encontró: "no me
+                  aparece lo de los cortes". Es el dato que más cambia cómo se ve
+                  un look, así que se DICE como los otros tres: el valor, o la
+                  pregunta si falta. Borde de alerta si es suposición o no hay. */}
+              {EL_CORTE_IMPORTA.has(categoria) ? (
+                <ChipResumen
+                  activo={seccion === "corte"}
+                  alerta={!corte || (!item.corteConfirmado && !corteTocado)}
+                  onClick={() => abre("corte")}
+                >
+                  {corte ? enChip(CORTES.find((c) => c.v === corte)?.l ?? corte) : "¿cómo te queda?"}
+                </ChipResumen>
+              ) : null}
+              <ChipResumen dashed activo={seccion === "mas"} onClick={() => abre("mas")}>
                 + más
               </ChipResumen>
             </div>
@@ -1274,6 +1275,46 @@ export function ItemSheet({
               </Field>
             )}
 
+            {/* EL CORTE, sólo donde cambia el look. Con siluetas y no con
+                las tres palabras sueltas: "entallado / recto / holgado" no
+                dice nada sin ver a qué se refiere — por eso este control
+                NO se cambió por los chips del carrete. Es el único campo
+                donde la ficha del clóset tiene el mejor editor de los dos. */}
+            {seccion === "corte" && EL_CORTE_IMPORTA.has(categoria) ? (
+              <Field
+                label={
+                  !corteTocado && corte && !item.corteConfirmado
+                    ? "Cómo te queda · esto es lo que supongo"
+                    : "Cómo te queda"
+                }
+              >
+                <div className="grid grid-cols-3 gap-2">
+                  {CORTES.map((c) => (
+                    <button
+                      key={c.v}
+                      type="button"
+                      onClick={() => {
+                        setCorte(c.v);
+                        setCorteTocado(true);
+                        setSeccion(null);
+                      }}
+                      className={`flex flex-col items-center gap-1 rounded-sm border px-2 py-2 text-xs transition-colors ${
+                        corte === c.v
+                          ? "border-accent bg-accent-soft text-accent"
+                          : "border-line bg-surface text-muted"
+                      }`}
+                    >
+                      <SiluetaCorte
+                        corte={c.v}
+                        tipo={categoria === "bottom" ? "bottom" : "top"}
+                      />
+                      {c.l}
+                    </button>
+                  ))}
+                </div>
+              </Field>
+            ) : null}
+
             {/* "+ MÁS": todo lo que se corrige de vez en cuando. No cierra al
                 elegir —son varios campos y cerrarse en el primero obligaría a
                 reabrir por cada uno—; cierra el botón "listo". */}
@@ -1282,45 +1323,6 @@ export function ItemSheet({
                 <Field label="Temporada">
                   <Chips opciones={TEMPORADAS} valor={temporada} onPick={setTemporada} />
                 </Field>
-
-                {/* EL CORTE, sólo donde cambia el look. Con siluetas y no con
-                    las tres palabras sueltas: "entallado / recto / holgado" no
-                    dice nada sin ver a qué se refiere — por eso este control
-                    NO se cambió por los chips del carrete. Es el único campo
-                    donde la ficha del clóset tiene el mejor editor de los dos. */}
-                {EL_CORTE_IMPORTA.has(categoria) ? (
-                  <Field
-                    label={
-                      !corteTocado && corte && !item.corteConfirmado
-                        ? "Cómo te queda · esto es lo que supongo"
-                        : "Cómo te queda"
-                    }
-                  >
-                    <div className="grid grid-cols-3 gap-2">
-                      {CORTES.map((c) => (
-                        <button
-                          key={c.v}
-                          type="button"
-                          onClick={() => {
-                            setCorte(c.v);
-                            setCorteTocado(true);
-                          }}
-                          className={`flex flex-col items-center gap-1 rounded-sm border px-2 py-2 text-xs transition-colors ${
-                            corte === c.v
-                              ? "border-accent bg-accent-soft text-accent"
-                              : "border-line bg-surface text-muted"
-                          }`}
-                        >
-                          <SiluetaCorte
-                            corte={c.v}
-                            tipo={categoria === "bottom" ? "bottom" : "top"}
-                          />
-                          {c.l}
-                        </button>
-                      ))}
-                    </div>
-                  </Field>
-                ) : null}
 
                 {/* Atributos ricos (v21): el motor los usa como señal dura (lana
                     ≠ calor, máx. un estampado) — por eso son corregibles aquí.
