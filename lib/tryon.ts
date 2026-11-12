@@ -67,6 +67,35 @@ function promptMultiVista(
   );
 }
 
+// EL CORTE REAL DE CADA PRENDA (2026-11-12). Un usuario con jeans rectos y
+// holgados: "me los da todos skinny". El corte estaba bien guardado (la visión
+// lo detecta y la ficha lo deja corregir), pero aquí sólo viajaban la foto y el
+// nombre, y el modelo de imagen ajusta el pantalón al cuerpo por default —
+// además, el avatar de referencia lleva jeans ajustados de base. Decirle el
+// corte como instrucción es lo que lo sostiene. "entallado" no se manda: es lo
+// que el modelo ya hace solo.
+const CORTE_EN_EL_CUERPO: Record<string, { bottom: string; otro: string }> = {
+  recto: {
+    bottom: "straight-leg fit: the leg keeps the same width from the knee down to the hem, with some room around the thigh — NOT skinny, NOT tapered, NOT tight to the leg",
+    otro: "regular straight fit, not tight to the body",
+  },
+  holgado: {
+    bottom: "relaxed loose fit: roomy through the thigh and the whole leg, wide at the hem, the fabric falls away from the leg — NOT skinny, NOT slim, NOT tapered",
+    otro: "relaxed loose fit with visible room around the body — NOT slim",
+  },
+};
+
+/** "Jeans rectos: straight-leg fit…" para cada prenda con un corte que el modelo tendería a perder. */
+export function cortesParaPrompt(prendas: { nombre: string; corte?: string | null; categoria?: string | null }[]): string[] {
+  const salida: string[] = [];
+  for (const p of prendas) {
+    const c = CORTE_EN_EL_CUERPO[(p.corte ?? "").trim().toLowerCase()];
+    if (!c || !p.nombre.trim()) continue;
+    salida.push(`${p.nombre.trim()}: ${p.categoria === "bottom" ? c.bottom : c.otro}`);
+  }
+  return salida;
+}
+
 // El media_type debe coincidir con los bytes (Gemini es laxo, pero el retrato y
 // el sheet salen de Gemini y pueden ser PNG aunque se guarden como .jpg).
 function mediaTypeOf(b64: string): string {
@@ -83,7 +112,8 @@ function buildPrompt(
   garments: string[],
   identity: { n: number; hasFace: boolean; hasSheet: boolean } | undefined,
   sinImagen: string[],
-  escena: string
+  escena: string,
+  cortes: string[] = []
 ): string {
   let p =
     identity && identity.n > 1
@@ -106,6 +136,11 @@ function buildPrompt(
       ` IMPORTANT — these garments have NO reference image and you must render them from their Spanish description alone: ${sinImagen.join("; ")}.` +
       " They are part of the outfit and MUST appear on the body, with the exact garment type, colour and fabric their description states." +
       " Do NOT substitute them with the person's base clothing (the plain white t-shirt or blue jeans) and do NOT omit them.";
+  }
+  if (cortes.length > 0) {
+    p +=
+      ` IMPORTANT — FIT: reproduce each garment's real cut on the body, as stated here: ${cortes.join("; ")}.` +
+      " Do not slim down or taper a garment to follow the body's shape: a straight or relaxed garment must look straight or relaxed when worn.";
   }
   const t = (tip ?? "").trim();
   if (t) {
@@ -207,10 +242,14 @@ export async function generarTryon(opciones: {
   const prendaUrls: string[] = [];
   const prendaNames: string[] = [];
   const sinImagen: string[] = [];
+  const conCorte: { nombre: string; corte?: string | null; categoria?: string | null }[] = [];
   for (const it of items ?? []) {
-    const archName = (it.archetypes as { name?: string | null } | null)?.name;
-    const attrs = (it.attrs ?? {}) as { nombre?: string; color?: string };
+    const arch = it.archetypes as { name?: string | null; category?: string | null; attrs?: { corte?: string } | null } | null;
+    const archName = arch?.name;
+    const attrs = (it.attrs ?? {}) as { nombre?: string; color?: string; corte?: string; categoria?: string };
     const nm = (archName ?? attrs.nombre ?? "").trim();
+    // El corte vive en la prenda; si no, se hereda del arquetipo (como al leer).
+    conCorte.push({ nombre: nm, corte: attrs.corte ?? arch?.attrs?.corte ?? null, categoria: arch?.category ?? attrs.categoria ?? null });
     if (nm) {
       prendaNames.push(
         attrs.color && !nm.toLowerCase().includes(attrs.color.toLowerCase())
@@ -268,7 +307,7 @@ export async function generarTryon(opciones: {
           n: identityB64.length,
           hasFace: !!faceRefB64,
           hasSheet: !!sheetRefB64,
-        }, sinImagen, escenaParaPrompt({ ...opciones.escena, semilla: opciones.escena?.semilla ?? cachePath })),
+        }, sinImagen, escenaParaPrompt({ ...opciones.escena, semilla: opciones.escena?.semilla ?? cachePath }), cortesParaPrompt(conCorte)),
       },
       ...identityB64.map((d) => ({ inlineData: { mimeType: mediaTypeOf(d), data: d } })),
       ...prendasB64.map((d) => ({ inlineData: { mimeType: mediaTypeOf(d), data: d } })),

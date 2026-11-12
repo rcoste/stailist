@@ -2,6 +2,21 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.418.3] - 2026-11-12 — "verme con este look" respeta el corte de tus pantalones
+
+"Tengo unos rectos pero holgados y me los da todos skinny" (un usuario real).
+El corte de la prenda estaba bien guardado, pero al vestir el avatar sólo
+viajaban la foto y el nombre, y el modelo de imagen ajusta el pantalón al
+cuerpo por default (el avatar de referencia, además, lleva jeans ajustados).
+Ahora la instrucción nombra el corte de cada prenda recta u holgada y prohíbe
+afilarla (`cortesParaPrompt`, `lib/tryon.ts`; el corte se hereda del arquetipo
+si la prenda no lo trae).
+
+Medido antes de publicar, mismo avatar y prendas, instrucción vieja contra
+nueva: 4 de 4 pantalones rectos salían afilados al tobillo con la vieja y
+rectos con la nueva; un wide-leg salía ancho con las dos (la nueva un poco más).
+La cara, la expresión y el resto del look no cambiaron.
+
 ## [0.2.418.2] - 2026-11-12 — en el viaje, puedes volver a la prenda que tenías antes
 
 "Cuando quiero elegir otra prenda y otros zapatos para el viaje y no me gusta,
