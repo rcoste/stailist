@@ -256,7 +256,7 @@ function igualValor(a: string | undefined, b: string): boolean {
 const limpia = (s: string) =>
   s.trim().toLowerCase().normalize("NFD").replace(/\p{Diacritic}/gu, "");
 
-export type Seccion = "tipo" | "color" | "formalidad" | "mas";
+export type Seccion = "tipo" | "color" | "formalidad" | "corte" | "mas";
 export const SECCION_DE_CAMPO: Record<string, Seccion> = {
   categoria: "tipo",
   color: "color",

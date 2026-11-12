@@ -2,6 +2,16 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.418.4] - 2026-11-13 — "cómo te queda" se ve en la ficha de cada prenda
+
+Un usuario con 128 prendas de foto no encontró dónde decir el corte de sus
+pantalones ("no me aparece lo de los cortes"). Las preguntas de "afinemos" sólo
+salen para prendas de la lista de básicos, donde el corte es una suposición;
+en las de foto, el corte se editaba dentro de "+ más". Ahora es un chip propio
+en la ficha, junto a tipo, color y formalidad: dice el corte ("recto") o
+"¿cómo te queda?" si falta, con borde de aviso si es suposición, y abre las
+mismas siluetas. Sigue sin viajar a la base si no tocas una silueta.
+
 ## [0.2.418.3] - 2026-11-12 — "verme con este look" respeta el corte de tus pantalones
 
 "Tengo unos rectos pero holgados y me los da todos skinny" (un usuario real).

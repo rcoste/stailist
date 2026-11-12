@@ -130,6 +130,17 @@ describe("ItemSheet — el resumen", () => {
     expect(screen.getByRole("button", { name: /\+ más/i })).toBeTruthy();
   });
 
+  it("el corte tiene chip propio, no vive escondido en \"+ más\"", () => {
+    // Un usuario con 128 prendas de foto no lo encontró dentro de "+ más"
+    // (2026-11-12): es el dato que más cambia cómo se ve el look, así que se
+    // dice a la vista como tipo, color y formalidad.
+    abrirFicha();
+    fireEvent.click(screen.getByRole("button", { name: /^recto$/i }));
+    expect(screen.getByText(/Cómo te queda/)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /\+ más/i }));
+    expect(screen.queryByText(/Cómo te queda/)).toBeNull();
+  });
+
   it("el nombre NO se pliega: se edita sin abrir nada", () => {
     // Es la identidad de la prenda y lo que más se corrige — esconderlo tras un
     // chip cambiaría una pantallota por una búsqueda del tesoro.
@@ -187,7 +198,7 @@ describe("ItemSheet — lo que viaja a la base", () => {
 
   it("tocar una silueta sí lo manda", async () => {
     abrirFicha();
-    fireEvent.click(screen.getByRole("button", { name: /\+ más/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^recto$/i }));
     fireEvent.click(screen.getByRole("button", { name: /holgado/i }));
     fireEvent.click(screen.getByRole("button", { name: /guardar cambios/i }));
     await waitFor(() => expect(updateItemAttrs).toHaveBeenCalled());
@@ -280,7 +291,7 @@ describe("ItemSheet — lo que quedó detrás de un tap", () => {
     // quedando marcado como confirmado POR TI. En la base ya hay 23 prendas con
     // corte donde no significa nada; la ficha no debe fabricar la 24.
     abrirFicha();
-    fireEvent.click(screen.getByRole("button", { name: /\+ más/i }));
+    fireEvent.click(screen.getByRole("button", { name: /^recto$/i }));
     fireEvent.click(screen.getByRole("button", { name: /holgado/i }));
     fireEvent.click(screen.getByRole("button", { name: /pantalón/i }));
     fireEvent.click(within(editor(/^Tipo$/)).getByRole("button", { name: /^Accesorio$/ }));
