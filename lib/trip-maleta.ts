@@ -56,6 +56,25 @@ export function empacablesDelViaje(
   return salida;
 }
 
+/**
+ * Las prendas que NO se pueden ofrecer para otro hueco porque ya van en la
+ * maleta: exactamente las empacables, ni una más.
+ *
+ * Antes cada buscador de sustitutos armaba su propia lista con el `by` del
+ * match MÁS los `sub:`, y el `by` sigue ahí aunque un sustituto lo haya
+ * reemplazado. La prenda que la app propuso primero quedaba "ocupada" para
+ * siempre en ese viaje: cambiabas los tenis y ya no había forma de volver a
+ * los tuyos de antes (reporte real, 2026-11-12: 7 veces en una noche). Lo
+ * que sacó del viaje (`fuera:`) también deja libre a su prenda.
+ */
+export function prendasOcupadas(
+  target: CapsuleTarget,
+  match: CapsuleMatch | null,
+  overrides: CapsuleOverrides | null
+): Set<string> {
+  return new Set(empacablesDelViaje(target, match, overrides).map((p) => p.nombre));
+}
+
 export type PiezaParaLooks = PrendaEmpacable & {
   /** Pieza sugerida que la persona todavía no tiene (ni cubierta ni sustituida). */
   falta: boolean;

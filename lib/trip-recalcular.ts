@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { CapsuleItem, CapsuleOverrides, ClosetItemLite, MatchEntry } from "@/lib/capsule";
 import { aplicarReglasDelCruce } from "@/lib/engine/capsule-match-reglas";
+import { rechazadasNetas, type CambioViaje } from "@/lib/trip-cambios";
 
 // "TU CLÓSET CAMBIÓ — RECALCULAR QUÉ TIENES", AHORA EN LA MALETA (2026-10-20).
 //
@@ -90,9 +91,10 @@ export function fusionarCruce(args: {
 }
 
 /**
- * Prendas suyas que ya cambió con "no me convence" en maletas anteriores
- * (eventos trip_item_swap): el cruce las usa como último recurso. Máx 8
- * recientes. Vivía dentro de /api/trip; aquí lo comparten crear y recalcular.
+ * Prendas suyas que RECHAZÓ de verdad con "no me convence" en maletas
+ * anteriores (eventos trip_item_swap, regla en lib/trip-cambios.ts): el cruce
+ * las usa como último recurso. Máx 8 recientes. Vivía dentro de /api/trip;
+ * aquí lo comparten crear y recalcular.
  */
 export async function cargarRechazadas(
   supabase: SupabaseClient,
@@ -100,22 +102,19 @@ export async function cargarRechazadas(
   anclas: Set<string> = new Set()
 ): Promise<string[]> {
   try {
+    // 200 y no 30: una sola noche de probar zapatos ya son 20 cambios, y la
+    // regla necesita ver el primer cambio de cada lugar para saber qué propuso la app.
     const { data: swapRows } = await supabase
       .from("events")
       .select("data")
       .eq("user_id", userId)
       .eq("type", "trip_item_swap")
       .order("created_at", { ascending: false })
-      .limit(30);
-    return Array.from(
-      new Set(
-        (swapRows ?? [])
-          .map((r) => ((r.data as { from?: string } | null)?.from ?? "").trim())
-          .filter((n) => n.length > 0)
-          // Un ancla gana sobre un rechazo viejo: si hoy la pidió, no es rechazada.
-          .filter((n) => !anclas.has(n.toLowerCase()))
-      )
-    ).slice(0, 8);
+      .limit(200);
+    return rechazadasNetas(
+      (swapRows ?? []).map((r) => (r.data ?? {}) as CambioViaje),
+      anclas
+    );
   } catch {
     return [];
   }
