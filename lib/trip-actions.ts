@@ -15,6 +15,8 @@ import { quizMetalDe, type Season } from "@/lib/colorimetria";
 import { vetoLabels, type StyleVetoes } from "@/lib/vetoes";
 import { matchCapsule, matchSignature } from "@/lib/engine/capsule-match";
 import { cargarRechazadas, fusionarCruce } from "@/lib/trip-recalcular";
+import { prendasOcupadas, sustitutoDe } from "@/lib/trip-maleta";
+import { anterioresDelLugar, type CambioViaje } from "@/lib/trip-cambios";
 import { posiblesDelCloset } from "@/lib/trip-ya-lo-tengo";
 import { familiaToHex } from "@/lib/capsule-images";
 import { renderItemImage } from "@/lib/render-item";
@@ -36,7 +38,53 @@ import { PROMPT_VIAJE } from "@/lib/engine/trip-outfits";
 // interfiere. Valor = nombre exacto de la prenda del clóset elegida.
 const subKey = (index: number) => `sub:${index}`;
 
-export type SubstituteCandidate = { nombre: string; porque: string; image: string | null };
+export type SubstituteCandidate = {
+  nombre: string;
+  porque: string;
+  image: string | null;
+  /** Ya estuvo en este lugar del viaje: "la que tenías antes" (sin IA). */
+  antes?: boolean;
+};
+
+const PORQUE_ANTES = "la que tenías antes aquí";
+
+/**
+ * "LA QUE TENÍAS ANTES" (2026-11-12, reporte de un usuario real: "cuando quiero
+ * elegir otra prenda y otros zapatos y no me gusta, ya no me deja elegir la
+ * misma prenda anterior"). Las prendas que ya ocuparon este lugar del viaje,
+ * leídas de sus cambios (lib/trip-cambios.ts), que siguen en su clóset y no
+ * ocupan otro lugar de la maleta. Van primero y sin IA: volver atrás no se
+ * paga, y tampoco depende de que la IA tenga a bien re-sugerirla.
+ */
+async function anterioresConFoto(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  tripId: string,
+  lugar: { ideal: string; index: number; actual: string | null },
+  ocupadas: Set<string>,
+  closet: { nombre: string }[],
+  imageMap: Record<string, string | null>
+): Promise<SubstituteCandidate[]> {
+  try {
+    const { data } = await supabase
+      .from("events")
+      .select("data")
+      .eq("user_id", userId)
+      .eq("type", "trip_item_swap")
+      .eq("data->>trip_id", tripId)
+      .order("created_at", { ascending: false })
+      .limit(200);
+    const enCloset = new Set(closet.map((c) => c.nombre));
+    return anterioresDelLugar((data ?? []).map((r) => (r.data ?? {}) as CambioViaje), lugar)
+      // La que lleva hoy nunca es "la de antes", aunque su lugar no cuente
+      // como empacado (un "parecido" rechazado, un lugar sacado del viaje).
+      .filter((n) => n !== lugar.actual && enCloset.has(n) && !ocupadas.has(n))
+      .slice(0, 3)
+      .map((nombre) => ({ nombre, porque: PORQUE_ANTES, image: imageMap[nombre] ?? null, antes: true }));
+  } catch {
+    return [];
+  }
+}
 
 // "Buscar en mi clóset": la IA propone hasta 3 prendas reales del clóset que
 // pueden cubrir una que falta para el viaje. Read-only (no persiste nada).
@@ -50,11 +98,6 @@ export async function suggestTripSubstitutes(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return [];
-  // Llama a la IA por cada hueco: sin esto no tenía freno (81 llamadas de una
-  // persona en una noche, 2026-10-12). Vacío = "no encontré", que es lo que
-  // la pantalla ya sabe decir.
-  if (!(await revisarGasto(supabase, user.id)).permitido) return [];
-
   const [{ data: trip }, { data: profile }] = await Promise.all([
     supabase
       .from("trips")
@@ -66,34 +109,41 @@ export async function suggestTripSubstitutes(
   ]);
   const target = trip?.capsule_target as CapsuleTarget | null;
   const missing = target?.items?.[index];
-  if (!missing) return [];
+  if (!target || !missing) return [];
 
-  // Prendas del clóset que YA están en la maleta (cubren otro hueco o ya son
-  // sustituto): no tiene sentido proponerlas otra vez — no puedes empacar la
-  // misma prenda dos veces. Se excluyen del clóset que ve la IA.
+  // Lo que ya va en la maleta no se ofrece otra vez: no puedes empacar la misma
+  // prenda dos veces. Sale de la MISMA fuente que la maleta (prendasOcupadas),
+  // así que la prenda que un sustituto reemplazó vuelve a estar libre.
   const match = (trip?.capsule_match as CapsuleMatch | null) ?? null;
   const overrides = (trip?.overrides as CapsuleOverrides | null) ?? null;
-  const used = new Set<string>();
-  // Lo que HOY se muestra en ESTE hueco: el `by` del match aunque sea un
-  // "parecido" sin decidir — es la prenda que la usuaria está viendo/rechazando.
-  let currentBy: string | null = null;
-  for (const r of capsuleRows(target, match, overrides)) {
-    if (r.dismissed) continue;
-    if (r.covered && r.by) used.add(r.by);
-    if (r.index === index && r.by) currentBy = r.by;
-  }
-  for (const [k, v] of Object.entries(overrides ?? {})) {
-    if (k.startsWith("sub:") && typeof v === "string") used.add(v);
-  }
-  // El sustituto ya elegido gana sobre el match como cover actual.
-  const subNow = (overrides as Record<string, unknown> | null)?.[`sub:${index}`];
-  if (typeof subNow === "string") currentBy = subNow;
+  const used = prendasOcupadas(target, match, overrides);
+  // Lo que HOY se muestra en ESTE hueco: el sustituto si hay, si no el `by` del
+  // match aunque sea un "parecido" sin decidir — es la que está rechazando.
+  const currentBy =
+    sustitutoDe(overrides, index) ??
+    capsuleRows(target, match, overrides).find((r) => r.index === index)?.by ??
+    null;
 
   const [closetAll, imageMap] = await Promise.all([
     loadClosetLite(supabase, user.id),
     loadClosetImageMap(supabase, user.id),
   ]);
-  const closet = closetAll.filter((c) => !used.has(c.nombre));
+  const antes = await anterioresConFoto(
+    supabase,
+    user.id,
+    tripId,
+    { ideal: missing.nombre, index, actual: currentBy },
+    used,
+    closetAll,
+    imageMap
+  );
+  // Llama a la IA por cada hueco: sin esto no tenía freno (81 llamadas de una
+  // persona en una noche, 2026-10-12). Sin presupuesto, lo de antes sigue
+  // ahí (no cuesta); vacío = "no encontré", que la pantalla ya sabe decir.
+  if (!(await revisarGasto(supabase, user.id)).permitido) return antes;
+
+  const yaVistas = new Set(antes.map((a) => a.nombre));
+  const closet = closetAll.filter((c) => !used.has(c.nombre) && !yaVistas.has(c.nombre));
   // Si el hueco YA está cubierto, esto es un swap ("no me convence"): el motor recibe
   // la rechazada para proponer alternativas con otro aire, no más de lo mismo.
   const matches = await matchSubstitutes(
@@ -103,7 +153,7 @@ export async function suggestTripSubstitutes(
     currentBy,
     { supabase, userId: user.id }
   );
-  return matches.map((m) => ({ ...m, image: imageMap[m.nombre] ?? null }));
+  return [...antes, ...matches.map((m) => ({ ...m, image: imageMap[m.nombre] ?? null }))];
 }
 
 /**
@@ -152,11 +202,10 @@ export async function proposeTripSubstitutes(
   >;
 
   // Los huecos SIN propuesta previa (ni candidata, ni descarte, ni sustituto).
-  const used = new Set<string>();
+  const used = prendasOcupadas(target, match, overrides as CapsuleOverrides);
   const huecos: number[] = [];
   for (const r of capsuleRows(target, match, overrides as CapsuleOverrides)) {
     if (r.dismissed) continue;
-    if (r.covered && r.by) used.add(r.by);
     if (
       r.effective === "falta" &&
       overrides[`cand:${r.index}`] === undefined &&
@@ -165,9 +214,6 @@ export async function proposeTripSubstitutes(
     ) {
       huecos.push(r.index);
     }
-  }
-  for (const [k, v] of Object.entries(overrides)) {
-    if (k.startsWith("sub:") && typeof v === "string") used.add(v);
   }
   // Las ya propuestas para OTRO hueco (aún sin decidir) también están tomadas:
   // una prenda, un lugar (lib/trip-candidatas.ts).
@@ -550,6 +596,9 @@ export async function setTripSubstitute(
         to: nombre.trim(),
         // Para análisis por viaje (los eventos viejos no lo traen).
         trip_id: tripId,
+        // El lugar exacto (desde 2026-11-12): "la que tenías antes" casa por
+        // él cuando dos piezas comparten nombre ideal.
+        index,
       },
     });
   }
@@ -1057,14 +1106,7 @@ function prendasUsadas(
   match: CapsuleMatch | null,
   overrides: Record<string, unknown>
 ): Set<string> {
-  const used = new Set<string>();
-  for (const r of capsuleRows(target, match, overrides as CapsuleOverrides)) {
-    if (!r.dismissed && r.covered && r.by) used.add(r.by);
-  }
-  for (const [k, v] of Object.entries(overrides)) {
-    if (k.startsWith("sub:") && typeof v === "string") used.add(v);
-  }
-  return used;
+  return prendasOcupadas(target, match, overrides as CapsuleOverrides);
 }
 
 /**
@@ -1109,8 +1151,13 @@ export async function listTripClosetOptions(
   const mismoTipo = tipoDe(item.nombre);
   // Una vez por nombre: la maleta elige por nombre (sub:i), y dos prendas que
   // se llaman igual salían repetidas (y React avisaba de llaves duplicadas).
-  const vistos = new Set<string>();
-  return candidatasPosibles(item, closet.filter((c) => !used.has(c.nombre)))
+  const actual =
+    sustitutoDe(overrides as CapsuleOverrides, index) ??
+    capsuleRows(target, (trip?.capsule_match as CapsuleMatch | null) ?? null, overrides as CapsuleOverrides).find((r) => r.index === index)?.by ??
+    null;
+  const antes = await anterioresConFoto(supabase, user.id, tripId, { ideal: item.nombre, index, actual }, used, closet, imageMap);
+  const vistos = new Set<string>(antes.map((a) => a.nombre));
+  const resto = candidatasPosibles(item, closet.filter((c) => !used.has(c.nombre)))
     .filter((c) => (vistos.has(c.nombre) ? false : (vistos.add(c.nombre), true)))
     .map((c) => ({ nombre: c.nombre, porque: "", image: imageMap[c.nombre] ?? null }))
     .sort(
@@ -1118,6 +1165,7 @@ export async function listTripClosetOptions(
         Number(tipoDe(b.nombre) === mismoTipo) - Number(tipoDe(a.nombre) === mismoTipo) ||
         a.nombre.localeCompare(b.nombre, "es")
     );
+  return [...antes, ...resto];
 }
 
 /** "No lo necesito en este viaje": saca la pieza de la maleta, con su motivo. */

@@ -2,6 +2,28 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.418.2] - 2026-11-12 — en el viaje, puedes volver a la prenda que tenías antes
+
+"Cuando quiero elegir otra prenda y otros zapatos para el viaje y no me gusta,
+ya no me deja elegir la misma prenda anterior" (un usuario real, armando un
+viaje). Eran tres cosas:
+
+- **La prenda que cambiabas quedaba "ocupada" para siempre.** Cada buscador de
+  sustitutos armaba su propia lista de lo que ya va en la maleta, con la prenda
+  que la app propuso aunque un sustituto ya la hubiera reemplazado. No volvía a
+  salir ni en las sugerencias ni en "elige tú otra de tu clóset". Ahora todos
+  leen la misma fuente que la maleta (`prendasOcupadas`, `lib/trip-maleta.ts`).
+- **"La que tenías antes aquí", primero y sin IA.** Al cambiar una prenda, las
+  que ya ocuparon ese lugar del viaje aparecen arriba en las dos listas (hasta
+  3, sólo si siguen en tu clóset y no ocupan otro lugar). Volver atrás no se
+  paga y sale aunque el freno de gasto apague las sugerencias.
+- **Probar no es rechazar.** La memoria que hace que un viaje nuevo esquive lo
+  que cambiaste contaba cada prenda que alguna vez salió de un lugar; una noche
+  de probar zapatos volvía "rechazados" justo los favoritos. Ahora sólo cuenta
+  lo que la app te propuso y quitaste, y deja de contar si después lo volviste
+  a elegir (`rechazadasNetas`, `lib/trip-cambios.ts`).
+- El evento `trip_item_swap` ahora guarda el lugar (`index`).
+
 ## [0.2.418.1] - 2026-11-06 — en computadora, el look de Inicio vuelve a enseñar sus prendas
 
 En pantallas anchas, el look recién generado salía sin fotos: sólo unas rayitas

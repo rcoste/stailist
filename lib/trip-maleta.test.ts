@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { empacablesDelViaje, piezasParaLooks, sustitutoDe } from "@/lib/trip-maleta";
+import { empacablesDelViaje, piezasParaLooks, prendasOcupadas, sustitutoDe } from "@/lib/trip-maleta";
 import type { CapsuleItem, CapsuleMatch, CapsuleOverrides, CapsuleTarget, MatchStatus } from "@/lib/capsule";
 
 // Lo que este test blinda: los looks del viaje se arman con TODO lo que hay en
@@ -103,5 +103,48 @@ describe("piezasParaLooks", () => {
     const t = target(2);
     const m = match([["tienes", "a"], ["tienes", "b"]]);
     expect(piezasParaLooks(t, m, null).map((p) => p.nombre)).toEqual(empacablesDelViaje(t, m, null).map((p) => p.nombre));
+  });
+});
+
+// "Ya no me deja elegir la misma prenda anterior" (reporte real, 2026-11-12):
+// la prenda que la app propuso seguía "ocupada" aunque un sustituto la hubiera
+// reemplazado, y no volvía a aparecer en ninguna lista de ese viaje.
+describe("prendasOcupadas", () => {
+  it("la prenda que un sustituto reemplazó queda libre para volver", () => {
+    const m = match([["tienes", "Tenis Golden Goose"]]);
+    const o = { "sub:0": "Tenis casuales beige" } as unknown as CapsuleOverrides;
+    const ocupadas = prendasOcupadas(target(1), m, o);
+    expect(ocupadas.has("Tenis Golden Goose")).toBe(false);
+    expect(ocupadas.has("Tenis casuales beige")).toBe(true);
+  });
+
+  it("si la reemplazada cubre OTRO lugar, sigue ocupada: una prenda, un lugar", () => {
+    const m = match([
+      ["tienes", "Suéter negro"],
+      ["tienes", "Suéter negro"],
+    ]);
+    const o = { "sub:0": "Suéter beige" } as unknown as CapsuleOverrides;
+    expect(prendasOcupadas(target(2), m, o).has("Suéter negro")).toBe(true);
+  });
+
+  it("lo que sacó del viaje deja libre su prenda, aunque fuera un sustituto", () => {
+    const m = match([
+      ["tienes", "Gorra mostaza"],
+      ["falta", null],
+    ]);
+    const o = { "fuera:0": "no-es-mi-estilo", "sub:1": "Bufanda gris", "fuera:1": "otro" } as unknown as CapsuleOverrides;
+    const ocupadas = prendasOcupadas(target(2), m, o);
+    expect(ocupadas.has("Gorra mostaza")).toBe(false);
+    expect(ocupadas.has("Bufanda gris")).toBe(false);
+  });
+
+  it("es exactamente lo que va en la maleta", () => {
+    const m = match([
+      ["tienes", "Jeans"],
+      ["parecido", "Botín café"],
+      ["falta", null],
+    ]);
+    const o = { "sub:2": "Camisa lino" } as unknown as CapsuleOverrides;
+    expect([...prendasOcupadas(target(3), m, o)]).toEqual(nombres(target(3), m, o));
   });
 });

@@ -1969,7 +1969,13 @@ export function TripResult({
                       </span>
                       <span className="flex min-w-0 flex-1 flex-col">
                         <b className="text-sm font-semibold leading-tight text-ink">{c.nombre}</b>
-                        {c.porque ? (
+                        {c.antes ? (
+                          // Volver atrás se distingue de lo nuevo: es la salida a
+                          // "probé otra y no me gustó" (lib/trip-cambios.ts).
+                          <span className="flex items-center gap-1 text-[11.5px] font-semibold leading-snug text-ink">
+                            <Icon name="repetir" size={12} /> {c.porque}
+                          </span>
+                        ) : c.porque ? (
                           <span className="text-[11.5px] leading-snug text-muted">{c.porque}</span>
                         ) : null}
                       </span>
