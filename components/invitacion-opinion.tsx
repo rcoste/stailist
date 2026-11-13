@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Icon } from "@/components/icon";
 import { BuzonEnHoja } from "@/components/boton-reportar";
 import { marcarInvitacion } from "@/lib/invitacion-opinion";
 
@@ -27,28 +26,31 @@ export function InvitacionOpinion() {
 
   return (
     <>
-      <div className="flex flex-col gap-3 rounded-md border border-line bg-surface p-4">
-        <div className="flex items-start gap-3">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-accent-soft text-accent">
-            <Icon name="corazon" size={16} />
-          </span>
-          <div className="flex flex-col gap-1">
-            <p className="text-[15px] font-bold leading-snug text-ink">
-              Eres de las personas que más usa stailist
-            </p>
-            <p className="text-[13.5px] leading-relaxed text-muted">
-              Por eso tu opinión vale doble. ¿Qué te gusta, qué no y qué te gustaría que hiciera? Lo leo
-              yo, en serio. — Roberto
-            </p>
-          </div>
+      {/* NEGRA, como el pasaporte del perfil: no es una card más del montón,
+          es una invitación. Tokens invertidos (bg-ink / text-bg), así que en
+          modo oscuro también se lee al revés del resto. */}
+      <div className="flex flex-col gap-3.5 rounded-md bg-ink p-5 text-bg">
+        <p className="text-[10.5px] font-bold uppercase tracking-[0.16em] opacity-60">
+          invitación · el círculo de stailist
+        </p>
+        <div className="flex flex-col gap-2">
+          <p className="text-[19px] font-bold leading-tight tracking-[-0.01em]">
+            Te elegí para el{" "}
+            <em className="font-display font-normal italic tracking-normal">círculo</em>
+          </p>
+          <p className="text-[13.5px] leading-relaxed opacity-75">
+            Es un grupo muy chico: las personas que más usan stailist. Quiero decidir con
+            ustedes qué mejora en la app. Lo que me cuentes lo leo yo, y te escribo de vuelta.
+            — Roberto
+          </p>
         </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={() => setEstado("escribiendo")}
-            className="min-h-11 flex-1 rounded-sm bg-accent px-4 text-[14px] font-bold text-on-accent transition-colors hover:bg-accent-deep"
+            className="min-h-11 flex-1 rounded-sm bg-bg px-4 text-[14px] font-bold text-ink transition-opacity hover:opacity-90"
           >
-            te cuento
+            quiero opinar
           </button>
           <button
             type="button"
@@ -56,7 +58,7 @@ export function InvitacionOpinion() {
               setEstado("fuera");
               void marcarInvitacion("descartada");
             }}
-            className="min-h-11 px-4 text-[13px] font-semibold text-muted transition-colors hover:text-ink"
+            className="min-h-11 px-4 text-[13px] font-semibold opacity-60 transition-opacity hover:opacity-100"
           >
             ahora no
           </button>

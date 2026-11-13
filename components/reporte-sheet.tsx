@@ -66,9 +66,11 @@ export function ReporteSheet({
         <span className="flex h-12 w-12 items-center justify-center rounded-full bg-tile text-ink">
           <Icon name="check" size={22} />
         </span>
-        <p className="text-[17px] font-bold text-ink">Llegó</p>
+        <p className="text-[17px] font-bold text-ink">{opinion ? "Gracias por estar en el círculo" : "Llegó"}</p>
         <p className="max-w-xs text-[14px] leading-relaxed text-muted">
-          Lo leo yo, en serio — no es un buzón que nadie abre. Si hace falta, te escribo.
+          {opinion
+            ? "Ya lo tengo. Lo leo con calma y te escribo de vuelta."
+            : "Lo leo yo, en serio — no es un buzón que nadie abre. Si hace falta, te escribo."}
         </p>
         <button
           type="button"
@@ -87,7 +89,7 @@ export function ReporteSheet({
         <h3 className="text-[22px] font-bold tracking-[-0.01em] text-ink">cuéntame</h3>
         <p className="text-[13.5px] leading-relaxed text-muted">
           {opinion
-            ? "Qué te gusta, qué no y qué te gustaría que hiciera. Con una línea basta."
+            ? "Lo que más te gusta, lo que te choca y lo que le falta. Con una línea basta."
             : "Algo que no jaló, algo que te gustaría, algo que te chocó. Lo que sea."}
         </p>
       </div>

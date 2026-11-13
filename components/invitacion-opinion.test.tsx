@@ -26,12 +26,12 @@ describe("InvitacionOpinion", () => {
     render(<InvitacionOpinion />);
     fireEvent.click(screen.getByRole("button", { name: /ahora no/i }));
     expect(marcarInvitacion).toHaveBeenCalledWith("descartada");
-    expect(screen.queryByText(/más usa stailist/i)).toBeNull();
+    expect(screen.queryByText(/círculo/i)).toBeNull();
   });
 
-  it('"te cuento" abre el buzón en modo opinión, sin marcarla respondida todavía', () => {
+  it('"quiero opinar" abre el buzón en modo opinión, sin marcarla respondida todavía', () => {
     render(<InvitacionOpinion />);
-    fireEvent.click(screen.getByRole("button", { name: /te cuento/i }));
+    fireEvent.click(screen.getByRole("button", { name: /quiero opinar/i }));
     expect(screen.getByPlaceholderText(/lo que más usas/i)).toBeTruthy();
     expect(marcarInvitacion).not.toHaveBeenCalledWith("respondida");
   });

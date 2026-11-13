@@ -4,11 +4,12 @@ Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepa
 
 ## [0.2.419.0] - 2026-11-13 — invitación a opinar para quienes más usan la app
 
-Una tarjeta arriba de Inicio, sólo para las personas que Roberto invita (las
-que más usan la app): "Eres de las personas que más usa stailist… ¿qué te
-gusta, qué no y qué te gustaría que hiciera? Lo leo yo, en serio. — Roberto".
+Una tarjeta negra arriba de Inicio, sólo para las personas que Roberto invita
+(las que más usan la app), con forma de invitación y no de encuesta: "el círculo
+de stailist — te elegí para el círculo… quiero decidir con ustedes qué mejora en
+la app. Lo leo yo, y te escribo de vuelta. — Roberto".
 
-- "te cuento" abre el buzón de siempre en modo opinión (tres preguntas guía,
+- "quiero opinar" abre el buzón de siempre en modo opinión (tres preguntas guía,
   "una idea" ya elegida); la respuesta llega por correo como cualquier reporte,
   marcada "invitación a opinar".
 - "ahora no" la esconde para siempre: a quien más usa la app no se le insiste.
