@@ -1,5 +1,6 @@
 "use client";
 
+import { InvitacionOpinion } from "@/components/invitacion-opinion";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -96,6 +97,7 @@ export function HoyClient({
   seedItemIds = [],
   homeTrip = null,
   ultimoLook = null,
+  invitacionOpinion = false,
   checklist = null,
   correoOptIn = false,
   verInicio = false,
@@ -134,6 +136,8 @@ export function HoyClient({
   homeTrip?: HomeTrip | null;
   /** El último look generado (card de zona 1, bajo el CTA). Tocarlo lo ABRE. */
   ultimoLook?: UltimoLook | null;
+  /** Roberto la invitó a opinar y no ha contestado (components/invitacion-opinion.tsx). */
+  invitacionOpinion?: boolean;
   /** Checklist de activación (home idle): avatar → prendas → estilo → silueta →
    *  cápsula. null = todo hecho (se autodestruye). */
   checklist?: HomeChecklistData | null;
@@ -512,6 +516,13 @@ export function HoyClient({
       // El min-h de 100dvh murió con el ancla del checklist: solo existía
       // para que el mt-auto tuviera contra qué empujar.
       <div className="flex flex-col pb-2 lg:mx-auto lg:max-w-md">
+        {/* La invitación a opinar va ANTES de todo: sale una vez a pocas
+            personas, y debajo del hero se perdería entre las cards de siempre. */}
+        {invitacionOpinion ? (
+          <div className="mb-5" style={anim(0)}>
+            <InvitacionOpinion />
+          </div>
+        ) : null}
         {/* ─── ZONA 1: CREAR (el hero nunca asume "hoy") ─── */}
         <div className="pt-1" style={anim(0)}>
           <h1 className="text-[34px] font-bold leading-[1.06] tracking-[-0.03em] text-ink">

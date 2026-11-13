@@ -27,14 +27,6 @@ import { lockBodyScroll, unlockBodyScroll } from "@/lib/scroll-lock";
 // `fixed` hijo suyo (la trampa que ya se documentó en sheets-portal-a-body).
 export function BotonReportar() {
   const [abierto, setAbierto] = useState(false);
-  const [montado, setMontado] = useState(false);
-
-  useEffect(() => setMontado(true), []);
-  useEffect(() => {
-    if (!abierto) return;
-    lockBodyScroll();
-    return () => unlockBodyScroll();
-  }, [abierto]);
 
   return (
     <>
@@ -47,26 +39,44 @@ export function BotonReportar() {
         <Icon name="burbuja" size={17} />
       </button>
 
-      {montado && abierto
-        ? createPortal(
-            <div
-              className="fixed inset-0 z-[70] flex items-end justify-center bg-ink/35 px-0"
-              onClick={() => setAbierto(false)}
-            >
-              <div
-                role="dialog"
-                aria-modal="true"
-                onClick={(e) => e.stopPropagation()}
-                className="w-full max-w-[430px] rounded-t-[14px] bg-surface px-5 pb-[calc(57px+22px+16px)] pt-2.5 shadow-[0_-20px_50px_-26px_rgb(0_0_0/0.45)]"
-                style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
-              >
-                <span aria-hidden className="mx-auto mb-3 mt-1 block h-1 w-9 rounded-full bg-line" />
-                <ReporteSheet onClose={() => setAbierto(false)} />
-              </div>
-            </div>,
-            document.body
-          )
-        : null}
+      {abierto ? <BuzonEnHoja onClose={() => setAbierto(false)} /> : null}
     </>
+  );
+}
+
+/**
+ * El buzón en su hoja, por portal a <body>. Lo comparten el botón del header y
+ * la invitación a opinar de Inicio (components/invitacion-opinion.tsx).
+ */
+export function BuzonEnHoja({
+  onClose,
+  opinion,
+  onEnviado,
+}: {
+  onClose: () => void;
+  opinion?: boolean;
+  onEnviado?: () => void;
+}) {
+  useEffect(() => {
+    lockBodyScroll();
+    return () => unlockBodyScroll();
+  }, []);
+  // Sólo se pinta después de un toque, así que siempre hay document; el guard
+  // es para que el render del servidor no truene si algún día se monta abierta.
+  if (typeof document === "undefined") return null;
+  return createPortal(
+    <div className="fixed inset-0 z-[70] flex items-end justify-center bg-ink/35 px-0" onClick={onClose}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-[430px] rounded-t-[14px] bg-surface px-5 pb-[calc(57px+22px+16px)] pt-2.5 shadow-[0_-20px_50px_-26px_rgb(0_0_0/0.45)]"
+        style={{ animation: "var(--dur-medium) var(--ease-enter) step-in" }}
+      >
+        <span aria-hidden className="mx-auto mb-3 mt-1 block h-1 w-9 rounded-full bg-line" />
+        <ReporteSheet onClose={onClose} opinion={opinion} onEnviado={onEnviado} />
+      </div>
+    </div>,
+    document.body
   );
 }

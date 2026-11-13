@@ -44,6 +44,7 @@ export const TABLAS_EN_CASCADA = [
   "items",
   "trips",
   "library_candidates",
+  "invitaciones_opinion",
 ] as const;
 
 /** Todas las rutas de Storage que son de esta persona, en los dos buckets. */

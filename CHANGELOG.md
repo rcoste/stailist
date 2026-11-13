@@ -2,6 +2,22 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.419.0] - 2026-11-13 — invitación a opinar para quienes más usan la app
+
+Una tarjeta arriba de Inicio, sólo para las personas que Roberto invita (las
+que más usan la app): "Eres de las personas que más usa stailist… ¿qué te
+gusta, qué no y qué te gustaría que hiciera? Lo leo yo, en serio. — Roberto".
+
+- "te cuento" abre el buzón de siempre en modo opinión (tres preguntas guía,
+  "una idea" ya elegida); la respuesta llega por correo como cualquier reporte,
+  marcada "invitación a opinar".
+- "ahora no" la esconde para siempre: a quien más usa la app no se le insiste.
+- Tabla `invitaciones_opinion` (migración 0190, ya aplicada): quién está
+  invitado y cuándo la vio, contestó o la descartó. Sin política de insert:
+  nadie se invita solo. Cascadea al borrar la cuenta.
+- La hoja del buzón pasó a `BuzonEnHoja` (`components/boton-reportar.tsx`),
+  compartida por el botón del header y la invitación.
+
 ## [0.2.418.4] - 2026-11-13 — "cómo te queda" se ve en la ficha de cada prenda
 
 Un usuario con 128 prendas de foto no encontró dónde decir el corte de sus

@@ -263,10 +263,22 @@ export default async function HoyPage({
       return null;
     }
   };
-  const [homeTrip, ultimoLook, signals] = await Promise.all([
+  const [homeTrip, ultimoLook, signals, invitacion] = await Promise.all([
     seguro(loadHomeTrip(supabase, profile.id)),
     seguro(loadUltimoLook(supabase, profile.id)),
     loadJourneySignals(supabase, profile),
+    // ¿La invitó Roberto a opinar y no ha contestado ni dicho "ahora no"? (0190)
+    seguro(
+      Promise.resolve(
+        supabase
+          .from("invitaciones_opinion")
+          .select("user_id")
+          .eq("user_id", profile.id)
+          .is("respondida_at", null)
+          .is("descartada_at", null)
+          .maybeSingle()
+      ).then((r) => !!r.data)
+    ),
   ]);
   const checklist = buildHomeChecklist({
     hasStyleReference: profile.style_reference != null,
@@ -382,6 +394,7 @@ export default async function HoyPage({
           homeTrip={homeTrip}
           ultimoLook={ultimoLook}
           checklist={checklist}
+          invitacionOpinion={invitacion === true}
         />
       </section>
     </AppShell>
