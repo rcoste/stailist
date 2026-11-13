@@ -379,17 +379,13 @@ export function StyleReferenceCard({
               <p className="text-[12.5px] leading-snug text-ink">{saved.fit.note}</p>
             ) : null}
             {!saved.referencias?.length ? <p className="text-[12.5px] leading-snug text-muted">{saved.summary}</p> : null}
+            {/* LAS ETIQUETAS SON TEXTO, NO BOTONES (2026-11-13). Iban en cajitas
+                con borde, idénticas a los chips que sí se tocan, y un usuario
+                las tocó una y otra vez para elegir sus estilos (Clarity: clics
+                sin respuesta justo aquí). Dicen lo que la app leyó de tus
+                fotos; para cambiarlas se cambian las fotos. */}
             {saved.tags.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5">
-                {saved.tags.map((t) => (
-                  <span
-                    key={t}
-                    className="rounded-sm border border-line bg-bg px-2 py-0.5 text-[11px] text-muted"
-                  >
-                    {t}
-                  </span>
-                ))}
-              </div>
+              <p className="text-[11px] leading-snug text-muted">{saved.tags.join(" · ")}</p>
             ) : null}
             <button
               type="button"
