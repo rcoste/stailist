@@ -2,6 +2,14 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.418.5] - 2026-11-13 — las etiquetas de tu estilo ya no parecen botones
+
+En Perfil → estilo, las etiquetas de tu estilo ("Pulido · Clásico…") y las que
+salen de tus fotos de referencia iban en cajitas con borde, iguales a los chips
+que sí se tocan. Las grabaciones de Clarity mostraron a un usuario tocándolas
+una y otra vez para elegir sus estilos, sin respuesta. Ahora son texto corrido;
+para cambiarlas está "¿cambió? rehazlo" o cambiar las fotos.
+
 ## [0.2.418.4] - 2026-11-13 — "cómo te queda" se ve en la ficha de cada prenda
 
 Un usuario con 128 prendas de foto no encontró dónde decir el corte de sus
