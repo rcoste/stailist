@@ -2,6 +2,22 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.419.0] - 2026-11-13 — invitación a opinar para quienes más usan la app
+
+Una tarjeta negra arriba de Inicio, sólo para las personas que Roberto invita
+(las que más usan la app), con forma de invitación y no de encuesta: "el círculo
+de stailist — te elegí para el círculo… quiero decidir con ustedes qué mejora en
+la app. Lo leo yo, y te escribo de vuelta. — Roberto".
+
+- "quiero opinar" abre el buzón de siempre en modo opinión (tres preguntas guía,
+  "una idea" ya elegida); la respuesta llega por correo como cualquier reporte,
+  marcada "invitación a opinar".
+- "ahora no" la esconde para siempre: a quien más usa la app no se le insiste.
+- Tabla `invitaciones_opinion` (migración 0190, ya aplicada): quién está
+  invitado y cuándo la vio, contestó o la descartó. Sin política de insert:
+  nadie se invita solo. Cascadea al borrar la cuenta.
+- La hoja del buzón pasó a `BuzonEnHoja` (`components/boton-reportar.tsx`),
+  compartida por el botón del header y la invitación.
 ## [0.2.418.5] - 2026-11-13 — las etiquetas de tu estilo ya no parecen botones
 
 En Perfil → estilo, las etiquetas de tu estilo ("Pulido · Clásico…") y las que

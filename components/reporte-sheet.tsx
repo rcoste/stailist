@@ -25,10 +25,23 @@ import { enviarReporte } from "@/lib/reportes";
 //    tu feedback". Val falló cuatro veces el 2026-09-09 y no reportó nada; lo
 //    que hace que alguien escriba la segunda vez es haber sentido que la
 //    primera sirvió de algo.
-export function ReporteSheet({ onClose }: { onClose: () => void }) {
+export function ReporteSheet({
+  onClose,
+  opinion = false,
+  onEnviado,
+}: {
+  onClose: () => void;
+  /**
+   * La invitación a opinar (lib/invitacion-opinion.ts): no viene a reportar
+   * algo que falló sino a contar qué le gusta y qué no, así que abre en "una
+   * idea" y con las tres preguntas a la vista.
+   */
+  opinion?: boolean;
+  onEnviado?: () => void;
+}) {
   const ruta = usePathname();
   const [texto, setTexto] = useState("");
-  const [tipo, setTipo] = useState<"problema" | "idea">("problema");
+  const [tipo, setTipo] = useState<"problema" | "idea">(opinion ? "idea" : "problema");
   const [enviando, startTransition] = useTransition();
   const [listo, setListo] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -37,8 +50,12 @@ export function ReporteSheet({ onClose }: { onClose: () => void }) {
     if (!texto.trim() || enviando) return;
     setError(null);
     startTransition(async () => {
-      const r = await enviarReporte({ texto, tipo, ruta });
-      if (r.ok) setListo(true);
+      // La ruta lleva la marca de la invitación: en el correo se sabe de dónde vino.
+      const r = await enviarReporte({ texto, tipo, ruta: opinion ? `${ruta} · invitación a opinar` : ruta });
+      if (r.ok) {
+        setListo(true);
+        onEnviado?.();
+      }
       else setError("No pude mandarlo. ¿Lo intentas otra vez?");
     });
   }
@@ -49,9 +66,11 @@ export function ReporteSheet({ onClose }: { onClose: () => void }) {
         <span className="flex h-12 w-12 items-center justify-center rounded-full bg-tile text-ink">
           <Icon name="check" size={22} />
         </span>
-        <p className="text-[17px] font-bold text-ink">Llegó</p>
+        <p className="text-[17px] font-bold text-ink">{opinion ? "Gracias por estar en el círculo" : "Llegó"}</p>
         <p className="max-w-xs text-[14px] leading-relaxed text-muted">
-          Lo leo yo, en serio — no es un buzón que nadie abre. Si hace falta, te escribo.
+          {opinion
+            ? "Ya lo tengo. Lo leo con calma y te escribo de vuelta."
+            : "Lo leo yo, en serio — no es un buzón que nadie abre. Si hace falta, te escribo."}
         </p>
         <button
           type="button"
@@ -69,7 +88,9 @@ export function ReporteSheet({ onClose }: { onClose: () => void }) {
       <div className="flex flex-col gap-1">
         <h3 className="text-[22px] font-bold tracking-[-0.01em] text-ink">cuéntame</h3>
         <p className="text-[13.5px] leading-relaxed text-muted">
-          Algo que no jaló, algo que te gustaría, algo que te chocó. Lo que sea.
+          {opinion
+            ? "Lo que más te gusta, lo que te choca y lo que le falta. Con una línea basta."
+            : "Algo que no jaló, algo que te gustaría, algo que te chocó. Lo que sea."}
         </p>
       </div>
 
@@ -97,9 +118,11 @@ export function ReporteSheet({ onClose }: { onClose: () => void }) {
         rows={5}
         autoFocus
         placeholder={
-          tipo === "problema"
-            ? "qué estabas haciendo y qué pasó…"
-            : "qué te gustaría que hiciera…"
+          opinion
+            ? "lo que más usas, lo que te choca, lo que le falta…"
+            : tipo === "problema"
+              ? "qué estabas haciendo y qué pasó…"
+              : "qué te gustaría que hiciera…"
         }
         className="w-full rounded-sm border border-line bg-surface p-3 text-[15px] text-ink outline-none placeholder:text-faint focus:border-ink"
       />
