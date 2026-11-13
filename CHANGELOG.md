@@ -18,6 +18,13 @@ la app. Lo leo yo, y te escribo de vuelta. — Roberto".
   nadie se invita solo. Cascadea al borrar la cuenta.
 - La hoja del buzón pasó a `BuzonEnHoja` (`components/boton-reportar.tsx`),
   compartida por el botón del header y la invitación.
+## [0.2.418.5] - 2026-11-13 — las etiquetas de tu estilo ya no parecen botones
+
+En Perfil → estilo, las etiquetas de tu estilo ("Pulido · Clásico…") y las que
+salen de tus fotos de referencia iban en cajitas con borde, iguales a los chips
+que sí se tocan. Las grabaciones de Clarity mostraron a un usuario tocándolas
+una y otra vez para elegir sus estilos, sin respuesta. Ahora son texto corrido;
+para cambiarlas está "¿cambió? rehazlo" o cambiar las fotos.
 
 ## [0.2.418.4] - 2026-11-13 — "cómo te queda" se ve en la ficha de cada prenda
 

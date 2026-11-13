@@ -305,17 +305,11 @@ function EstiloTab({
               <span className="editorial text-h3 leading-tight text-ink">
                 {archetype.nombre}
               </span>
+              {/* Texto, no cajitas: con borde parecían botones y se tocaban
+                  sin respuesta (Clarity, 2026-11-13; mismo arreglo que en la
+                  card de referencia). Para cambiarlas: "¿cambió? rehazlo". */}
               {tasteTags.length > 0 ? (
-                <div className="flex flex-wrap gap-1.5">
-                  {tasteTags.map((t) => (
-                    <span
-                      key={t}
-                      className="rounded-sm border border-line bg-bg px-2.5 py-1 text-xs text-muted"
-                    >
-                      {tagVisible(t)}
-                    </span>
-                  ))}
-                </div>
+                <p className="text-xs leading-snug text-muted">{tasteTags.map(tagVisible).join(" · ")}</p>
               ) : null}
             </>
           ) : (
