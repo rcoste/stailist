@@ -10,6 +10,7 @@ import { ChangeAvatar } from "@/components/change-avatar";
 import { PrendaZoom } from "@/components/prenda-zoom";
 import { InstallAppRow } from "@/components/install-app-row";
 import { CorreoSemanalToggle } from "@/components/correo-semanal-toggle";
+import { AvisosPushToggle } from "@/components/avisos-push-toggle";
 import { EdadEditar } from "@/components/edad-editar";
 import { CuentaBorrar } from "@/components/cuenta-borrar";
 import { FirmaRaicode } from "@/components/firma-raicode";
@@ -47,6 +48,7 @@ export type PerfilTabsProps = {
   styleWords: string | null; // su estilo en sus palabras (texto libre)
   tieneCapsula: boolean; // para avisar que cambiar el estilo la deja vieja
   emailSemanal: "semanal" | "off"; // opt-in del correo semanal (B2)
+  avisosPush: "on" | "off" | null; // avisos push de la cuenta (0189); el interruptor refleja este teléfono
   ageRange: import("@/lib/edad").AgeRange | null; // editable desde aquí (B2)
   banner: {
     title: string; // estación o fallback
@@ -129,7 +131,7 @@ export function PerfilTabs(props: PerfilTabsProps) {
   );
 }
 
-function CuentaTab({ name, email, avatarUrl, signOut, emailSemanal, ageRange }: PerfilTabsProps) {
+function CuentaTab({ name, email, avatarUrl, signOut, emailSemanal, avisosPush, ageRange }: PerfilTabsProps) {
   const [zoom, setZoom] = useState(false);
   return (
     <div className="flex flex-col gap-3">
@@ -169,6 +171,7 @@ function CuentaTab({ name, email, avatarUrl, signOut, emailSemanal, ageRange }: 
 
       {/* Opt-in del correo y edad editable (B2 de la auditoría). */}
       <CorreoSemanalToggle inicial={emailSemanal} />
+      <AvisosPushToggle inicial={avisosPush} />
       <EdadEditar inicial={ageRange} />
 
       <a

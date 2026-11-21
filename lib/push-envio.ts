@@ -1,0 +1,75 @@
+import "server-only";
+import webpush from "web-push";
+import { esCulpaDeLaSuscripcion, esServicioDePush, type Aviso } from "@/lib/avisos-push";
+
+// EL ENVÍO: una llamada de web-push por suscripción, firmada con las llaves
+// VAPID (el par que identifica a nuestro servidor ante Apple y Google). La
+// llave pública es la misma que ve el navegador al suscribirse; la privada
+// vive sólo en Vercel y en .env.local.
+//
+// Lo que devuelve es lo que el cron necesita decidir: si la suscripción
+// MURIÓ (404/410: la persona quitó el permiso, borró la app o cambió de
+// teléfono) se marca revoked_at de inmediato; cualquier otro error suma un
+// fallo y a los tres se deja de intentar (lib/avisos-push.ts).
+
+export function vapidListo(env: NodeJS.ProcessEnv = process.env): boolean {
+  return !!env.NEXT_PUBLIC_VAPID_PUBLIC_KEY && !!env.VAPID_PRIVATE_KEY;
+}
+
+let configurado = false;
+function configurar() {
+  if (configurado) return;
+  const pub = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const priv = process.env.VAPID_PRIVATE_KEY;
+  if (!pub || !priv) throw new Error("VAPID: faltan llaves");
+  webpush.setVapidDetails(process.env.VAPID_SUBJECT || "mailto:hola@stailist.co", pub, priv);
+  configurado = true;
+}
+
+export type SuscripcionGuardada = { endpoint: string; p256dh: string; auth: string };
+
+export type ResultadoEnvio =
+  | { ok: true }
+  | {
+      ok: false;
+      /** 404/410: la persona quitó el permiso o borró la app. Se borra la fila. */
+      muerta: boolean;
+      /** El servicio rechazó ESTA suscripción (un 4xx que no es de permisos ni
+       *  de ritmo). Es lo único que suma a los tres fallos que la dan por rota. */
+      culpaDeLaSuscripcion: boolean;
+      error: string;
+    };
+
+/** Si el teléfono está apagado, el aviso espera hasta esto; después se
+ *  descarta: "buenos días" a las 9 de la noche no sirve. */
+const TTL_SEGUNDOS = 6 * 3600;
+
+/** Lo más que se espera a un servicio de avisos. Sin esto, una sola dirección
+ *  que no contesta deja colgado el cron y nadie más recibe su aviso. */
+const ESPERA_MS = 8_000;
+
+export async function enviarAviso(s: SuscripcionGuardada, aviso: Aviso): Promise<ResultadoEnvio> {
+  // La segunda puerta: una fila escrita directo a la base no pasó por
+  // guardarSuscripcion. Se da por muerta para que el cron no la reintente.
+  if (!esServicioDePush(s.endpoint)) {
+    return { ok: false, muerta: true, culpaDeLaSuscripcion: false, error: "endpoint fuera de los servicios de push" };
+  }
+  configurar();
+  try {
+    await webpush.sendNotification(
+      { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+      JSON.stringify(aviso),
+      { TTL: TTL_SEGUNDOS, urgency: "normal", timeout: ESPERA_MS }
+    );
+    return { ok: true };
+  } catch (e) {
+    const status = (e as { statusCode?: number }).statusCode;
+    const mensaje = e instanceof Error ? e.message : String(e);
+    return {
+      ok: false,
+      muerta: status === 404 || status === 410,
+      culpaDeLaSuscripcion: esCulpaDeLaSuscripcion(status),
+      error: `${status ?? "?"} ${mensaje}`.slice(0, 300),
+    };
+  }
+}

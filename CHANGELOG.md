@@ -2,6 +2,31 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.420.0] - 2026-11-21 — avisos en el teléfono: "¿qué te pones hoy?"
+
+Quien tiene la app en su pantalla de inicio puede recibir un aviso cada mañana
+(7:00 de CDMX) para armar su look del día. Se pregunta una vez, después del
+primer 👍 o del primer look ("¿Te aviso en las mañanas?"), y se prende o apaga en
+Perfil → Cuenta. Entre visita y visita no le llegaba nada a nadie: los correos
+los aceptaron 2 de 103 personas, y las siete que siguen usando la app pasado el
+día 15 tienen todas la app instalada.
+
+- A quién le toca cada mañana: no dos veces el mismo día, no si ya armó su look
+  de hoy, no si está usando la app, y se deja de insistir tras siete avisos sin
+  que vuelva (`lib/avisos-push.ts`, probado regla por regla).
+- El texto no promete un look ya hecho: sin uno planeado dice "Dime a dónde vas
+  y te lo armo con tu ropa"; con uno planeado para hoy lo anuncia con su título.
+- Tabla `push_subscriptions` y `profiles.avisos_push` (migración 0189, aplicada).
+  Cinco eventos nuevos para leer aceptación y apertura.
+- Antes de prenderlos, una revisión independiente encontró y se corrigió: el
+  aviso enviado contaba como "volvió" en los paneles (el experimento se habría
+  dado la razón solo); el servidor podía ser puesto a llamar a cualquier
+  dirección; los fallos de envío no se veían y unas llaves mal puestas habrían
+  dado por rotas todas las suscripciones en tres días; el interruptor decía
+  "activado" sin que el servidor tuviera nada; apagar o cerrar sesión no
+  borraba todas las direcciones. Detalle en `docs/designs/avisos-push-y-clarity.md`.
+- `/privacidad` describe los avisos (sólo aparece porque están prendidos).
+
 ## [0.2.419.1] - 2026-11-21 — el límite de looks al día sube de 20 a 40
 
 Una de las dos personas que más usan la app topó el "ya te armé 20 looks hoy"

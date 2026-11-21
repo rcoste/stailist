@@ -37,7 +37,16 @@ export const MINIMO_PARA_VOLVER_TEXTO = "4 horas";
  * correo de reenganche desde el propio correo contaba como "volvió" (lo cazó la
  * revisión adversarial del 2026-09-10).
  */
-export const EVENTOS_QUE_NO_SON_VOLVER = ["email_unsubscribed"];
+export const EVENTOS_QUE_NO_SON_VOLVER = ["email_unsubscribed", "push_enviado"];
+// `push_enviado` (2026-11-21) lo escribe el cron de los avisos cada mañana, a
+// nombre de la persona y sin que ella haga nada. Sin esta exclusión, alguien
+// que se suscribió y no volvió a abrir la app salía como que "volvió" siete
+// días seguidos: el experimento del aviso se habría dado la razón solo. Lo
+// cazó la revisión adversarial antes de prenderlos. `push_abierto` SÍ cuenta:
+// ése lo escribe el teléfono cuando la persona entra.
+
+/** La misma lista, lista para pegarse en un `not in (…)`. Sólo constantes. */
+export const NO_SON_VOLVER_SQL = EVENTOS_QUE_NO_SON_VOLVER.map((t) => `'${t}'`).join(", ");
 
 // Vive aquí y no en la página para que su test (adquisicion.test.ts) vigile que
 // los tres caminos de actividad lleven el mismo piso y la misma exclusión.
@@ -229,6 +238,7 @@ with cuentas as (
 activas as (
   select distinct e.user_id as id from public.events e
   where e.created_at >= now() - interval '30 days'
+    and e.type not in (${NO_SON_VOLVER_SQL})
 ),
 instaladas as (
   select distinct e.user_id as id from public.events e where e.type = 'pwa_installed'

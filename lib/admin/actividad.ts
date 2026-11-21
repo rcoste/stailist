@@ -111,6 +111,14 @@ export const EVENTOS_DUPLICADOS = new Set([
 export const EVENTOS_FUERA = new Set([...EVENTOS_PASIVOS, ...EVENTOS_DUPLICADOS]);
 
 /**
+ * LO QUE ESCRIBE EL SERVIDOR A NOMBRE DE LA PERSONA sin que ella esté: el cron
+ * de los avisos anota `push_enviado` cada mañana. No es una acción y TAMPOCO es
+ * presencia (por eso no va con los pasivos): en el feed no sale. Que el aviso
+ * funcionó se lee en `push_abierto`, que sí lo escribe su teléfono.
+ */
+export const EVENTOS_DEL_SERVIDOR = new Set(["push_enviado"]);
+
+/**
  * Cuánto dura "una visita". Una sola vuelta por la app deja varios rastros
  * sueltos (cerrar un tip, los timings de una generación), y pintar cinco
  * líneas de "abrió la app" para una sesión sería igual de inútil que pintar
@@ -334,7 +342,7 @@ export function construirFeed(f: FuentesCrudas, ventanaMin = 10): Momento[] {
   const visitas: Momento[] = [];
   for (let i = 0; i < f.events.length; i++) {
     const e = f.events[i];
-    if (EVENTOS_DUPLICADOS.has(e.type)) continue;
+    if (EVENTOS_DUPLICADOS.has(e.type) || EVENTOS_DEL_SERVIDOR.has(e.type)) continue;
     if (EVENTOS_PASIVOS.has(e.type)) {
       if (e.user_id && e.created_at) {
         visitas.push({

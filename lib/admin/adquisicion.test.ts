@@ -79,6 +79,9 @@ describe("SQL_ADQUISICION — los arreglos de 'volvió' viven en la consulta", (
     expect(pisos).toHaveLength(3);
     expect(SQL_ADQUISICION).toMatch(/e\.type <> all \(\$1::text\[\]\)/);
     expect(EVENTOS_QUE_NO_SON_VOLVER).toContain("email_unsubscribed");
+    // El aviso que manda el cron cada mañana no es la persona volviendo.
+    expect(EVENTOS_QUE_NO_SON_VOLVER).toContain("push_enviado");
+    expect(EVENTOS_QUE_NO_SON_VOLVER).not.toContain("push_abierto");
   });
 
   it("no corta en silencio", () => {

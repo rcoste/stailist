@@ -21,3 +21,42 @@ self.addEventListener("fetch", (event) => {
     );
   }
 });
+
+// ── AVISOS PUSH (2026-10-30; apagados hasta NEXT_PUBLIC_AVISOS_PUSH=1) ──────
+// El servidor manda un JSON {titulo, cuerpo, url, tag} (lib/avisos-push.ts).
+// Mostrar la notificación es obligatorio: con userVisibleOnly el navegador
+// castiga a quien recibe un push y no enseña nada.
+self.addEventListener("push", (event) => {
+  let datos = {};
+  try {
+    datos = event.data ? event.data.json() : {};
+  } catch {}
+  const titulo = datos.titulo || "stailist";
+  event.waitUntil(
+    self.registration.showNotification(titulo, {
+      body: datos.cuerpo || "¿Qué te pones hoy? Te lo armo con tu ropa.",
+      icon: "/icon-192.png",
+      badge: "/icon-192.png",
+      tag: datos.tag || "look-de-hoy",
+      data: { url: datos.url || "/hoy" },
+    })
+  );
+});
+
+// Al tocarla: si la app ya está abierta se trae al frente y se navega; si no,
+// se abre. La URL trae ?desde=aviso para dejar la huella push_abierto.
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const destino = new URL((event.notification.data && event.notification.data.url) || "/hoy", self.location.origin).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((ventanas) => {
+      for (const v of ventanas) {
+        if ("focus" in v) {
+          if ("navigate" in v) v.navigate(destino).catch(() => {});
+          return v.focus();
+        }
+      }
+      return self.clients.openWindow(destino);
+    })
+  );
+});
