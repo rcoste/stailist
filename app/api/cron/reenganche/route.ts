@@ -62,7 +62,8 @@ export async function GET(request: NextRequest) {
     const { rows } = await c.query<FilaCandidata>(
       `select p.id, p.email, p.email_unsub_token, p.email_semanal_last_sent,
               greatest(
-                coalesce((select max(created_at) from events  e where e.user_id = p.id), p.created_at),
+                -- sin push_enviado: lo escribe el cron de los avisos, no la persona.
+                coalesce((select max(created_at) from events  e where e.user_id = p.id and e.type <> 'push_enviado'), p.created_at),
                 coalesce((select max(created_at) from outfits o where o.user_id = p.id), p.created_at),
                 coalesce((select max(created_at) from items   i where i.user_id = p.id), p.created_at),
                 coalesce((select max(created_at) from trips   t where t.user_id = p.id), p.created_at),

@@ -75,7 +75,12 @@ export type EstadoParaAviso = {
 // (lib/push-envio.ts), porque la primera se puede saltar escribiendo directo
 // a la base. Agregado en la revisión del 2026-11-21, antes de prenderlos.
 const SERVICIOS_DE_PUSH: ReadonlyArray<(host: string) => boolean> = [
-  (h) => h === "fcm.googleapis.com" || h === "android.googleapis.com",
+  // Chrome entrega casi siempre desde fcm.googleapis.com, pero el propio
+  // Chromium trae otra dirección bajo google.com (jmt17.google.com) y hay
+  // reportes de teléfonos Android que la reciben. Cualquier subdominio de
+  // google.com es de Google: aceptarlo no abre nada, y dejarlo fuera dejaría a
+  // Android diciendo "sí" sin quedar suscrito.
+  (h) => h === "fcm.googleapis.com" || h === "android.googleapis.com" || h.endsWith(".google.com"),
   (h) => h.endsWith(".push.apple.com"),
   (h) => h.endsWith(".push.services.mozilla.com"),
   (h) => h.endsWith(".notify.windows.com"),
@@ -91,6 +96,18 @@ export function esServicioDePush(endpoint: string): boolean {
   } catch {
     return false;
   }
+}
+
+/**
+ * ¿De quién es el fallo? Un 401/403 es NUESTRO (llaves VAPID mal puestas), un
+ * 429 es ritmo, un 5xx o un corte de red es del servicio. Ninguno debe gastar
+ * los tres fallos de la suscripción: con las llaves mal, tres mañanas habrían
+ * dado por rotas TODAS las suscripciones sin que nadie se enterara.
+ */
+export function esCulpaDeLaSuscripcion(status: number | undefined): boolean {
+  if (status === undefined) return false;
+  if (status === 401 || status === 403 || status === 404 || status === 410 || status === 429) return false;
+  return status >= 400 && status < 500;
 }
 
 /** Teléfonos por persona a los que se manda. Nadie tiene más de dos o tres; el

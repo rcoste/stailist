@@ -1,6 +1,6 @@
 import "server-only";
 import webpush from "web-push";
-import { esServicioDePush, type Aviso } from "@/lib/avisos-push";
+import { esCulpaDeLaSuscripcion, esServicioDePush, type Aviso } from "@/lib/avisos-push";
 
 // EL ENVÍO: una llamada de web-push por suscripción, firmada con las llaves
 // VAPID (el par que identifica a nuestro servidor ante Apple y Google). La
@@ -30,7 +30,15 @@ export type SuscripcionGuardada = { endpoint: string; p256dh: string; auth: stri
 
 export type ResultadoEnvio =
   | { ok: true }
-  | { ok: false; muerta: boolean; error: string };
+  | {
+      ok: false;
+      /** 404/410: la persona quitó el permiso o borró la app. Se borra la fila. */
+      muerta: boolean;
+      /** El servicio rechazó ESTA suscripción (un 4xx que no es de permisos ni
+       *  de ritmo). Es lo único que suma a los tres fallos que la dan por rota. */
+      culpaDeLaSuscripcion: boolean;
+      error: string;
+    };
 
 /** Si el teléfono está apagado, el aviso espera hasta esto; después se
  *  descarta: "buenos días" a las 9 de la noche no sirve. */
@@ -44,7 +52,7 @@ export async function enviarAviso(s: SuscripcionGuardada, aviso: Aviso): Promise
   // La segunda puerta: una fila escrita directo a la base no pasó por
   // guardarSuscripcion. Se da por muerta para que el cron no la reintente.
   if (!esServicioDePush(s.endpoint)) {
-    return { ok: false, muerta: true, error: "endpoint fuera de los servicios de push" };
+    return { ok: false, muerta: true, culpaDeLaSuscripcion: false, error: "endpoint fuera de los servicios de push" };
   }
   configurar();
   try {
@@ -60,6 +68,7 @@ export async function enviarAviso(s: SuscripcionGuardada, aviso: Aviso): Promise
     return {
       ok: false,
       muerta: status === 404 || status === 410,
+      culpaDeLaSuscripcion: esCulpaDeLaSuscripcion(status),
       error: `${status ?? "?"} ${mensaje}`.slice(0, 300),
     };
   }

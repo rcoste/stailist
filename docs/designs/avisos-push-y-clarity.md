@@ -1,4 +1,4 @@
-# Avisos push + Microsoft Clarity — preparados apagados (2026-10-30)
+# Avisos push + Microsoft Clarity (preparados 2026-10-30; Clarity prendido 2026-11-05, avisos 2026-11-21)
 
 Rama `avisos-y-clarity`. Decisión de Roberto del 2026-10-30, en la semana de "cero
 versiones" previa al 5 de noviembre: se construye, se deja apagado detrás de dos
@@ -161,6 +161,49 @@ Cero código. En este orden:
 5. Leer a los 7 días: aceptación (`push_suscrito` / `push_prompt_shown`), apertura
    (`push_abierto` / `push_enviado`), y en Clarity las dos preguntas: ¿qué tocan
    después del primer look? ¿dónde se atoran (rage/dead clicks)?
+
+## Lo que cambió al prenderlos (2026-11-21)
+
+Roberto pidió prenderlos el 21 de noviembre. Antes de publicar se leyó el código
+entero y se corrió una revisión adversarial independiente. Lo que salió, y quedó
+arreglado en la misma versión:
+
+- **El aviso contaba como "volvió".** `push_enviado` lo escribe el cron a nombre de
+  la persona; los paneles de retención, embudo, adquisición, "último uso", el feed y
+  el correo de reenganche tomaban cualquier evento como actividad. Alguien suscrito
+  que no volviera a abrir la app habría salido como que volvió siete días seguidos.
+  Ahora está en `EVENTOS_QUE_NO_SON_VOLVER` (lib/admin/adquisicion.ts) y en
+  `EVENTOS_DEL_SERVIDOR` (lib/admin/actividad.ts). `push_abierto` sí cuenta.
+- **A quién le habla el servidor.** La dirección de la suscripción la escribe el
+  navegador y la RLS sólo pide que la fila sea propia: una cuenta podía poner al
+  cron a llamar a cualquier dirección. Sólo se aceptan Google, Apple, Mozilla y
+  Microsoft (`esServicioDePush`), al guardar y al mandar. Un rechazo se anota en
+  `/admin/errores` como `push:suscripcion-rechazada` con el nombre del servidor:
+  si aparece uno de un navegador real, se agrega a la lista.
+- **Tope y espera.** Máximo 5 teléfonos por persona (recortado en el SQL, antes de
+  las subconsultas) y 8 segundos de espera por envío.
+- **Los fallos se ven y no matan lo que no deben.** Un 401/403 (llaves nuestras),
+  un 429, un 5xx o un corte de red ya no suman a los tres fallos que dan por rota
+  una suscripción; todo fallo va al log y a `/admin/errores` (`push:envio`).
+- **El interruptor dice la verdad.** "Activado" sólo si el servidor tiene viva la
+  suscripción de ese teléfono para esa cuenta (`suscripcionViva`). Si no se pudo
+  guardar, también se suelta en el navegador.
+- **Apagar borra.** Apagar en Perfil borra todas las direcciones de la cuenta;
+  apagar desde los ajustes del teléfono borra la fila al siguiente envío (404/410);
+  cerrar sesión borra las de la cuenta y deja la preferencia sin decidir.
+  `/privacidad` lo dice así, y menciona el navegador y por dónde viaja el aviso.
+- **Textos.** "Tu look de hoy te espera. Un toque y listo." y "¿Te aviso cuando
+  esté tu look?" prometían un look ya hecho. Sin un look planeado, al abrir no hay
+  nada esperando: la app pregunta el plan y lo arma. Quedaron "Dime a dónde vas y
+  te lo armo con tu ropa." y "¿Te aviso en las mañanas?".
+
+### Al leer la apertura, tener presente
+
+`push_abierto` se escribe cuando la app carga `/hoy?desde=aviso`. Se pierde si iOS
+abre la app en su pantalla de inicio en vez de la dirección pedida, si sólo se trae
+la ventana al frente sin navegar, o si `/hoy` redirige (onboarding a medias). La
+apertura real puede ser mayor que la medida: contrastarla con las visitas del mismo
+día entre las 7 y las 13 h de quien recibió aviso.
 
 ## Pendientes conocidos (no bloquean)
 

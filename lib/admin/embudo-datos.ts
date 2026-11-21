@@ -42,7 +42,7 @@ select b.id, b.email, b.pais, b.origen, b.onboarding_variante, b.inicio,
       and x.at < b.inicio + interval '${DIAS_VENTANA + 1} days'
       and (x.at at time zone '${ZONA}')::date > (b.inicio at time zone '${ZONA}')::date) as volvio,
   greatest(
-    (select max(e.created_at) from public.events e where e.user_id = b.id),
+    (select max(e.created_at) from public.events e where e.user_id = b.id and e.type <> all($2::text[])),
     (select max(i.created_at) from public.items i where i.user_id = b.id),
     b.inicio
   ) as ultima

@@ -348,10 +348,12 @@ export default function PrivacidadPage() {
           <P>
             Si aceptas que te avisemos en las mañanas para armar tu look, guardamos la
             dirección técnica que tu navegador nos da para mandarte el aviso (no
-            es tu número ni tu correo) y anotamos cuándo lo mandamos y si lo
-            abriste. Lo apagas en Perfil → Cuenta o desde los ajustes de
-            notificaciones de tu teléfono; al apagarlo borramos esa dirección.
-            Si borras tu cuenta, se borra con ella.
+            es tu número ni tu correo) y qué navegador es, y anotamos cuándo lo
+            mandamos y si lo abriste. El aviso viaja cifrado por el servicio de
+            avisos de tu teléfono (Apple, Google, Mozilla o Microsoft). Lo apagas
+            en Perfil → Cuenta o desde los ajustes de notificaciones de tu
+            teléfono; al apagarlo, o al cerrar sesión, borramos esas direcciones.
+            Si borras tu cuenta, se borran con ella.
           </P>
         </>
       )}

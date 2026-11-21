@@ -73,7 +73,16 @@ export async function GET(request: NextRequest) {
                   and (o.gen_status is null or o.gen_status = 'ready')
                   and ((o.is_look_of_day and o.look_date = $1::date) or o.planned_for = $1::date)
                 order by o.created_at desc limit 1) as titulo_hoy
-         from push_subscriptions s
+         from (
+           -- Sólo los MAX_TELEFONOS más recientes de cada persona, ANTES de las
+           -- subconsultas de abajo: con cien mil filas de una sola cuenta el
+           -- cron se pasaría del minuto y nadie recibiría su aviso.
+           select x.* from (
+             select t.*, row_number() over (partition by t.user_id order by t.created_at desc) as n
+               from push_subscriptions t
+              where t.revoked_at is null
+           ) x where x.n <= $3
+         ) s
          join profiles p on p.id = s.user_id
          cross join lateral (
            -- La última huella de uso, SIN contar nuestros propios avisos (si
@@ -88,7 +97,7 @@ export async function GET(request: NextRequest) {
           and p.avisos_push is distinct from 'off'
           and p.borrado_programado_para is null
         order by s.user_id, s.created_at`,
-      [hoy, ZONA_HORARIA]
+      [hoy, ZONA_HORARIA, MAX_TELEFONOS]
     );
 
     // Un texto por persona; se manda a cada uno de sus teléfonos.
@@ -133,11 +142,20 @@ export async function GET(request: NextRequest) {
           dispositivos++;
           await c.query(`update push_subscriptions set last_sent_at = now(), fallos = 0 where id = $1`, [s.sub_id]);
         } else if (r.muerta) {
+          // Quitó el permiso, borró la app o la dirección no era de un servicio
+          // de avisos: la fila se BORRA (no se marca). /privacidad dice que al
+          // apagarlo borramos la dirección, y apagarlo desde los ajustes del
+          // teléfono también es apagarlo.
           muertas++;
-          await c.query(`update push_subscriptions set revoked_at = now() where id = $1`, [s.sub_id]);
+          await c.query(`delete from push_subscriptions where id = $1`, [s.sub_id]);
         } else {
           fallidos.push({ user_id: userId, error: r.error });
-          await c.query(`update push_subscriptions set fallos = fallos + 1 where id = $1`, [s.sub_id]);
+          // Sólo cuenta contra la suscripción lo que es culpa de la suscripción
+          // (lib/push-envio.ts): llaves nuestras mal puestas o una caída del
+          // servicio no deben darla por rota.
+          if (r.culpaDeLaSuscripcion) {
+            await c.query(`update push_subscriptions set fallos = fallos + 1 where id = $1`, [s.sub_id]);
+          }
         }
       }
 
@@ -154,6 +172,23 @@ export async function GET(request: NextRequest) {
           } catch (e) {
             console.error("[push] no se anotó push_enviado:", e instanceof Error ? e.message : e);
           }
+        }
+      }
+    }
+
+    // Los fallos tienen que VERSE: antes sólo viajaban en esta respuesta, que
+    // nadie lee. Van al log de Vercel y a /admin/errores (uno por persona).
+    if (fallidos.length > 0) {
+      console.error(`[push] ${fallidos.length} envíos fallaron:`, fallidos.slice(0, 5).map((f) => f.error).join(" | "));
+      for (const f of fallidos.slice(0, 20)) {
+        try {
+          await c.query(
+            `insert into errores (user_id, origen, clave, pantalla, tecnico, version)
+             values ($1, 'servidor', 'push:envio', '/api/cron/avisos', $2, $3)`,
+            [f.user_id, f.error.slice(0, 500), process.env.NEXT_PUBLIC_APP_VERSION ?? null]
+          );
+        } catch (e) {
+          console.error("[push] no se anotó el fallo:", e instanceof Error ? e.message : e);
         }
       }
     }

@@ -181,6 +181,20 @@ export async function signOut() {
   // Una cuenta de 13-17 sale con la marca que apaga las etiquetas de la landing
   // (lib/marca-menor-servidor.ts). Antes del signOut: después ya no hay sesión.
   await marcarNavegadorSiEsMenor(supabase);
+  // Salir también apaga los avisos: sin esto el teléfono seguía recibiendo el
+  // "tu look de hoy" de una cuenta que ya no está abierta ahí, y quien entrara
+  // después con otra cuenta los recibía. Se borran las direcciones de la cuenta
+  // (no se sabe cuál es la de ESTE teléfono desde el servidor) y la preferencia
+  // vuelve a "sin decidir". Nunca debe impedir salir.
+  try {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (user) {
+      const { error } = await supabase.from("push_subscriptions").delete().eq("user_id", user.id);
+      if (!error) await supabase.from("profiles").update({ avisos_push: null }).eq("id", user.id).eq("avisos_push", "on");
+    }
+  } catch {}
   await supabase.auth.signOut();
   redirect("/login");
 }

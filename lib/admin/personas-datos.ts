@@ -1,5 +1,6 @@
 import { withDb } from "@/lib/db";
 import type { FuentesCrudas } from "@/lib/admin/actividad";
+import { NO_SON_VOLVER_SQL } from "@/lib/admin/adquisicion";
 
 // LAS FUENTES DE PERSONAS Y ACTIVIDAD, EN UNA SOLA IDA A LA BASE (2026-10-12).
 //
@@ -124,7 +125,7 @@ w as (select user_id, count(*)::int as cartera, max(created_at) as ultimo from p
 e as (select user_id,
     count(*) filter (where type = 'worn')::int as worn,
     count(*) filter (where type in ('vote_up', 'vote_down'))::int as votes,
-    max(created_at) as ultimo
+    max(created_at) filter (where type not in (${NO_SON_VOLVER_SQL})) as ultimo
   from public.events group by user_id)
 select p.id,
   coalesce(it.closet, 0) closet, coalesce(it.closet_photos, 0) closet_photos, coalesce(o.looks, 0) looks,

@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import { Icon } from "@/components/icon";
 import { pushActivo } from "@/lib/avisos-push";
-import { apagarAvisos } from "@/lib/push-actions";
+import { apagarAvisos, suscripcionViva } from "@/lib/push-actions";
 import {
   desuscribirEsteNavegador,
   esIPhone,
@@ -31,7 +31,11 @@ async function detectarDispositivo(): Promise<Dispositivo> {
   if (!soportaPush()) return "sin_soporte";
   if (esIPhone() && !estaInstalada()) return "no_instalada";
   if (Notification.permission === "denied") return "bloqueado";
-  return (await suscripcionActual()) ? "si" : "no";
+  // "Sí" sólo si el servidor la tiene viva para ESTA cuenta: el navegador no
+  // sabe de quién es la suscripción ni si se dio por rota.
+  const sub = await suscripcionActual();
+  if (!sub) return "no";
+  return (await suscripcionViva(sub.endpoint).catch(() => false)) ? "si" : "no";
 }
 
 export function AvisosPushToggle({ inicial }: { inicial: "on" | "off" | null }) {

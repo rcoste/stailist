@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { registrarEvento } from "@/lib/telemetria";
+import { registrarError } from "@/lib/errores";
+import { MAX_FALLOS } from "@/lib/avisos-push";
 import { esServicioDePush } from "@/lib/avisos-push";
 
 // LO QUE EL NAVEGADOR LE PIDE AL SERVIDOR SOBRE LOS AVISOS PUSH.
@@ -32,12 +34,29 @@ export async function guardarSuscripcion(
   userAgent: string | null,
   motivo: string
 ): Promise<ResultadoGuardar> {
-  if (!valida(s)) return { ok: false, motivo: "invalida" };
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false, motivo: "sin_sesion" };
+  if (!valida(s)) {
+    // Que se VEA (/admin/errores). Si un navegador real entrega una dirección
+    // de un servicio que no está en la lista, esa persona dice "sí" y no queda
+    // suscrita: sin este renglón nadie se enteraría. Sólo el nombre del
+    // servidor, nunca la dirección completa.
+    let host = "ilegible";
+    try {
+      host = new URL(s.endpoint).hostname;
+    } catch {}
+    await registrarError(supabase, {
+      userId: user.id,
+      origen: "servidor",
+      clave: "push:suscripcion-rechazada",
+      pantalla: motivo.slice(0, 40),
+      tecnico: host,
+    });
+    return { ok: false, motivo: "invalida" };
+  }
 
   const { error } = await supabase.from("push_subscriptions").upsert(
     {
@@ -57,6 +76,13 @@ export async function guardarSuscripcion(
     // endpoint ya tiene dueña. El navegador pedirá otro.
     if (error.code === "42501" || error.code === "23505") return { ok: false, motivo: "endpoint_ajeno" };
     console.error("[push] no se guardó la suscripción:", error.message);
+    await registrarError(supabase, {
+      userId: user.id,
+      origen: "servidor",
+      clave: "push:suscripcion-no-guardada",
+      pantalla: motivo.slice(0, 40),
+      tecnico: `${error.code ?? "?"} ${error.message}`,
+    });
     return { ok: false, motivo: "error" };
   }
   await supabase
@@ -73,8 +99,35 @@ export async function guardarSuscripcion(
 }
 
 /**
- * Apaga los avisos de la CUENTA (todos sus teléfonos dejan de recibir en el
- * próximo cron) y borra la suscripción de este navegador si la manda.
+ * ¿El SERVIDOR tiene viva la suscripción de este teléfono para ESTA cuenta?
+ * El navegador sólo sabe que existe una suscripción, no de quién es ni si
+ * sirve. Sin esta pregunta el interruptor de Perfil decía "activado" cuando la
+ * dirección era de otra cuenta (teléfono compartido, o una persona con dos
+ * cuentas), cuando no se había podido guardar, o cuando ya se había dado por
+ * rota. La RLS sólo deja ver filas propias, así que una ajena responde false.
+ */
+export async function suscripcionViva(endpoint: string): Promise<boolean> {
+  if (typeof endpoint !== "string" || !endpoint) return false;
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return false;
+  const { data } = await supabase
+    .from("push_subscriptions")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("endpoint", endpoint)
+    .is("revoked_at", null)
+    .lt("fallos", MAX_FALLOS)
+    .limit(1);
+  return !!data?.length;
+}
+
+/**
+ * Apaga los avisos de la CUENTA y BORRA todas sus direcciones, la de este
+ * teléfono y las de cualquier otro. /privacidad promete "al apagarlo borramos
+ * esa dirección": borrar sólo la de este navegador dejaba las demás guardadas.
  */
 export async function apagarAvisos(endpoint: string | null, via: string): Promise<{ ok: boolean }> {
   const supabase = await createClient();
@@ -82,9 +135,11 @@ export async function apagarAvisos(endpoint: string | null, via: string): Promis
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return { ok: false };
-  if (endpoint) {
-    await supabase.from("push_subscriptions").delete().eq("user_id", user.id).eq("endpoint", endpoint);
-  }
+  // `endpoint` ya no decide qué se borra (se borra todo lo de la cuenta); se
+  // conserva en la firma porque el navegador lo manda y deja ver de dónde vino.
+  void endpoint;
+  const borrado = await supabase.from("push_subscriptions").delete().eq("user_id", user.id);
+  if (borrado.error) return { ok: false };
   const { error } = await supabase
     .from("profiles")
     .update({ avisos_push: "off", updated_at: new Date().toISOString() })

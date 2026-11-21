@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  esCulpaDeLaSuscripcion,
   esServicioDePush,
   fechaLocal,
   leTocaAviso,
@@ -117,6 +118,8 @@ describe("a quién le habla nuestro servidor", () => {
   it("acepta los cuatro servicios de avisos que existen", () => {
     for (const e of [
       "https://fcm.googleapis.com/fcm/send/abc123:APA91b",
+      "https://fcm.googleapis.com/wp/abc123",
+      "https://jmt17.google.com/fcm/send/abc123",
       "https://web.push.apple.com/QGx7abc",
       "https://updates.push.services.mozilla.com/wpush/v2/gAAAA",
       "https://wns2-par02p.notify.windows.com/w/?token=AwYAAAB",
@@ -132,6 +135,8 @@ describe("a quién le habla nuestro servidor", () => {
       "https://fcm.googleapis.com.ejemplo.com/x", // el nombre bueno como prefijo de uno ajeno
       "https://ejemplo.com/?u=https://fcm.googleapis.com/", // el nombre bueno escondido en la ruta
       "https://push.apple.com.mx/x",
+      "https://google.com.ejemplo.com/x",
+      "https://migoogle.com/x",
       "https://usuario:clave@fcm.googleapis.com/x",
       "https://fcm.googleapis.com:8443/x",
       "https://169.254.169.254/latest/meta-data/",
@@ -145,5 +150,23 @@ describe("a quién le habla nuestro servidor", () => {
 
   it("rechaza una dirección kilométrica", () => {
     expect(esServicioDePush("https://fcm.googleapis.com/" + "a".repeat(2100))).toBe(false);
+  });
+});
+
+describe("de quién es un fallo de envío", () => {
+  // Tres fallos dan por rota una suscripción para siempre. Si los nuestros
+  // contaran, unas llaves mal puestas en Vercel matarían todas en tres mañanas.
+  it("un rechazo del servicio a ESA suscripción sí cuenta", () => {
+    expect(esCulpaDeLaSuscripcion(400)).toBe(true);
+    expect(esCulpaDeLaSuscripcion(413)).toBe(true);
+  });
+  it("llaves nuestras mal puestas, ritmo, caídas del servicio y cortes de red no cuentan", () => {
+    for (const s of [401, 403, 429, 500, 502, 503, undefined]) {
+      expect(esCulpaDeLaSuscripcion(s), String(s)).toBe(false);
+    }
+  });
+  it("404 y 410 tampoco: ésas no acumulan, se borran al instante", () => {
+    expect(esCulpaDeLaSuscripcion(404)).toBe(false);
+    expect(esCulpaDeLaSuscripcion(410)).toBe(false);
   });
 });

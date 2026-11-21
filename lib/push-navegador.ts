@@ -104,7 +104,11 @@ export async function suscribirEsteNavegador(motivo: string): Promise<ResultadoS
       });
       r = await guardarSuscripcion(aGuardable(sub), navigator.userAgent, motivo);
     }
-    return r.ok ? { ok: true } : { ok: false, motivo: "error" };
+    if (r.ok) return { ok: true };
+    // No quedó guardada: se suelta también en el navegador. Si se quedara, el
+    // teléfono "tendría" una suscripción a la que nadie le va a mandar nada.
+    await sub.unsubscribe().catch(() => {});
+    return { ok: false, motivo: "error" };
   } catch (e) {
     console.error("[push] no se pudo suscribir:", e instanceof Error ? e.message : e);
     return { ok: false, motivo: "error" };
