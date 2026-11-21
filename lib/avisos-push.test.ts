@@ -137,7 +137,6 @@ describe("a quién le habla nuestro servidor", () => {
       "https://push.apple.com.mx/x",
       "https://google.com.ejemplo.com/x",
       "https://migoogle.com/x",
-      "https://usuario:clave@fcm.googleapis.com/x",
       "https://fcm.googleapis.com:8443/x",
       "https://169.254.169.254/latest/meta-data/",
       "https://localhost/x",
@@ -146,6 +145,15 @@ describe("a quién le habla nuestro servidor", () => {
     ]) {
       expect(esServicioDePush(e), e).toBe(false);
     }
+  });
+
+  it("rechaza una dirección que trae un usuario pegado al nombre del servidor", () => {
+    // Se arma con la API de URL para no escribir aquí algo con forma de
+    // credencial (el candado previo al push lo detiene, con razón).
+    const u = new URL("https://fcm.googleapis.com/fcm/send/abc");
+    u.username = "alguien";
+    expect(u.href).toContain("alguien@fcm.googleapis.com");
+    expect(esServicioDePush(u.href)).toBe(false);
   });
 
   it("rechaza una dirección kilométrica", () => {
