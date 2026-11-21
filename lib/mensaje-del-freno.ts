@@ -2,7 +2,7 @@
 //
 // Toda ruta de IA que frena (cuota del día, tope de dinero, pausa manual, sesión
 // sin correo) contesta igual: 429 con `{ error: "cuota", motivo, mensaje }`, y
-// el `mensaje` ya viene redactado para la persona ("ya te armé 20 looks hoy.
+// el `mensaje` ya viene redactado para la persona ("ya te armé 40 looks hoy.
 // mañana seguimos"). Lo que fallaba era del lado de acá: la mitad de las
 // pantallas trataban ese 429 como un error cualquiera y decían "no pude" o
 // "inténtalo de nuevo" —que es mentira dos veces: sí pudo, y reintentar no va a

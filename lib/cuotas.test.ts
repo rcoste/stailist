@@ -147,7 +147,7 @@ describe("el freno de dinero", () => {
   it("va por encima de agotar las cinco cuotas: el mensaje útil gana", async () => {
     // Si el tope de dinero fuera menor que este total, saltaría ANTES que los
     // topes por recurso y la persona recibiría "necesita un respiro" en vez de
-    // "ya te armé 20 looks hoy".
+    // "ya te armé 40 looks hoy".
     const peorCaso =
       CUOTAS.looks * 0.049 +
       CUOTAS.avatar * 0.134 +

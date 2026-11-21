@@ -44,7 +44,7 @@ Interrumpir en el paso N y volver = retomas en el paso N; no se puede saltar por
 - **Generador: Gemini 3.5 Flash** (`MODELO_MOTOR` en `lib/models.ts`, ganado a ciegas el 2026-08-07: mismos looks, -42% costo, -44% latencia). **Juez: Sonnet 5** (`MODELO_JUEZ`). `ENGINE_MODEL` (Opus 5) ya NO arma outfits: queda para cápsula ideal y viaje.
 - Contexto en `lib/engine/contexto.ts`, pipeline generar→juez en `lib/engine/pipeline.ts`; los comparten `/api/generate`, el look de hoy y `/admin/comparador`. Structured outputs con enum de `item_ids` (no puede inventar prendas).
 - **Ningún cambio del motor sale sin medirse** contra la versión anterior con el instrumento pareado: `docs/improvement-loop-del-motor.md`. El loop está en pausa desde 2026-08-25.
-- Cuotas diarias por persona (`lib/cuotas.ts`): 20 looks, 5 avatares, 15 try-ons, 120 fotos leídas; freno de $5 por persona; `MOTOR_PAUSADO` como kill switch. Cada llamada deja recibo en `ai_calls` (`/admin/ia`), imágenes incluidas desde v0.2.301.0.
+- Cuotas diarias por persona (`lib/cuotas.ts`): 40 looks (20 hasta el 2026-11-21), 10 avatares, 15 try-ons, 120 fotos leídas; freno de $15 por persona; `MOTOR_PAUSADO` como kill switch. Cada llamada deja recibo en `ai_calls` (`/admin/ia`), imágenes incluidas desde v0.2.301.0.
 
 ## Día 2 en adelante — el hábito
 
