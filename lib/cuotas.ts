@@ -32,7 +32,14 @@ export type Recurso = "looks" | "avatar" | "tryon" | "fotos" | "renders" | "idea
 
 /** Cuántas veces al día. Aprobados por Roberto el 2026-09-02. */
 export const CUOTAS: Record<Recurso, number> = {
-  looks: 20,
+  // SUBIÓ DE 20 A 40 EL 2026-11-21, pedido por Roberto con el dato enfrente: una
+  // de las dos personas que más usan la app lo topó dos veces la noche del 19 de
+  // noviembre. No hizo 20 en un día: hizo 13 una noche y 8 la siguiente, y como
+  // la ventana es de 24 horas móviles las dos noches se sumaron. El 20 se fijó
+  // el 2026-09-02 contra un máximo medido de 3 generaciones al día; hoy quien
+  // se queda pide 13-19 en una sentada. Una generación (motor + juez) cuesta
+  // ~$0.08 medidos, así que 40 son ~$3 y el freno de dinero sigue encima.
+  looks: 40,
   // Subió de 5 a 10 el 2026-10-08, aprobado por Roberto. Un avatar completo SIN
   // un solo ajuste ya gasta 3 (cara, cuerpo y la hoja de 3 vistas), y el
   // redibujo automático de una cara que no se parece cuenta doble: una usuaria
@@ -72,8 +79,8 @@ export const CUOTAS: Record<Recurso, number> = {
  * Qué filas de `ai_calls` cuentan para cada recurso.
  *
  * `looks` cuenta SÓLO el motor y no el juez: una generación es una llamada al
- * motor y una al juez, así que sumar los dos haría que 20 looks se sintieran
- * como 10. El juez igual entra en el tope de gasto.
+ * motor y una al juez, así que sumar los dos haría que 40 looks se sintieran
+ * como 20. El juez igual entra en el tope de gasto.
  *
  * `fotos` cuenta SÓLO `vision-prendas` (la lectura de la foto) y no
  * `vision-personas` (el portero que cuenta cuántas personas salen). Las dos se
@@ -111,7 +118,7 @@ const TAREAS: Record<Recurso, string[]> = {
  * recupera de a poco, y decir "mañana" nunca queda corto.
  */
 export const MENSAJE_CUOTA: Record<Recurso, string> = {
-  looks: "ya te armé 20 looks hoy. mañana seguimos — el stylist también duerme.",
+  looks: "ya te armé 40 looks hoy. mañana seguimos — el stylist también duerme.",
   avatar: "por hoy ya no puedo rehacer tu avatar — mañana lo afinamos.",
   tryon: "ya te probé 15 looks hoy. mañana van más.",
   fotos: "por hoy ya guardé 120 prendas. mañana seguimos con el resto de tu clóset.",

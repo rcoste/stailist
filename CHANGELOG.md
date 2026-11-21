@@ -2,6 +2,19 @@
 
 Cambios notables de stailist. Formato basado en [Keep a Changelog](https://keepachangelog.com/es/); versiones `MAJOR.MINOR.PATCH.MICRO`.
 
+## [0.2.419.1] - 2026-11-21 — el límite de looks al día sube de 20 a 40
+
+Una de las dos personas que más usan la app topó el "ya te armé 20 looks hoy"
+dos veces la misma noche. No había hecho 20 en un día: hizo 13 una noche y 8 la
+siguiente, y como el límite cuenta las últimas 24 horas, las dos noches se
+sumaron. El 20 se fijó en septiembre, cuando el día más pesado medido eran 3
+generaciones; quien se queda hoy pide entre 13 y 19 looks en una sentada.
+
+- `CUOTAS.looks` pasa a 40 y el mensaje dice 40. Una generación (motor + juez)
+  cuesta ~$0.08 medidos, así que el tope nuevo son ~$3 por persona al día.
+- El freno de dinero por persona ($15) y el global siguen igual, por encima.
+- `docs/USER-JOURNEY.md` decía 5 avatares y freno de $5: corregido a lo vigente.
+
 ## [0.2.419.0] - 2026-11-13 — invitación a opinar para quienes más usan la app
 
 Una tarjeta negra arriba de Inicio, sólo para las personas que Roberto invita
