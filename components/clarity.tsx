@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { clarityId, conFotosTapadas, rutaConClarity, URL_SCRIPT } from "@/lib/clarity";
 import { permitidoEnEsteNavegador } from "@/lib/publicidad";
+import { estaInstalada } from "@/lib/push-navegador";
 
 // El único lugar que decide, en cada cambio de ruta, si Clarity vive. Las
 // reglas están en lib/clarity.ts; aquí sólo se aplican. No pinta nada.
@@ -14,14 +15,6 @@ import { permitidoEnEsteNavegador } from "@/lib/publicidad";
 type ClarityFn = ((...args: unknown[]) => void) & { q?: unknown[][] };
 
 let cargada = false;
-
-// ¿Abrió la app desde su pantalla de inicio? (lo mismo que mira pwa-install).
-function estaInstalada(): boolean {
-  return (
-    window.matchMedia("(display-mode: standalone)").matches ||
-    (window.navigator as { standalone?: boolean }).standalone === true
-  );
-}
 
 export function Clarity() {
   const pathname = usePathname();

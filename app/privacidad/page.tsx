@@ -5,6 +5,7 @@ import { Logo } from "@/components/logo";
 import { InterruptorMedicion } from "@/components/interruptor-medicion";
 import { DIAS_PARA_BORRAR } from "@/lib/borrado-programado";
 import { clarityId } from "@/lib/clarity";
+import { pushActivo } from "@/lib/avisos-push";
 
 // EL AVISO DE PRIVACIDAD.
 //
@@ -295,8 +296,9 @@ export default function PrivacidadPage() {
       </P>
       <InterruptorMedicion />
 
-      {/* Esta sección sólo se pinta cuando Clarity está prendido (su variable
-          existe en el deploy): el aviso dice lo que pasa, no lo que podría pasar. */}
+      {/* Las dos secciones de abajo sólo se pintan cuando lo que describen está
+          prendido (su variable existe en el deploy): el aviso dice lo que pasa,
+          no lo que podría pasar. */}
       {clarityId() && (
         <>
           <H2>cómo se usa la app, grabado</H2>
@@ -336,6 +338,20 @@ export default function PrivacidadPage() {
           <P>
             <b>Cómo apagarla.</b> El mismo interruptor de arriba la apaga en este
             navegador, y la señal Global Privacy Control también.
+          </P>
+        </>
+      )}
+
+      {pushActivo() && (
+        <>
+          <H2>avisos en tu teléfono</H2>
+          <P>
+            Si aceptas que te avisemos en las mañanas para armar tu look, guardamos la
+            dirección técnica que tu navegador nos da para mandarte el aviso (no
+            es tu número ni tu correo) y anotamos cuándo lo mandamos y si lo
+            abriste. Lo apagas en Perfil → Cuenta o desde los ajustes de
+            notificaciones de tu teléfono; al apagarlo borramos esa dirección.
+            Si borras tu cuenta, se borra con ella.
           </P>
         </>
       )}
